@@ -2,6 +2,7 @@
 
 ## Platform
 
+- [ ] Confirm the `Game Ready` handoff evidence before provisioning production logistics.
 - [ ] Define local/test/staging/production configuration schemas and secret ownership.
 - [ ] Implement explicit migration, immutable deployment, smoke-test, and rollback automation.
 - [ ] Implement separate liveness/readiness, structured logs, traces, bounded metrics, dashboards, and alerts.

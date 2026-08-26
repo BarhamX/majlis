@@ -2,6 +2,8 @@
 
 ## Delivery Order
 
+Begin production logistics after the internal `Game Ready` evidence in `V1-DEC-011`. Local CI, security-safe coding, and test infrastructure continue throughout feature development.
+
 1. Define environment configuration, secret ownership, artifacts, migration, deployment, and rollback runbooks.
 2. Add structured logs, bounded metrics, traces, correlation ids, readiness/liveness, dashboards, and alerts.
 3. Add the approved analytics catalog and consent/deletion controls.

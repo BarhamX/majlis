@@ -21,7 +21,8 @@ Android-first mobile app with Flutter frontend and .NET backend.
 - Entity Framework Core.
 - PostgreSQL.
 - Clean architecture solution structure.
-- Managed OpenID Connect provider using Authorization Code with PKCE; the API validates bearer tokens and stores no passwords.
+- Google Account through Android Credential Manager and Sign in with Apple through the system browser, with state/nonce validation and PKCE where supported; provider adapters share one application boundary and Majlis stores no passwords.
+- A deterministic signed identity issuer is allowed only in Development/Testing and is rejected by Production startup.
 
 ## Backend Solution Structure
 
@@ -37,7 +38,7 @@ src/backend/
 
 ## Infrastructure
 
-Recommended production options:
+Production vendor selection and provisioning are deliberately deferred until the `Game Ready` milestone. Candidate options, not current decisions:
 
 - API hosting: Azure App Service, Azure Container Apps, Railway, Render, or Fly.io.
 - Database: Managed PostgreSQL.

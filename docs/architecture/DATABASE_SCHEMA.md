@@ -11,14 +11,25 @@ All ids are UUIDs. All instants are `timestamptz` in UTC. Content days are Postg
 ```text
 Users
 - Id uuid primary key
-- Issuer text not null
-- Subject text not null
 - Status text not null -- active, suspended, deletion_pending, deleted
-- SessionVersion bigint not null default 1
+- AuthenticationNotBefore timestamptz nullable
 - CreatedAt timestamptz not null
 - LastLoginAt timestamptz nullable
 - DeletedAt timestamptz nullable
+
+UserIdentities
+- Id uuid primary key
+- UserId uuid not null references Users(Id)
+- Provider text not null -- google, apple; test only outside Production
+- Issuer text not null
+- Subject text not null
+- RevocationHandleCiphertext bytea nullable -- only when provider-required; encrypted outside database keys
+- RevocationKeyVersion text nullable
+- LinkedAt timestamptz not null
+- LastAuthenticatedAt timestamptz not null
+- ProviderAuthorizationRevokedAt timestamptz nullable
 unique (Issuer, Subject)
+unique (UserId, Provider)
 
 Profiles
 - UserId uuid primary key references Users(Id)
@@ -77,7 +88,7 @@ DeletionTombstones
 - BackupExpiryDueAt timestamptz not null
 ```
 
-Majlis stores no password hash, password-reset token, provider refresh token, or full date of birth.
+Majlis stores no password hash, password-reset token, provider email as an identity key, or full date of birth. A provider-required revocation handle may be retained only as managed-key ciphertext and is never exposed to application logs or consumer APIs. Google and Apple identities may be explicitly linked to one user, but are never merged by email equality. The `test` provider value is rejected by Production configuration.
 
 ## Editorial Content
 
@@ -336,6 +347,7 @@ The outbox accepts only events/fields allowlisted by Spec 009. It must not conta
 
 ## Required Indexes
 
+- `UserIdentities(Issuer, Subject)` unique and `UserIdentities(UserId, Provider)` unique.
 - `DailyMajlis(PublishDate)` unique partial index for `scheduled|published`.
 - `UserAttempts(UserId, AttemptedAt desc)` and unique `(UserId, DailyMajlisId)`.
 - `XpLedger(OccurredAt, Amount)` and `XpLedger(UserId, OccurredAt)`.

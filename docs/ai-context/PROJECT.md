@@ -26,7 +26,7 @@ Majlis is a daily Arab culture challenge game that recreates the feeling of a tr
 
 The target is the full Majlis Production V1, not a prototype, reduced release, or isolated feature demonstration. Completion requires an installable Android app and an operational backend with:
 
-- Registration, login, profile, and region preferences.
+- Google Account and Sign in with Apple login, profile, and region preferences.
 - Backend-managed daily cultural content.
 - Answer submission, scoring, explanation, XP, and streaks.
 - Spoiler-safe sharing and deep-link handling.

@@ -36,13 +36,15 @@ This document closes cross-feature decisions that otherwise allow incompatible i
 - V1 supports family and friend connection through user-initiated external sharing, safe deep links, and an opt-in global weekly leaderboard.
 - No V1 copy or journey may imply that private groups exist.
 
-### V1-DEC-005 - Managed Identity Boundary
+### V1-DEC-005 - Google and Apple Identity
 
-- Majlis uses a managed, standards-compatible identity provider supporting OpenID Connect Authorization Code with PKCE.
-- Majlis does not store user passwords or implement password reset tokens.
-- The provider must support email verification, account recovery, session revocation, and MFA for privileged operator accounts.
-- The backend validates issuer, audience, signature, expiry, and stable subject claims, then maps the subject to a local `User` record.
-- Provider selection is deployment configuration. A provider must be selected and proven in staging before identity implementation is marked complete; changing providers must not change Majlis domain identifiers or public API contracts.
+- Production V1 supports only Google Account and Sign in with Apple identity. Email/password, phone/SMS, guest, and other social providers are out of scope.
+- Android uses Google Credential Manager and the Sign in with Apple system-browser flow with provider-required state/nonce validation and PKCE where supported; embedded login webviews are prohibited.
+- Majlis does not store user passwords or implement password reset tokens. Any provider credential retained solely to satisfy provider-required revocation is encrypted with a managed key, never logged, and deleted after revocation/account purge.
+- Google and Apple own email verification and account recovery. Majlis stores the provider, issuer, and stable subject but does not use email as an account key.
+- The backend validates the selected provider, issuer, audience, signature, expiry, nonce/code-verifier binding where applicable, and stable subject before mapping the identity to a local `User`.
+- One Majlis user may explicitly link one Google and one Apple identity after authenticating both. Majlis never auto-links accounts by matching email, including Apple private-relay addresses.
+- Provider adapters and configuration must not change Majlis domain identifiers or public feature contracts.
 - V1 challenge options, attempts, progress, leaderboard, and discussion require an authenticated completed profile. Public deep-link landing pages may explain Majlis but do not expose the challenge options.
 
 ### V1-DEC-006 - One Final Attempt and Non-Shaming Rewards
@@ -85,6 +87,14 @@ This document closes cross-feature decisions that otherwise allow incompatible i
 - Majlis sends at most one daily challenge reminder. It sends no streak-loss warning, re-engagement nag, or notification based on another user's activity.
 - The V1 leaderboard is one global UTC weekly board. Adult users must opt in; it shows approved display name, rank, and weekly XP only.
 - The board returns the top 100 entries and the requesting user's own entry when eligible. Equal XP receives the same displayed rank.
+
+### V1-DEC-011 - Game-Ready Before Deployment Logistics
+
+- The internal `Game Ready` milestone means the Arabic/RTL Flutter daily journey runs end to end against the local .NET/PostgreSQL backend with deterministic development/test identity: profile, today's challenge, one final attempt, result/cultural card, XP, streak, and automated core-flow tests.
+- Development/test identity must be impossible to enable in Production configuration.
+- Google/Apple production credentials, Sign in with Apple redirect/service configuration, hosting procurement, public domains, verified App Links, production signing, production-shaped staging, monitoring, backup, and deployment work are deliberately deferred until after `Game Ready`.
+- Provider-facing interfaces, configurable URL boundaries, and release requirements are specified now so game code does not assume a vendor credential, host, or domain.
+- This sequencing decision does not remove Google/Apple authentication, verified links, hosting, staging, or Spec 009 evidence from the Production V1 release gate.
 
 ## Change Control
 

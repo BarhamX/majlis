@@ -43,13 +43,14 @@ src/backend/                        Active .NET backend solution
 ## Recommended Implementation Order
 
 1. Complete PostgreSQL persistence, migrations, health, and integration-test infrastructure.
-2. Implement Spec 004 authentication, authorization, profile, deletion, and preferences.
+2. Implement the Spec 004 local identity/profile foundation using the Development/Testing issuer; production login is Google Account and Sign in with Apple.
 3. Complete challenge submission, scoring, streaks, history, and share contracts.
 4. Build the complete Flutter Android experience.
-5. Implement Specs 005-007 for leaderboard, native sharing/deep links, and user-controlled reminders.
-6. Implement community responses, reporting, and moderation.
-7. Implement Spec 008 content and moderation administration.
-8. Implement Spec 009 analytics, observability, security hardening, deployment, measurable quality gates, and release validation.
+5. Reach the internal `Game Ready` milestone with the persisted Arabic/RTL daily loop.
+6. Implement Specs 005-007 for leaderboard, native sharing/deep links, and user-controlled reminders.
+7. Implement community responses, reporting, and moderation.
+8. Implement Spec 008 content and moderation administration.
+9. After `Game Ready`, configure Google/Apple production identity, hosting, domains, verified App Links, signing, staging, and Spec 009 release operations; this can proceed alongside the remaining local product work.
 
 ## Delivery Target
 

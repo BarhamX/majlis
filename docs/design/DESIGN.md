@@ -23,6 +23,7 @@ Purpose: Explain the concept quickly.
 Content:
 - App name and tagline.
 - One-line promise.
+- Google Account and Sign in with Apple actions using native/system-browser authentication; no Majlis password fields or embedded login webview.
 - Optional region/dialect preference with clear copy that it does not change the official V1 daily edition.
 - Display name.
 - Notification opt-in after value is shown.

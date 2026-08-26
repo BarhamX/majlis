@@ -112,6 +112,7 @@ Constraints:
 - Update tests for scoring/streak behavior when relevant.
 - Do not add community features before moderation basics exist.
 - Map the implemented requirement IDs to named tests/evidence in docs/quality/requirements-to-tests.md.
+- Do not provision hosting, public domains, production Google/Apple credentials, App Links, or signing until the handoff records the `Game Ready` gate.
 
 Deliverables:
 - Implement the selected task.

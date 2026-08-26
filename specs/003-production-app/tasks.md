@@ -22,7 +22,9 @@ This is the release-wide checklist. Feature task files provide implementation de
 
 ## Identity and Profile
 
-- [ ] Implement registration, login, logout, session renewal, and account recovery.
+- [x] Select Google Account and Sign in with Apple as the Production V1 identity providers.
+- [ ] Implement the provider-neutral identity boundary and Development/Testing issuer.
+- [ ] After `Game Ready`, configure live Google/Apple login, logout, renewal, linking, recovery, and revocation.
 - [ ] Implement authorization policies and least-privilege admin/moderator roles.
 - [ ] Implement profile, region/dialect, privacy, and notification preferences.
 - [ ] Test cross-user data isolation and privileged-route authorization.
@@ -39,12 +41,23 @@ This is the release-wide checklist. Feature task files provide implementation de
 ## Android Application
 
 - [ ] Create the Flutter app with feature-first structure, Riverpod, routing, theme, and localization resources.
-- [ ] Implement onboarding, authentication, Today, challenge, result, cultural card, profile, progress, and leaderboard screens.
-- [ ] Implement native sharing, inbound deep links, and user-controlled reminders.
-- [ ] Implement loading, empty, offline, validation, retry, and completed states.
-- [ ] Add Flutter unit, widget, golden, and end-to-end integration tests.
-- [ ] Validate Arabic/RTL, accessibility, and every Android device-matrix row in Spec 009.
+- [ ] Implement Development/Testing sign-in, onboarding, Today, challenge, result, cultural card, profile, and progress screens.
+- [ ] Implement loading, empty, offline, validation, retry, and completed states for the core daily journey.
+- [ ] Add Flutter unit, widget, golden, and end-to-end integration tests for the core daily journey.
+
+## Internal Game-Ready Gate
+
+- [ ] Complete the persisted local daily journey: profile, Today, final attempt, result/cultural card, XP, and streak.
+- [ ] Pass mapped backend and Flutter core-flow tests using only the Development/Testing identity issuer.
+- [ ] Verify Arabic/RTL core screens on an Android emulator without production identity, host, domain, or signing dependencies.
+- [ ] Record `Game Ready` evidence before starting the deferred logistics tasks.
+
+## Remaining Android Features
+
+- [ ] Implement leaderboard, native sharing, link routing, user-controlled reminders, and discussion screens.
+- [ ] Complete remaining loading, empty, offline, validation, retry, and completed states.
 - [ ] Complete all required tasks in Specs 005-007.
+- [ ] Pass the full Flutter suite and every Android/accessibility device-matrix row in Spec 009.
 
 ## Community and Safety
 
@@ -63,6 +76,7 @@ This is the release-wide checklist. Feature task files provide implementation de
 
 ## Production Operations
 
+- [ ] Begin hosting, public-domain, signing, staging, backup, and deployment logistics only after the `Game Ready` evidence is recorded in the handoff.
 - [ ] Add structured logging, safe error handling, metrics, and product analytics.
 - [ ] Add rate limiting and security headers/policies appropriate to each endpoint.
 - [ ] Document local setup, production configuration, secrets, deployment, and rollback.

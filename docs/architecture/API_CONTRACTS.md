@@ -4,7 +4,7 @@
 
 - Base path: `/api/v1`.
 - JSON uses UTF-8 and camelCase. Times are RFC 3339 UTC instants; content dates are ISO `yyyy-MM-dd` UTC dates.
-- Consumer endpoints require `Authorization: Bearer <access-token>` unless explicitly public. The token comes from the configured OIDC provider; Majlis has no password/login API.
+- Consumer endpoints require `Authorization: Bearer <access-token>` unless explicitly public. Production accepts only the configured Google Account and Sign in with Apple identity paths; Majlis has no email/password login API.
 - Localized endpoints accept `Accept-Language`, return `Content-Language`, and fall back from a regional Arabic tag to required `ar`.
 - Mutation endpoints marked idempotent require `Idempotency-Key: <uuid>`.
 - Idempotency records remain replayable for at least 24 hours; persistent business uniqueness continues to prevent duplicate resources after that window.
@@ -29,11 +29,11 @@ Limits may be lowered during abuse response but not raised for release without s
 
 ## Authentication and Profile
 
-Authentication, verification, recovery, token renewal, and primary logout are provider-hosted OIDC flows using Authorization Code with PKCE.
+Production V1 supports Google Account and Sign in with Apple only. Android uses Google Credential Manager or the Sign in with Apple system-browser flow with provider-required state/nonce validation and PKCE where supported. Google/Apple own account verification and recovery; Majlis maps the validated provider/issuer/subject to a local user. A signed test issuer exists only in Development/Testing and Production startup rejects it.
 
 ### POST `/me/bootstrap` (idempotent)
 
-Creates or locates the local user for the validated issuer/subject.
+Creates or locates the local user for the validated provider/issuer/subject.
 
 Request:
 
@@ -69,6 +69,14 @@ Response `201` on creation or `200` on replay:
 
 Declaring `under_13` returns `422 age_not_eligible` and does not create a user.
 
+### GET/POST/DELETE `/me/identities`
+
+- `GET /me/identities` returns linked provider names (`google` and/or `apple`) and link dates; it never returns provider subject, email, or credential material.
+- `POST /me/identities` requires a fresh authenticated Majlis session. Google accepts `{ "provider": "google", "idToken": "short-lived-token", "nonce": "original-nonce" }`; Apple accepts `{ "provider": "apple", "authorizationCode": "one-time-code", "identityToken": "short-lived-token", "state": "original-state", "nonce": "original-nonce" }`. The backend validates/exchanges the second provider result before linking it.
+- `DELETE /me/identities/{provider}` requires recent authentication, is idempotent, and rejects removal with `409 last_identity_required` when it would leave no login identity.
+
+The same provider identity cannot belong to two users. Email equality never links or merges accounts. Provider authorization results are secrets: they are accepted only over TLS and excluded from logs, errors, traces, and analytics. Any provider-required revocation handle retained from the exchange is encrypted with a managed key and used only for unlink/deletion revocation.
+
 ### GET/PUT `/me/profile`
 
 `GET` returns the authenticated user's private profile and preferences. `PUT` accepts:
@@ -89,7 +97,7 @@ The response is the updated profile. A minor leaderboard opt-in returns `422 lea
 
 ### POST `/me/sessions/revoke-all`
 
-Coordinates provider revocation and increments the Majlis session version. Returns `204`.
+Sets the local authentication-not-before instant so previously issued provider credentials are rejected, clears device credentials, and performs provider grant revocation when required/supported. Returns `204`. A later explicit Google/Apple sign-in may authenticate again unless the Majlis account is suspended or deletion-pending.
 
 ### POST `/me/deletion-requests` (idempotent)
 
@@ -97,7 +105,7 @@ Coordinates provider revocation and increments the Majlis session version. Retur
 { "confirmation": "delete_my_account" }
 ```
 
-Returns `202` with `requestId`, `requestedAt`, and `purgeDueAt`. Access is revoked immediately. A public `POST /account-deletion/request` accepts an email, always returns `202`, and completes only after provider-hosted ownership verification.
+Returns `202` with `requestId`, `requestedAt`, and `purgeDueAt`. Access is revoked immediately. After `Game Ready`, the public web deletion page shall authenticate the user through Google or Apple and call this same endpoint; it shall not collect an email to locate an account. A user who cannot access either linked provider is directed to provider recovery and a documented support verification process.
 
 ## Daily Majlis and Progress
 
@@ -386,4 +394,4 @@ When discussion mode is `disabled`, consumer discussion reads/mutations return `
 
 ## Stable Problem Codes
 
-`authentication_required`, `profile_incomplete`, `forbidden`, `resource_not_found`, `validation_failed`, `rate_limit_exceeded`, `daily_majlis_unavailable`, `option_not_in_challenge`, `idempotency_key_reused`, `attempt_already_completed`, `comment_already_exists`, `comment_not_visible`, `interaction_blocked`, `discussion_unavailable`, `appeal_not_eligible`, `separation_of_duties`, `publish_date_conflict`, and `content_revision_invalid`.
+`authentication_required`, `identity_provider_not_supported`, `identity_already_linked`, `identity_link_conflict`, `last_identity_required`, `profile_incomplete`, `forbidden`, `resource_not_found`, `validation_failed`, `rate_limit_exceeded`, `daily_majlis_unavailable`, `option_not_in_challenge`, `idempotency_key_reused`, `attempt_already_completed`, `comment_already_exists`, `comment_not_visible`, `interaction_blocked`, `discussion_unavailable`, `appeal_not_eligible`, `separation_of_duties`, `publish_date_conflict`, and `content_revision_invalid`.

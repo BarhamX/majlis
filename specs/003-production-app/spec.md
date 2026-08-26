@@ -52,7 +52,7 @@ As an authorized content or moderation operator, I want to publish culturally re
 ## Acceptance Criteria
 
 - **REL-010**: A clean environment can start the database and API using documented commands and apply all committed migrations.
-- **REL-011**: A new user can install the Android release build, authenticate, complete today's challenge, receive the correct persisted result/progress, share safely, and participate in moderated discussion.
+- **REL-011**: A new user can install the Android release build, authenticate through either Google Account or Sign in with Apple, complete today's challenge, receive the correct persisted result/progress, share safely, and participate in moderated discussion.
 - **REL-012**: Restarting the API does not lose accounts, content, attempts, streaks, comments, reports, moderation state, editorial revisions, or audit events.
 - **REL-013**: Authorized operators can publish the next Daily Majlis and process a report/appeal through supported browser tooling.
 - **REL-014**: Unauthorized users cannot access another user's private state or administrative operations.
