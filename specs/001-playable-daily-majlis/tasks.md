@@ -4,9 +4,9 @@
 
 - [x] Create .NET solution under `src/backend` with projects: Api, Application, Domain, Infrastructure, Contracts, Tests.
 - [x] Add project references according to clean architecture boundaries.
-- [ ] Add health endpoint to `Majlis.Api`.
-- [ ] Add PostgreSQL and EF Core packages to Infrastructure.
-- [ ] Add application configuration for database connection string.
+- [x] Add health endpoint to `Majlis.Api`.
+- [x] Add PostgreSQL and EF Core packages to Infrastructure.
+- [x] Add application configuration for database connection string.
 
 ## Domain Model
 
@@ -41,7 +41,7 @@
 - [ ] Test duplicate attempt does not duplicate XP.
 - [ ] Test first completion updates streak.
 - [ ] Test missed day resets streak.
-- [ ] Test today's endpoint hides correct answer.
+- [x] Test today's endpoint hides correct answer.
 
 ## Flutter Foundation
 

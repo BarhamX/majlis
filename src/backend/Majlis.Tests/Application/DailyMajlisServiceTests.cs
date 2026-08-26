@@ -7,6 +7,20 @@ namespace Majlis.Tests.Application;
 public sealed class DailyMajlisServiceTests
 {
     [Fact]
+    public async Task GetTodayAsync_UsesUtcCalendarDate()
+    {
+        var repository = new StubDailyMajlisRepository(dailyMajlis: null);
+        var service = new DailyMajlisService(
+            repository,
+            new FixedTimeProvider(new DateTimeOffset(2026, 8, 26, 23, 59, 0, TimeSpan.Zero)));
+
+        var result = await service.GetTodayAsync();
+
+        Assert.Null(result);
+        Assert.Equal(new DateOnly(2026, 8, 26), repository.RequestedDate);
+    }
+
+    [Fact]
     public async Task GetTodayAsync_WhenPublishedMajlisExists_ReturnsValidSpoilerSafePayload()
     {
         var today = new DateOnly(2026, 8, 26);
@@ -63,7 +77,7 @@ public sealed class DailyMajlisServiceTests
         Assert.DoesNotContain("explanation", serializedResponse, StringComparison.OrdinalIgnoreCase);
     }
 
-    private sealed class StubDailyMajlisRepository(DailyMajlis dailyMajlis)
+    private sealed class StubDailyMajlisRepository(DailyMajlis? dailyMajlis)
         : IDailyMajlisRepository
     {
         public DateOnly? RequestedDate { get; private set; }

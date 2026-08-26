@@ -2,6 +2,15 @@ namespace Majlis.Domain.DailyMajlis;
 
 public sealed class Challenge
 {
+    private readonly List<ChallengeOption> _options = [];
+
+    private Challenge()
+    {
+        QuestionText = string.Empty;
+        Topic = string.Empty;
+        Explanation = string.Empty;
+    }
+
     public Challenge(
         Guid id,
         string questionText,
@@ -43,28 +52,28 @@ public sealed class Challenge
         Explanation = RequireText(explanation, nameof(explanation));
         SourceNotes = string.IsNullOrWhiteSpace(sourceNotes) ? null : sourceNotes;
         ReviewStatus = reviewStatus;
-        Options = Array.AsReadOnly(orderedOptions);
+        _options.AddRange(orderedOptions);
     }
 
-    public Guid Id { get; }
+    public Guid Id { get; private set; }
 
-    public string QuestionText { get; }
+    public string QuestionText { get; private set; }
 
-    public ChallengeType Type { get; }
+    public ChallengeType Type { get; private set; }
 
-    public ChallengeDifficulty Difficulty { get; }
+    public ChallengeDifficulty Difficulty { get; private set; }
 
-    public string? Region { get; }
+    public string? Region { get; private set; }
 
-    public string Topic { get; }
+    public string Topic { get; private set; }
 
-    public string Explanation { get; }
+    public string Explanation { get; private set; }
 
-    public string? SourceNotes { get; }
+    public string? SourceNotes { get; private set; }
 
-    public ContentReviewStatus ReviewStatus { get; }
+    public ContentReviewStatus ReviewStatus { get; private set; }
 
-    public IReadOnlyList<ChallengeOption> Options { get; }
+    public IReadOnlyList<ChallengeOption> Options => _options;
 
     private static string RequireText(string value, string parameterName)
     {

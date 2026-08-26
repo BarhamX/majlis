@@ -4,3 +4,7 @@ GET {{Majlis.Api_HostAddress}}/api/v1/daily-majlis/today
 Accept: application/json
 
 ###
+
+GET {{Majlis.Api_HostAddress}}/health
+
+###

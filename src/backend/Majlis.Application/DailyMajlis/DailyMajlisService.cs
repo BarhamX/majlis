@@ -33,6 +33,7 @@ public sealed class DailyMajlisService(
                 MapDifficulty(challenge.Difficulty),
                 challenge.Region,
                 challenge.Options
+                    .OrderBy(option => option.SortOrder)
                     .Select(option => new ChallengeOptionResponse(option.Id, option.Text))
                     .ToArray()),
             dailyMajlis.DiscussionQuestion,

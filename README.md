@@ -63,15 +63,17 @@ The backend requires .NET 10 and Docker Desktop.
 ```powershell
 docker compose up -d postgres
 dotnet tool restore
-dotnet run --project src/backend/Majlis.Api/Majlis.Api.csproj
+dotnet run --project src/backend/Majlis.Api/Majlis.Api.csproj --launch-profile https
 ```
 
 Development startup applies committed migrations and idempotently prepares the sample Daily Majlis for the current UTC date. Production does not migrate or seed automatically and must supply `ConnectionStrings__MajlisDatabase`.
 
+`dotnet test src/backend/Majlis.sln` starts an isolated PostgreSQL Testcontainer, so Docker Desktop must be running.
+
 The local endpoints are:
 
-- `GET http://localhost:5129/health`
-- `GET http://localhost:5129/api/v1/daily-majlis/today`
+- `GET https://localhost:7204/health`
+- `GET https://localhost:7204/api/v1/daily-majlis/today`
 
 Stop the local database without deleting its named volume:
 

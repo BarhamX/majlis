@@ -11,12 +11,12 @@ This is the release-wide checklist. Feature task files provide implementation de
 
 ## Persistent Platform
 
-- [ ] Configure PostgreSQL and EF Core in Infrastructure.
+- [x] Configure PostgreSQL and EF Core in Infrastructure.
 - [ ] Add explicit reviewed migrations for all production entities.
-- [ ] Add idempotent development/test seed and content initialization.
-- [ ] Add database-backed health checks and configuration validation.
-- [ ] Replace production use of the in-memory Daily Majlis repository.
-- [ ] Add PostgreSQL-backed integration tests.
+- [x] Add idempotent development/test seed and content initialization.
+- [x] Add database-backed health checks and configuration validation.
+- [x] Replace production use of the in-memory Daily Majlis repository.
+- [x] Add PostgreSQL-backed integration tests.
 
 ## Identity and Profile
 
@@ -31,7 +31,7 @@ This is the release-wide checklist. Feature task files provide implementation de
 - [ ] Persist exactly one scored attempt per user and challenge.
 - [ ] Implement XP, current/longest streak, missed-day, and duplicate-award rules.
 - [ ] Implement attempt history and spoiler-safe share result.
-- [ ] Resolve and test the content scheduling timezone.
+- [x] Resolve and test the content scheduling timezone.
 
 ## Android Application
 

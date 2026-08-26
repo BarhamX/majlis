@@ -2,6 +2,14 @@ namespace Majlis.Domain.DailyMajlis;
 
 public sealed class DailyMajlis
 {
+    private DailyMajlis()
+    {
+        Title = string.Empty;
+        Topic = string.Empty;
+        Challenge = null!;
+        DiscussionQuestion = string.Empty;
+    }
+
     public DailyMajlis(
         Guid id,
         DateOnly publishDate,
@@ -25,19 +33,19 @@ public sealed class DailyMajlis
         Status = status;
     }
 
-    public Guid Id { get; }
+    public Guid Id { get; private set; }
 
-    public DateOnly PublishDate { get; }
+    public DateOnly PublishDate { get; private set; }
 
-    public string Title { get; }
+    public string Title { get; private set; }
 
-    public string Topic { get; }
+    public string Topic { get; private set; }
 
-    public Challenge Challenge { get; }
+    public Challenge Challenge { get; private set; }
 
-    public string DiscussionQuestion { get; }
+    public string DiscussionQuestion { get; private set; }
 
-    public DailyMajlisStatus Status { get; }
+    public DailyMajlisStatus Status { get; private set; }
 
     private static string RequireText(string value, string parameterName)
     {
