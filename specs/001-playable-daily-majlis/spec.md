@@ -2,7 +2,9 @@
 
 ## Goal
 
-Build the first playable version of Majlis: a user can open today's Majlis, answer the daily cultural challenge, receive feedback, read a short explanation, update streak/XP, and generate a shareable result card.
+Build the daily-game vertical slice of the complete Majlis app: a user can open today's Majlis, answer the daily cultural challenge, receive feedback, read a short explanation, update streak/XP, and generate a shareable result card.
+
+This feature is an implementation milestone. It does not define or reduce the Production V1 delivery scope in `docs/product/full-app-scope.md`.
 
 ## Primary User Story
 
@@ -28,6 +30,8 @@ As an Arab user, I want to answer a short daily cultural challenge so that I can
 - Premium access.
 - Advanced audio.
 - Full admin UI.
+
+Items listed here are outside this feature slice only. Production V1 requirements remain governed by `specs/003-production-app/`.
 
 ## Requirements
 

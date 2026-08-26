@@ -8,7 +8,7 @@ Android-first mobile app with Flutter frontend and .NET backend.
 
 - Flutter stable channel.
 - Dart stable channel matched to Flutter release.
-- Android MVP first.
+- Android production release first.
 - Riverpod for state management.
 - GoRouter for navigation.
 - Dio or generated client for API calls.
@@ -37,7 +37,7 @@ src/backend/
 
 ## Infrastructure
 
-Recommended MVP options:
+Recommended production options:
 
 - API hosting: Azure App Service, Azure Container Apps, Railway, Render, or Fly.io.
 - Database: Managed PostgreSQL.
@@ -47,7 +47,7 @@ Recommended MVP options:
 
 ## Admin
 
-MVP admin can start as protected API endpoints plus a simple internal web UI later.
+Production V1 requires protected admin operations. They may begin as protected API endpoints, but a usable internal web interface or equivalent operational tool is required before release.
 
 Admin capabilities:
 
@@ -63,7 +63,7 @@ Admin capabilities:
 
 - xUnit.
 - FluentAssertions.
-- Testcontainers for integration tests later.
+- Testcontainers for database integration tests.
 - OpenAPI/Swagger.
 - Serilog or structured logging.
 
@@ -71,7 +71,7 @@ Admin capabilities:
 
 - flutter_test.
 - mocktail.
-- golden tests later for critical share cards.
+- Golden tests for critical share cards.
 - integration_test for the daily loop.
 
 ## Versioning

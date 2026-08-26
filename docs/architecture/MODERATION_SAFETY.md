@@ -4,7 +4,7 @@
 
 Majlis must feel like a respectful majlis. Users can disagree, joke, and compete, but the app cannot allow insults, sectarian attacks, racism, harassment, or regional humiliation.
 
-## MVP Controls
+## Production V1 Controls
 
 - Report comment.
 - Hide reported comments after threshold or admin review.

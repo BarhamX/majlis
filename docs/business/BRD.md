@@ -55,7 +55,7 @@ Institutional dashboards, private classrooms, weekly reports, teacher prompts, a
 
 Cultural organizations can sponsor themed weeks, heritage campaigns, museum events, or national cultural days.
 
-## 7. MVP Business Requirements
+## 7. Production Release Business Requirements
 
 - Free daily challenge must be valuable enough to attract organic sharing.
 - Shareable cards must create low-cost acquisition.
@@ -65,7 +65,7 @@ Cultural organizations can sponsor themed weeks, heritage campaigns, museum even
 
 ## 8. Revenue Assumptions
 
-Initial revenue should not be the MVP's primary success measure. First prove:
+Initial revenue should not be the launch release's primary success measure. First prove:
 
 1. Users return daily.
 2. Users share challenges.

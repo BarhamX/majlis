@@ -94,14 +94,14 @@ Elements:
 
 ## Navigation
 
-MVP bottom navigation:
+Production V1 bottom navigation:
 
 1. Today
 2. Discussion
 3. Leaderboard
 4. Profile
 
-Admin tooling can be web/API-first and does not need mobile navigation in MVP.
+Admin tooling can be web/API-first and does not need mobile navigation, but an authenticated operational interface is required before production release.
 
 ## Empty States
 

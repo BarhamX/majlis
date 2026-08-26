@@ -2,9 +2,73 @@
 
 ## Current Status
 
-The first Milestone 1 backend slice is complete: the .NET 10 clean-architecture solution builds, the Daily Majlis query returns seeded content, and `GET /api/v1/daily-majlis/today` returns a spoiler-safe payload.
+Majlis is now governed as a complete Production V1 Android application, not a partial or backend-only release. The committed baseline contains the first .NET daily-content slice; the Flutter client and most production capabilities remain to be delivered. Separate PostgreSQL persistence work is currently in progress in the working tree and was intentionally not modified by the scope-alignment task.
 
-## Task Completed
+## Latest Task Completed
+
+### 2026-08-26 - Full Production App Scope Alignment
+
+- Replaced the reduced-release framing with a full Production V1 delivery contract.
+- Defined the complete user, operator, platform, safety, and release-readiness scope.
+- Added a release-wide spec, implementation plan, and completion checklist.
+- Reframed the existing Daily Majlis and Community Majlis specs as required implementation slices rather than final delivery boundaries.
+- Updated agent instructions and reusable prompts so future tasks remain aligned with the full running app.
+
+### Files Changed
+
+- `AGENTS.md`
+- `.github/copilot-instructions.md`
+- `.specify/memory/constitution.md`
+- `README.md`
+- `MANIFEST.md`
+- `docs/ai-context/PROJECT.md`
+- `docs/ai-context/ARCHITECTURE.md`
+- `docs/ai-context/HANDOFF.md`
+- `docs/product/PRD.md`
+- `docs/product/full-app-scope.md` (replaces the former reduced-scope document)
+- `docs/product/roadmap.md`
+- `docs/product/acceptance-criteria.md`
+- `docs/product/user-stories.md`
+- `docs/architecture/TECH_STACK.md`
+- `docs/architecture/MODERATION_SAFETY.md`
+- `docs/architecture/API_CONTRACTS.md`
+- `docs/architecture/DATABASE_SCHEMA.md`
+- `docs/business/BRD.md`
+- `docs/design/DESIGN.md`
+- `docs/prompts/PROMPT_PACK.md`
+- `docs/superpowers/plans/2026-08-26-majlis-foundation.md`
+- `specs/000-product-foundation/tasks.md`
+- `specs/001-playable-daily-majlis/spec.md`
+- `specs/001-playable-daily-majlis/plan.md`
+- `specs/002-community-majlis/spec.md`
+- `specs/003-production-app/spec.md`
+- `specs/003-production-app/plan.md`
+- `specs/003-production-app/tasks.md`
+
+### Decisions Made
+
+- Production V1 means a complete, installable Android app with an operational .NET/PostgreSQL backend, not merely a successful feature slice.
+- The release includes accounts/profile, the complete daily loop, persisted progress, leaderboard, sharing/deep links, reminders, moderated community, content/moderation operations, analytics, and production readiness.
+- Internal milestones remain useful for sequencing and testability but cannot redefine project completion.
+- iOS/web clients, institutional dashboards, paid products, advanced audio, and AI-assisted content remain post-V1 expansions rather than incomplete Android core functionality.
+
+### Tests and Checks Run
+
+- Repository-wide terminology search confirmed that no document still defines Majlis as a reduced early release.
+- `git diff --check -- .specify AGENTS.md MANIFEST.md README.md .github docs specs` - passed; only existing line-ending conversion warnings were reported.
+- `dotnet test src/backend/Majlis.sln --configuration Release --no-restore` - failed during a separate, concurrent PostgreSQL red-phase change because its new integration tests referenced packages and persistence types that were not yet available. No backend files were changed by this scope task.
+
+### Known Blockers
+
+- Most Production V1 implementation remains incomplete; use `specs/003-production-app/tasks.md` as the release gate.
+- The current PostgreSQL persistence work must be completed and returned to a green build before starting the next backend slice.
+- Authentication, hosting, content timezone, Arabic font, first regional focus, and initial comment visibility policy still require decisions.
+
+### Next Recommended Task
+
+Finish and validate the in-progress PostgreSQL persistence slice, including migrations, health checks, idempotent initialization, and PostgreSQL-backed integration tests. Then implement authentication/profile and the persisted attempt/scoring/streak slice in the order defined by `specs/003-production-app/plan.md`.
+
+## Previous Task Completed
 
 ### 2026-08-26 - Initial Playable Daily Majlis Backend
 
@@ -16,7 +80,7 @@ The first Milestone 1 backend slice is complete: the .NET 10 clean-architecture 
 - Added the versioned endpoint and replaced the template weather endpoint.
 - Added application and domain unit tests.
 
-## Files Changed
+### Files Changed
 
 - `src/backend/Majlis.sln`
 - `src/backend/Majlis.Api/` - API project, composition root, controller, host settings, and HTTP request sample.
@@ -28,7 +92,7 @@ The first Milestone 1 backend slice is complete: the .NET 10 clean-architecture 
 - `specs/001-playable-daily-majlis/tasks.md`
 - `docs/ai-context/HANDOFF.md`
 
-## Decisions Made
+### Decisions Made
 
 - Used the canonical versioned route `/api/v1/daily-majlis/today` from the conventions and API contract.
 - Kept the correct option, explanation, source notes, and editorial state in the Domain model; the pre-attempt response DTO exposes only option ids and text.
@@ -37,20 +101,20 @@ The first Milestone 1 backend slice is complete: the .NET 10 clean-architecture 
 - Returned a safe `404` problem response when no published Daily Majlis is available.
 - Kept `userState` at `hasAttempted: false` and `currentStreak: 0` until authentication and attempt persistence are implemented.
 
-## Tests and Checks Run
+### Tests and Checks Run
 
 - `dotnet test src/backend/Majlis.Tests/Majlis.Tests.csproj` - expected red phase failed with 5 missing-type compiler errors before implementation.
 - `dotnet build src/backend/Majlis.sln --configuration Release --no-restore` - passed with 0 warnings and 0 errors.
 - `dotnet test src/backend/Majlis.sln --configuration Release --no-build` - passed: 2 tests, 0 failed, 0 skipped.
 - `dotnet run --project src/backend/Majlis.Api/Majlis.Api.csproj --configuration Release --no-build --no-launch-profile --urls https://127.0.0.1:5092` plus `curl.exe --insecure --fail-with-body --silent --show-error --write-out "`nHTTP %{http_code}`n" https://127.0.0.1:5092/api/v1/daily-majlis/today` - returned HTTP 200 with the expected JSON and no correct-answer field.
 
-## Known Blockers
+### Known Blockers
 
 - None for this slice.
-- PostgreSQL/EF Core, authentication, attempts, scoring, and persisted user state remain intentionally deferred.
+- PostgreSQL/EF Core, authentication, attempts, scoring, and persisted user state were outside that initial slice and remain required for Production V1.
 - The final content scheduling timezone is not yet specified; the placeholder query currently uses UTC.
 
-## Next Recommended Task
+### Next Recommended Task
 
 Add the health endpoint and PostgreSQL/EF Core configuration, create the first explicit migration for Daily Majlis content, replace the seed repository with persistence, and add an API integration test for the spoiler-safe response.
 

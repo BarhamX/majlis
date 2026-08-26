@@ -7,7 +7,7 @@
 - [x] Create BRD.
 - [x] Create personas and user journeys.
 - [x] Create user stories and acceptance criteria.
-- [x] Create MVP scope and roadmap.
+- [x] Create production full-app scope and roadmap.
 - [x] Create design and theme docs.
 - [x] Create architecture, API, database, and tech stack docs.
 - [x] Create prompt pack.

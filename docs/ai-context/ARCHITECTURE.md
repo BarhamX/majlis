@@ -32,6 +32,8 @@ apps/mobile/lib/
 
 The backend owns daily challenge truth, answer validation, scoring, streaks, content publishing, and moderation state. Flutter displays and submits; it does not decide correctness.
 
-## First Feature Slice
+## First Implementation Slice
 
 `specs/001-playable-daily-majlis`
+
+This slice establishes the daily loop but is not the release boundary. The complete delivery architecture also includes authentication, PostgreSQL persistence, scoring/streaks, Flutter, community safety, content operations, observability, and release infrastructure as defined by `specs/003-production-app/`.

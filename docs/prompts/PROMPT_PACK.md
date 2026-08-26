@@ -14,9 +14,11 @@ Before editing anything:
 - Read docs/ai-context/ARCHITECTURE.md
 - Read docs/ai-context/CONVENTIONS.md
 - Read docs/ai-context/HANDOFF.md
+- Read docs/product/full-app-scope.md
+- Read specs/003-production-app/spec.md, plan.md, and tasks.md
 
 Task:
-Summarize the project goal, current repo structure, MVP scope, and the next safest implementation step.
+Summarize the project goal, current repo structure, full production-app scope, and the next safest implementation step toward the complete release.
 
 Scope:
 - Read documentation only.
@@ -41,6 +43,8 @@ Before doing anything:
 - Read docs/ai-context/ARCHITECTURE.md
 - Read docs/ai-context/CONVENTIONS.md
 - Read docs/ai-context/HANDOFF.md
+- Read docs/product/full-app-scope.md
+- Read specs/003-production-app/spec.md, plan.md, and tasks.md
 - Read the relevant specs/<feature>/spec.md, plan.md, and tasks.md
 - Then inspect only the files needed for the task
 
@@ -77,6 +81,8 @@ Before doing anything:
 - Read docs/ai-context/ARCHITECTURE.md
 - Read docs/ai-context/CONVENTIONS.md
 - Read docs/ai-context/HANDOFF.md
+- Read docs/product/full-app-scope.md
+- Read specs/003-production-app/spec.md, plan.md, and tasks.md
 - Read specs/001-playable-daily-majlis/spec.md
 - Read specs/001-playable-daily-majlis/plan.md
 - Read specs/001-playable-daily-majlis/tasks.md
@@ -89,6 +95,7 @@ Scope:
 - Focus only on the selected task.
 - Avoid unrelated refactors.
 - Avoid implementing future features not required by the task.
+- Treat the selected feature as one delivery slice; do not present it as completion of the full app.
 
 Constraints:
 - Preserve the clean architecture boundaries.
@@ -118,6 +125,8 @@ You are working in the Majlis .NET backend.
 
 Read first:
 - AGENTS.md
+- docs/product/full-app-scope.md
+- specs/003-production-app/spec.md, plan.md, and tasks.md
 - docs/ai-context/ARCHITECTURE.md
 - docs/architecture/DATABASE_SCHEMA.md
 - docs/architecture/API_CONTRACTS.md
@@ -142,6 +151,8 @@ You are working in the Majlis Flutter Android app.
 
 Read first:
 - AGENTS.md
+- docs/product/full-app-scope.md
+- specs/003-production-app/spec.md, plan.md, and tasks.md
 - docs/design/DESIGN.md
 - docs/design/THEME.md
 - docs/design/content-voice.md

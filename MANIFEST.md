@@ -23,7 +23,7 @@
 - `docs/design/content-voice.md`
 - `docs/product/PRD.md`
 - `docs/product/acceptance-criteria.md`
-- `docs/product/mvp-scope.md`
+- `docs/product/full-app-scope.md`
 - `docs/product/personas.md`
 - `docs/product/roadmap.md`
 - `docs/product/user-journeys.md`
@@ -39,4 +39,7 @@
 - `specs/002-community-majlis/plan.md`
 - `specs/002-community-majlis/spec.md`
 - `specs/002-community-majlis/tasks.md`
+- `specs/003-production-app/plan.md`
+- `specs/003-production-app/spec.md`
+- `specs/003-production-app/tasks.md`
 - `src/backend/.gitkeep`

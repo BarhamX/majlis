@@ -36,7 +36,7 @@ Existing cultural content is often either too academic, too passive, too long, o
 - Create a shareable format that can travel through WhatsApp, Instagram, TikTok, Snapchat, and X.
 - Build a safe, moderated community around cultural curiosity.
 
-## 6. Non-Goals for MVP
+## 6. Post-V1 Product Expansion
 
 - Full course marketplace.
 - Long-form lectures.
@@ -44,7 +44,7 @@ Existing cultural content is often either too academic, too passive, too long, o
 - Real-money rewards.
 - AI-generated cultural facts without editorial review.
 - Full school/university dashboard.
-- iOS release before Android MVP validation.
+- iOS and web clients before the Android production release is proven.
 
 ## 7. Target Users
 
@@ -70,25 +70,27 @@ Arabs living outside the Arab world who want to preserve connection to language,
 
 ### Culture-Curious Users
 
-Non-Arab or Arabic-learning users interested in Arab culture, language, and social customs. This is a secondary audience after the Arab-first MVP.
+Non-Arab or Arabic-learning users interested in Arab culture, language, and social customs. This is a secondary audience after the Arab-first Android launch.
 
-## 8. MVP Scope
+## 8. Production V1 Scope
 
-The MVP is Playable Daily Majlis:
+Production V1 is the complete Android Majlis app, not a prototype or a single feature slice:
 
 1. User registration/login.
-2. Basic profile with display name and region preference.
+2. Profile with display name, region preference, progress, and notification settings.
 3. Today's Majlis screen.
 4. One daily cultural challenge.
 5. Multiple-choice answer submission.
 6. Result and short explanation.
-7. Proverb/story card.
-8. Streak and XP update.
-9. Shareable result card.
-10. Daily discussion question.
-11. Basic comments and reactions.
-12. Report comment.
-13. Admin content seed/import workflow.
+7. Curated proverb/story card with internal source traceability.
+8. Persistent attempts, streaks, XP, and duplicate-award protection.
+9. Basic privacy-safe leaderboard and friendly comparison.
+10. Shareable spoiler-safe result/cultural card and deep-link handling.
+11. Daily discussion question, comments, and reactions.
+12. Reporting, moderation states, and moderator workflow.
+13. Authenticated admin content creation, review, scheduling, publishing, and correction workflow.
+14. User-controlled daily reminders and basic product analytics.
+15. Production PostgreSQL persistence, security controls, observability, deployment configuration, and an Android release build.
 
 ## 9. Core Product Loop
 
@@ -148,7 +150,7 @@ The MVP is Playable Daily Majlis:
 - Daily challenge load should feel near-instant on common Android devices.
 - Core daily challenge should be completable in 1-3 minutes.
 - Backend APIs should use clear versioning from the start.
-- The app should support Arabic-first UI later; English internal docs are acceptable during development.
+- The Android release shall support Arabic-first product content and layout; English internal documentation is acceptable during development.
 - Community features must be safe by default.
 - Personal data must be minimized.
 
@@ -193,4 +195,4 @@ The MVP is Playable Daily Majlis:
 
 ## 14. Release Recommendation
 
-Release the MVP only when the Playable Daily Majlis loop is smooth, short, and shareable. Do not wait for advanced courses, full regional personalization, or institutional dashboards.
+Release Majlis Production V1 only when the complete scope in `docs/product/full-app-scope.md` works end to end. Playable Daily Majlis is an implementation milestone, not the release boundary. Advanced courses, institutional dashboards, and other explicitly post-V1 products do not block the Android release.

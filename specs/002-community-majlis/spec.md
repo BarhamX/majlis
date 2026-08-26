@@ -4,6 +4,8 @@
 
 Make Majlis feel social by allowing users to answer the daily discussion question, read community responses, react, and report inappropriate comments.
 
+Community Majlis is a required Production V1 slice and must be integrated into the full Android application before release.
+
 ## Primary User Story
 
 As a user, I want to share my response to the daily Majlis question and read others' responses so that the app feels like a real majlis conversation.

@@ -31,9 +31,13 @@
 - As a user, I want to share my result card so that I can challenge friends.
 - As a recipient, I want the shared card to make me curious without spoiling the answer.
 - As a user, I want to invite family/friends so that we can compete together.
+- As a user, I want a privacy-safe leaderboard so that comparison feels social without exposing private activity.
+- As a user, I want to control daily reminders so that Majlis supports my routine without pressuring me.
 
 ## Epic 6: Admin and Content Operations
 
 - As an admin, I want to create proverbs, stories, and questions so that I can build future Daily Majlis content.
 - As an admin, I want to tag content by region and difficulty so that content can be curated intelligently.
 - As an admin, I want to review reported comments so that community safety is maintained.
+- As an admin, I want to publish, correct, or unpublish reviewed content without a code deployment.
+- As an operator, I want health, logging, analytics, backup, and recovery procedures so that Majlis can run reliably in production.

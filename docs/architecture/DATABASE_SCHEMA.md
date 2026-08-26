@@ -1,5 +1,7 @@
 # Majlis Database Schema
 
+This is the initial domain schema. It must be extended through explicit, reviewed migrations for every persisted Production V1 capability in `specs/003-production-app/`; an entity missing from this draft is not implicitly out of release scope.
+
 Database: PostgreSQL
 
 ## Users
@@ -19,6 +21,7 @@ Users
 Profiles
 - UserId uuid primary key references Users(Id)
 - DisplayName text not null
+- CountryCode text nullable -- ISO 3166-1 alpha-2; used for future user-local offset metadata
 - Region text nullable
 - Dialect text nullable
 - AvatarUrl text nullable
@@ -31,7 +34,7 @@ Profiles
 ```text
 DailyMajlis
 - Id uuid primary key
-- PublishDate date not null
+- PublishDate date not null -- canonical UTC calendar date
 - Title text not null
 - Topic text not null
 - ChallengeId uuid not null references Challenges(Id)

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build the first playable Majlis product slice: Android Flutter app plus .NET backend daily cultural challenge loop.
+**Goal:** Build the first playable Majlis implementation slice within the complete Production V1: Android Flutter app plus .NET backend daily cultural challenge loop.
 
 **Architecture:** Flutter renders the daily Majlis experience and submits answers. .NET owns content, validation, scoring, streaks, and moderation state. PostgreSQL persists users, content, attempts, streaks, and discussion records.
 
@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- Android MVP first.
+- Android production release first; this plan covers only its initial vertical slice.
 - Daily challenge must be completable in 1-3 minutes.
 - Backend must not expose correct answer before answer submission.
 - No public community feature ships without reporting/moderation status.
@@ -178,7 +178,7 @@ git commit -m "feat: create flutter app skeleton"
 
 **Interfaces:**
 - Consumes: domain model and Flutter skeleton.
-- Produces: first playable daily loop.
+- Produces: first playable daily loop; further production slices remain required by `specs/003-production-app/`.
 
 - [ ] **Step 1: Implement backend contracts**
 

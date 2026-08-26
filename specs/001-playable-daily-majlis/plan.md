@@ -1,5 +1,7 @@
 # Plan 001: Playable Daily Majlis
 
+This plan is the first daily-loop implementation slice within the complete Production V1. It is not a standalone release plan.
+
 ## Architecture
 
 Backend owns challenge truth, scoring, streaks, and result generation. Flutter displays today's Majlis, collects answer selection, submits to backend, and renders the result/share UI.

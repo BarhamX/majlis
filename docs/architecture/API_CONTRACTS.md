@@ -2,6 +2,8 @@
 
 Base path: `/api/v1`
 
+This file currently defines the initial contracts. It must be expanded and versioned for every Production V1 capability in `specs/003-production-app/`; an absent contract here does not remove that capability from the release scope.
+
 ## Auth
 
 ### POST `/auth/register`
@@ -49,6 +51,8 @@ Response:
 ```
 
 ## Daily Majlis
+
+Daily Majlis dates use the canonical UTC calendar date. Country-derived UTC offset metadata is deferred until authenticated profiles provide an ISO country code.
 
 ### GET `/daily-majlis/today`
 
