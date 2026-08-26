@@ -2,25 +2,25 @@
 
 ## Backend Foundation
 
-- [ ] Create .NET solution under `src/backend` with projects: Api, Application, Domain, Infrastructure, Contracts, Tests.
-- [ ] Add project references according to clean architecture boundaries.
+- [x] Create .NET solution under `src/backend` with projects: Api, Application, Domain, Infrastructure, Contracts, Tests.
+- [x] Add project references according to clean architecture boundaries.
 - [ ] Add health endpoint to `Majlis.Api`.
 - [ ] Add PostgreSQL and EF Core packages to Infrastructure.
 - [ ] Add application configuration for database connection string.
 
 ## Domain Model
 
-- [ ] Create `DailyMajlis` entity.
-- [ ] Create `Challenge` entity.
-- [ ] Create `ChallengeOption` entity.
+- [x] Create `DailyMajlis` entity.
+- [x] Create `Challenge` entity.
+- [x] Create `ChallengeOption` entity.
 - [ ] Create `UserAttempt` entity.
 - [ ] Create `UserStreak` entity.
-- [ ] Add domain rule: exactly one correct option per multiple-choice challenge.
+- [x] Add domain rule: exactly one correct option per multiple-choice challenge.
 - [ ] Add domain rule: one scored attempt per user per challenge.
 
 ## Backend Use Cases
 
-- [ ] Implement query: get today's Daily Majlis.
+- [x] Implement query: get today's Daily Majlis.
 - [ ] Implement command: submit challenge answer.
 - [ ] Implement scoring service.
 - [ ] Implement streak service.
@@ -29,10 +29,10 @@
 
 ## Backend API
 
-- [ ] Add `GET /api/v1/daily-majlis/today`.
+- [x] Add `GET /api/v1/daily-majlis/today`.
 - [ ] Add `POST /api/v1/challenges/{challengeId}/attempts`.
-- [ ] Add API response contracts.
-- [ ] Confirm today's endpoint does not expose correct answer.
+- [x] Add API response contracts.
+- [x] Confirm today's endpoint does not expose correct answer.
 
 ## Backend Tests
 
@@ -64,8 +64,8 @@
 
 ## Validation
 
-- [ ] Run backend tests.
+- [x] Run backend tests.
 - [ ] Run Flutter analyzer.
 - [ ] Run Flutter tests.
 - [ ] Manually complete daily loop on Android emulator.
-- [ ] Update `docs/ai-context/HANDOFF.md`.
+- [x] Update `docs/ai-context/HANDOFF.md`.

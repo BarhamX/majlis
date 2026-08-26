@@ -1,0 +1,8 @@
+using Majlis.Contracts.DailyMajlis;
+
+namespace Majlis.Application.DailyMajlis;
+
+public interface IDailyMajlisService
+{
+    Task<DailyMajlisResponse?> GetTodayAsync(CancellationToken cancellationToken = default);
+}
