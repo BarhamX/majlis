@@ -21,7 +21,7 @@ Majlis is delivered as one complete production Android app. The phases below seq
 ## Phase 2: Accounts and Daily Game Domain
 
 - Provider-neutral local identity/profile/authorization using the Development/Testing issuer.
-- Google/Apple-ready identity boundaries with Development/Testing authentication, age-band attestation, account recovery/deletion, blocking, and privacy defaults.
+- Google/Apple/Meta/Snapchat-ready identity boundaries with Development/Testing authentication, age-band attestation, account recovery/deletion, blocking, and privacy defaults.
 - Answer submission and exactly-once scoring.
 - XP, streak, attempt history, and spoiler-safe result generation.
 - Authorization and rate limiting for user actions.
@@ -48,7 +48,7 @@ Majlis is delivered as one complete production Android app. The phases below seq
 
 ## Phase 6: Production Release Readiness
 
-- After the local `Game Ready` milestone, configure live Google Account and Sign in with Apple, hosting, public domains, verified App Links, production signing, and production-shaped staging.
+- After the local `Game Ready` milestone, configure live Google, Apple, Meta, and Snapchat identity, hosting, public domains, verified App Links, production signing, and production-shaped staging.
 - End-to-end validation of every release journey.
 - Security, privacy, backup/restore, observability, and failure-recovery checks.
 - Deployable backend and database configuration.

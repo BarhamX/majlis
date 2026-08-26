@@ -134,6 +134,273 @@ namespace Majlis.Infrastructure.Persistence.Migrations
                     b.ToTable("DailyMajlis", (string)null);
                 });
 
+            modelBuilder.Entity("Majlis.Domain.Identity.AccountDeletionRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("BackupExpiryDueAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LegalHoldReason")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("PurgeDueAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasFilter("\"Status\" <> 'completed'");
+
+                    b.ToTable("AccountDeletionRequests", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_AccountDeletionRequests_Status", "\"Status\" IN ('requested', 'identity_deleted', 'active_data_purged', 'backup_expiry_pending', 'completed', 'legal_hold')");
+                        });
+                });
+
+            modelBuilder.Entity("Majlis.Domain.Identity.UserAccount", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("AuthenticationNotBefore")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("LastLoginAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Users", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Users_Status", "\"Status\" IN ('active', 'suspended', 'deletion_pending', 'deleted')");
+                        });
+                });
+
+            modelBuilder.Entity("Majlis.Domain.Identity.UserConsent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Accepted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("RecordedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "Type", "Version")
+                        .IsUnique();
+
+                    b.ToTable("UserConsents", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_UserConsents_Type", "\"Type\" IN ('terms', 'privacy', 'analytics')");
+                        });
+                });
+
+            modelBuilder.Entity("Majlis.Domain.Identity.UserIdentity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Issuer")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("LastAuthenticatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("LinkedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("ProviderAuthorizationRevokedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<byte[]>("RevocationHandleCiphertext")
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("RevocationKeyVersion")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Issuer", "Subject")
+                        .IsUnique();
+
+                    b.HasIndex("UserId", "Provider")
+                        .IsUnique();
+
+                    b.ToTable("UserIdentities", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_UserIdentities_Provider", "\"Provider\" IN ('google', 'apple', 'meta', 'snapchat', 'test')");
+                        });
+                });
+
+            modelBuilder.Entity("Majlis.Domain.Identity.UserPreferences", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("AnalyticsConsent")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ReminderEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<TimeOnly?>("ReminderLocalTime")
+                        .HasColumnType("time");
+
+                    b.Property<string>("ReminderTimeZoneId")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("UserPreferences", (string)null);
+                });
+
+            modelBuilder.Entity("Majlis.Domain.Identity.UserProfile", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AgeBand")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("AgeBandAttestedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CountryCode")
+                        .HasColumnType("character(2)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DialectCode")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("DisplayNameNormalized")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("LeaderboardVisibility")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Locale")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("RegionCode")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("Profiles", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Profiles_AgeBand", "\"AgeBand\" IN ('13_17', '18_plus')");
+
+                            t.HasCheckConstraint("CK_Profiles_CountryCode", "\"CountryCode\" IS NULL OR \"CountryCode\" ~ '^[A-Z]{2}$'");
+
+                            t.HasCheckConstraint("CK_Profiles_DisplayNameStorageLength", "char_length(btrim(\"DisplayName\")) BETWEEN 1 AND 120");
+
+                            t.HasCheckConstraint("CK_Profiles_LeaderboardVisibility", "\"LeaderboardVisibility\" IN ('private', 'global_weekly')");
+                        });
+                });
+
+            modelBuilder.Entity("Majlis.Domain.Identity.UserRoleAssignment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("AssignedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("AssignedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssignedByUserId");
+
+                    b.HasIndex("UserId", "Role")
+                        .IsUnique()
+                        .HasFilter("\"RevokedAt\" IS NULL");
+
+                    b.ToTable("UserRoleAssignments", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_UserRoleAssignments_Role", "\"Role\" IN ('moderator', 'content_editor', 'content_reviewer', 'publisher', 'operations_admin')");
+                        });
+                });
+
             modelBuilder.Entity("Majlis.Domain.DailyMajlis.ChallengeOption", b =>
                 {
                     b.HasOne("Majlis.Domain.DailyMajlis.Challenge", null)
@@ -154,9 +421,85 @@ namespace Majlis.Infrastructure.Persistence.Migrations
                     b.Navigation("Challenge");
                 });
 
+            modelBuilder.Entity("Majlis.Domain.Identity.AccountDeletionRequest", b =>
+                {
+                    b.HasOne("Majlis.Domain.Identity.UserAccount", null)
+                        .WithMany("DeletionRequests")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Majlis.Domain.Identity.UserConsent", b =>
+                {
+                    b.HasOne("Majlis.Domain.Identity.UserAccount", null)
+                        .WithMany("Consents")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Majlis.Domain.Identity.UserIdentity", b =>
+                {
+                    b.HasOne("Majlis.Domain.Identity.UserAccount", null)
+                        .WithMany("Identities")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Majlis.Domain.Identity.UserPreferences", b =>
+                {
+                    b.HasOne("Majlis.Domain.Identity.UserAccount", null)
+                        .WithOne("Preferences")
+                        .HasForeignKey("Majlis.Domain.Identity.UserPreferences", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Majlis.Domain.Identity.UserProfile", b =>
+                {
+                    b.HasOne("Majlis.Domain.Identity.UserAccount", null)
+                        .WithOne("Profile")
+                        .HasForeignKey("Majlis.Domain.Identity.UserProfile", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Majlis.Domain.Identity.UserRoleAssignment", b =>
+                {
+                    b.HasOne("Majlis.Domain.Identity.UserAccount", null)
+                        .WithMany()
+                        .HasForeignKey("AssignedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Majlis.Domain.Identity.UserAccount", null)
+                        .WithMany("RoleAssignments")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Majlis.Domain.DailyMajlis.Challenge", b =>
                 {
                     b.Navigation("Options");
+                });
+
+            modelBuilder.Entity("Majlis.Domain.Identity.UserAccount", b =>
+                {
+                    b.Navigation("Consents");
+
+                    b.Navigation("DeletionRequests");
+
+                    b.Navigation("Identities");
+
+                    b.Navigation("Preferences")
+                        .IsRequired();
+
+                    b.Navigation("Profile");
+
+                    b.Navigation("RoleAssignments");
                 });
 #pragma warning restore 612, 618
         }

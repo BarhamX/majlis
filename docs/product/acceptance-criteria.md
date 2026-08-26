@@ -4,8 +4,8 @@ These release-wide criteria summarize feature specifications. Exact rules and re
 
 ## Account and Profile
 
-- WHEN a user signs in with a validated Google Account or Apple identity for the first time, THE SYSTEM SHALL create one local identity/user and then require a profile with display name and default preferences.
-- WHEN an authenticated user links Google and Apple, THE SYSTEM SHALL require fresh proof from both and SHALL NOT merge accounts by email equality.
+- WHEN a user signs in with a validated Google, Apple, Meta, or Snapchat identity for the first time, THE SYSTEM SHALL create one local identity/user and then require a profile with display name and default preferences.
+- WHEN an authenticated user links another supported provider, THE SYSTEM SHALL require fresh proof from both identities and SHALL NOT merge accounts by email equality.
 - WHEN a user selects region preference, THE SYSTEM SHALL save it to the profile.
 - WHEN a person self-attests that they are under 13, THE SYSTEM SHALL prevent account creation.
 - WHEN a user requests deletion, THE SYSTEM SHALL revoke access and meet the deletion and retention deadlines in `docs/product/v1-product-decisions.md`.

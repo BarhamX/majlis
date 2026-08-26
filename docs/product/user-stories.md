@@ -2,8 +2,8 @@
 
 ## Epic 1: Foundation and Authentication
 
-- As a new user, I want to sign in with Google Account or Apple so that my streak and progress are saved without another password.
-- As a returning user, I want to explicitly link Google and Apple without email-based merging so that I can keep one Majlis profile safely.
+- As a new user, I want to sign in with Google, Apple, Meta, or Snapchat so that my streak and progress are saved without another password.
+- As a returning user, I want to explicitly link supported providers without email-based merging so that I can keep one Majlis profile safely.
 - As a user, I want to choose my display name so that others can recognize me in Majlis discussions.
 - As a user, I want to select my region or dialect preference so that content can become more relevant over time.
 - As a user, I want secure account recovery, session revocation, and account deletion so that I control access to my data.

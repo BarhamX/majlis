@@ -1,10 +1,13 @@
 using Majlis.Application.DailyMajlis;
+using Majlis.Api.Authentication;
 using Majlis.Contracts.DailyMajlis;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Majlis.Api.Controllers;
 
 [ApiController]
+[Authorize(Policy = MajlisAuthorizationPolicies.CompletedProfile)]
 [Route("api/v1/daily-majlis")]
 public sealed class DailyMajlisController(IDailyMajlisService dailyMajlisService) : ControllerBase
 {

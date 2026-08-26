@@ -2,9 +2,60 @@
 
 ## Current Status
 
-Majlis remains governed as a complete Production V1 Android application. The release documentation now closes the prior product contradictions, defines every major V1 feature and target contract, and maps 147 normative requirements to planned verification. Google Account and Sign in with Apple are the selected Production V1 identities, while hosting/domain/provider credential logistics are intentionally sequenced after the local `Game Ready` milestone. The implemented backend still contains only the persisted read-only Daily Majlis slice; the focused implementation tasks remain required.
+Majlis remains governed as a complete Production V1 Android application. The backend now has the local identity/profile foundation needed for game development: persisted users and external identities, private profiles/preferences/consents, deletion requests, a signed Development/Testing issuer, self-service profile endpoints, and completed-profile authorization for Daily Majlis. Google, Apple, Meta, and Snapchat are the selected production providers, but their credentials/callbacks and all hosting/domain logistics remain deferred until `Game Ready`.
 
 ## Latest Task Completed
+
+### 2026-08-26 - Local Identity and Profile Foundation
+
+- Expanded the Production V1 provider set to Google Account, Sign in with Apple, Meta/Facebook Login, and Snapchat Login Kit behind one external-identity boundary.
+- Added the `UserAccount` aggregate with provider identities, profile, default preferences, versioned consents, role assignments, session revocation, and deletion-request state.
+- Added explicit provider/issuer/subject and per-user/provider uniqueness, private leaderboard defaults, 13+ age-band validation, normalized display/profile fields, and deletion deadlines.
+- Added a Development/Testing-only signed JWT issuer; Production fails closed if test authentication is configured.
+- Added authenticated profile bootstrap, read/update, revoke-all, and deletion-request endpoints with safe problem codes.
+- Protected the Daily Majlis endpoint with the completed-profile policy.
+- Added migration `AddIdentityProfileFoundation` without altering the existing migration.
+- Added domain, application, token/configuration, persistence-model, functional API, and PostgreSQL integration tests.
+- Reordered delivery so the local persisted Arabic daily loop reaches `Game Ready` before external credentials, hosting, domains, App Links, signing, staging, or deployment work begins.
+
+### Files Changed
+
+- Identity domain/contracts/application: `src/backend/Majlis.Domain/Identity/`, `src/backend/Majlis.Contracts/Identity/`, and `src/backend/Majlis.Application/Identity/`.
+- API/authentication: `src/backend/Majlis.Api/Authentication/`, identity/profile controllers, `Program.cs`, app settings, and HTTP samples.
+- Persistence: identity repository, EF configurations, DbContext registration, enum storage, and the new migration/snapshot.
+- Tests: identity domain/application/configuration/model/functional API/PostgreSQL suites plus authenticated Daily Majlis integration setup.
+- Specifications and guidance: identity/provider decisions, delivery sequencing, API/schema contracts, traceability, manifest, README, AGENTS, and this handoff.
+
+### Decisions Made
+
+- Production providers are Google, Apple, Meta, and Snapchat; other login methods remain out of scope.
+- Provider mechanics remain isolated behind the external-identity boundary because Meta/Snapchat are not assumed to share Google/Apple OIDC behavior.
+- A local user may link at most one identity per supported provider; email equality never links accounts.
+- Local feature work uses an ephemeral signed test issuer that cannot start in Production.
+- External credentials/callbacks and hosting/domain/signing/staging work begin only after the documented `Game Ready` gate.
+
+### Tests and Checks Run
+
+- Red phase: the new tests initially failed on missing identity domain types and persistence sets.
+- `dotnet test src/backend/Majlis.Tests/Majlis.Tests.csproj --configuration Release --no-restore --filter "Category!=Integration"` - passed: 33 tests, 0 failed, 0 skipped, including domain, application, signed-token, malformed-token, fail-closed configuration, persistence-model, and functional API coverage.
+- `dotnet build src/backend/Majlis.sln --configuration Release --no-restore` - passed with 0 warnings and 0 errors.
+- `dotnet format src/backend/Majlis.sln --verify-no-changes --no-restore` - passed.
+- `dotnet tool run dotnet-ef migrations has-pending-model-changes ... --configuration Release` - passed with no pending model changes.
+- `dotnet tool run dotnet-ef migrations script --idempotent ... --configuration Release` - passed after a transient concurrent EF build-host collision was rerun sequentially.
+- `dotnet list src/backend/Majlis.sln package --vulnerable --include-transitive` - completed after adding JwtBearer with no known vulnerable packages; a later refresh attempt was blocked by the configured NuGet proxy with HTTP 407 and no package change had occurred.
+- Documentation validation passed for 60 Markdown files and 147 requirement ids.
+
+### Known Blockers
+
+- `dotnet test src/backend/Majlis.Tests/Majlis.Tests.csproj --no-restore` compiled successfully but the PostgreSQL-backed cases could not start because Docker Desktop's Linux engine returned HTTP 500 on both contexts. One Docker Desktop restart did not recover it; a Windows reboot is the next appropriate local recovery step.
+- Live Google/Apple/Meta/Snapchat adapters, provider linking endpoints, and provider revocation remain intentionally deferred until after `Game Ready`.
+- Role-management endpoints, auth/profile rate limiting, deletion purge/retention jobs, and the Flutter identity UI remain incomplete.
+
+### Next Recommended Task
+
+After rebooting Windows, rerun the full PostgreSQL-backed suite. If green, implement the persisted one-attempt, XP-ledger, and UTC streak slice from Spec 001 using the completed local identity/profile foundation.
+
+## Previous Work
 
 ### 2026-08-26 - Production V1 Specification Hardening
 
@@ -15,7 +66,7 @@ Majlis remains governed as a complete Production V1 Android application. The rel
 - Added measurable performance, Android-version, accessibility, reliability, security, analytics, backup/restore, deployment, and release gates.
 - Added requirement-to-test traceability and a repository-local validation hook.
 - Archived the stale foundation work plan and made the reusable feature prompt select its focused spec instead of hardcoding Spec 001.
-- Fixed Google Account and Sign in with Apple as the only V1 identity choices and deferred production identity/hosting/domain logistics until after the local `Game Ready` milestone.
+- Fixed Google, Apple, Meta/Facebook Login, and Snapchat Login Kit as the V1 identity choices and deferred production identity/hosting/domain logistics until after the local `Game Ready` milestone.
 
 ### Files Changed
 
@@ -31,7 +82,7 @@ Majlis remains governed as a complete Production V1 Android application. The rel
 - One global Daily Majlis uses a UTC `PublishDate`; Qatar/Gulf is the initial editorial focus, not a segmented edition.
 - Arabic is the required launch locale, with Noto Sans Arabic, RTL-first UI, BCP 47 negotiation, and localized content records.
 - V1 has external family/friend sharing but no private Family Majlis, private discussion, or family leaderboard.
-- Google Account and Sign in with Apple own account authentication/recovery; Majlis owns explicit identity linking, local users, roles, privacy, and deletion state and never merges by email.
+- Google, Apple, Meta, and Snapchat own account authentication/recovery; Majlis owns explicit identity linking, local users, roles, privacy, and deletion state and never merges by email.
 - One final attempt awards 10 completion XP plus 5 correct-answer XP; both outcomes advance a streak across eligible published UTC days.
 - Public comments are premoderated. Blocking, appeals, minor safeguards, deletion, and retention are explicit.
 - The V1 leaderboard is adult-only, opt-in, global, and weekly; reminders are local Android notifications and off by default.
@@ -48,14 +99,12 @@ Majlis remains governed as a complete Production V1 Android application. The rel
 
 - The current migration/domain still allow nullable source notes and non-localized content; the target schema explicitly requires a forward migration rather than editing the applied migration.
 - All implementation and evidence rows marked `Planned` in the traceability matrix remain release work.
-- Google/Apple production credentials and verification, Apple redirect/service configuration, hosting, canonical public hosts, signing fingerprints, staging, and deployment are deliberately deferred until `Game Ready`; they remain release gates.
+- Google/Apple/Meta/Snapchat production credentials and verification, provider callback configuration, hosting, canonical public hosts, signing fingerprints, staging, and deployment are deliberately deferred until `Game Ready`; they remain release gates.
 - Legal/product review must confirm enabled launch jurisdictions for 13-17 accounts and the documented retention windows before production launch.
 
 ### Next Recommended Task
 
 Implement the provider-neutral portion of Spec 004 test-first: add signed-test-token infrastructure, local user/identity/profile/consent/deletion persistence, and cross-user authorization tests without production Google/Apple credentials or hosting dependencies.
-
-## Previous Work
 
 ### 2026-08-26 - PostgreSQL Daily Majlis Persistence
 
@@ -107,7 +156,7 @@ Implement the provider-neutral portion of Spec 004 test-first: add signed-test-t
 
 ### Next Recommended Task
 
-At this point in history, authentication/profile specification and provider choice were still open. The later hardening decision selects Google and Apple and moves their production configuration after `Game Ready`.
+At this point in history, authentication/profile specification and provider choice were still open. The later hardening decision selects Google, Apple, Meta, and Snapchat and moves their production configuration after `Game Ready`.
 
 ### 2026-08-26 - Full Production App Scope Alignment
 
@@ -221,7 +270,7 @@ Add the health endpoint and PostgreSQL/EF Core configuration, create the first e
 
 ## Implementation Gates
 
-- After `Game Ready`, configure Google Account and Sign in with Apple production credentials, including the Apple service/redirect configuration, and verify both in staging.
+- After `Game Ready`, configure Google, Apple, Meta, and Snapchat production credentials/callbacks and verify all four in staging.
 - After `Game Ready`, select the hosting/managed PostgreSQL providers and record the Spec 009 RPO/RTO and data-residency evidence.
 - After `Game Ready`, configure the canonical production/staging hosts and Android signing fingerprints for verified App Links.
 - Confirm launch jurisdictions and obtain legal/product approval for minor accounts and retention.

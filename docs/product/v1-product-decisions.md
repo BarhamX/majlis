@@ -36,14 +36,14 @@ This document closes cross-feature decisions that otherwise allow incompatible i
 - V1 supports family and friend connection through user-initiated external sharing, safe deep links, and an opt-in global weekly leaderboard.
 - No V1 copy or journey may imply that private groups exist.
 
-### V1-DEC-005 - Google and Apple Identity
+### V1-DEC-005 - External Identity Providers
 
-- Production V1 supports only Google Account and Sign in with Apple identity. Email/password, phone/SMS, guest, and other social providers are out of scope.
-- Android uses Google Credential Manager and the Sign in with Apple system-browser flow with provider-required state/nonce validation and PKCE where supported; embedded login webviews are prohibited.
+- Production V1 supports Google Account, Sign in with Apple, Meta/Facebook Login, and Snapchat Login Kit. Email/password, phone/SMS, guest, and other providers are out of scope.
+- Android uses Google Credential Manager and provider-supported native/system-browser flows for Apple, Meta, and Snapchat with required state/nonce validation and PKCE where supported; embedded login webviews are prohibited.
 - Majlis does not store user passwords or implement password reset tokens. Any provider credential retained solely to satisfy provider-required revocation is encrypted with a managed key, never logged, and deleted after revocation/account purge.
-- Google and Apple own email verification and account recovery. Majlis stores the provider, issuer, and stable subject but does not use email as an account key.
-- The backend validates the selected provider, issuer, audience, signature, expiry, nonce/code-verifier binding where applicable, and stable subject before mapping the identity to a local `User`.
-- One Majlis user may explicitly link one Google and one Apple identity after authenticating both. Majlis never auto-links accounts by matching email, including Apple private-relay addresses.
+- Google, Apple, Meta, and Snapchat own account verification and recovery. Majlis stores the provider, issuer, and stable subject but does not use email as an account key.
+- The backend performs the selected provider's required verification: signed-token issuer/audience/signature validation or server-side code exchange/introspection, plus expiry, state/nonce/PKCE checks where applicable, before mapping the stable provider subject to a local `User`.
+- One Majlis user may explicitly link one identity from each supported provider after authenticating both the current and added identities. Majlis never auto-links accounts by matching email, including Apple private-relay addresses.
 - Provider adapters and configuration must not change Majlis domain identifiers or public feature contracts.
 - V1 challenge options, attempts, progress, leaderboard, and discussion require an authenticated completed profile. Public deep-link landing pages may explain Majlis but do not expose the challenge options.
 
@@ -90,11 +90,11 @@ This document closes cross-feature decisions that otherwise allow incompatible i
 
 ### V1-DEC-011 - Game-Ready Before Deployment Logistics
 
-- The internal `Game Ready` milestone means the Arabic/RTL Flutter daily journey runs end to end against the local .NET/PostgreSQL backend with deterministic development/test identity: profile, today's challenge, one final attempt, result/cultural card, XP, streak, and automated core-flow tests.
+- The internal `Game Ready` milestone means the Arabic/RTL Flutter daily journey runs end to end against the local .NET/PostgreSQL backend with deterministic test identities from the ephemeral Development/Testing issuer: profile, today's challenge, one final attempt, result/cultural card, XP, streak, and automated core-flow tests.
 - Development/test identity must be impossible to enable in Production configuration.
-- Google/Apple production credentials, Sign in with Apple redirect/service configuration, hosting procurement, public domains, verified App Links, production signing, production-shaped staging, monitoring, backup, and deployment work are deliberately deferred until after `Game Ready`.
+- Google, Apple, Meta, and Snapchat production credentials/callback configuration, hosting procurement, public domains, verified App Links, production signing, production-shaped staging, monitoring, backup, and deployment work are deliberately deferred until after `Game Ready`.
 - Provider-facing interfaces, configurable URL boundaries, and release requirements are specified now so game code does not assume a vendor credential, host, or domain.
-- This sequencing decision does not remove Google/Apple authentication, verified links, hosting, staging, or Spec 009 evidence from the Production V1 release gate.
+- This sequencing decision does not remove the four production identity integrations, verified links, hosting, staging, or Spec 009 evidence from the Production V1 release gate.
 
 ## Change Control
 

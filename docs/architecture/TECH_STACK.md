@@ -21,7 +21,7 @@ Android-first mobile app with Flutter frontend and .NET backend.
 - Entity Framework Core.
 - PostgreSQL.
 - Clean architecture solution structure.
-- Google Account through Android Credential Manager and Sign in with Apple through the system browser, with state/nonce validation and PKCE where supported; provider adapters share one application boundary and Majlis stores no passwords.
+- Google Account through Android Credential Manager plus provider-approved Apple, Meta/Facebook Login, and Snapchat Login Kit flows, with state/nonce validation and PKCE where supported; provider adapters share one application boundary and Majlis stores no passwords.
 - A deterministic signed identity issuer is allowed only in Development/Testing and is rejected by Production startup.
 
 ## Backend Solution Structure

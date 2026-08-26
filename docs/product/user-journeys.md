@@ -4,7 +4,7 @@
 
 1. User opens Majlis from a friend share or app store.
 2. App shows a warm intro: "Enter today's Majlis."
-3. User chooses Google Account or Sign in with Apple in a native/system-browser flow.
+3. User chooses Google Account, Sign in with Apple, Meta/Facebook Login, or Snapchat Login Kit in a supported native/system-browser flow.
 4. User selects display name and optional region/dialect preference.
 5. User sees today's cultural challenge.
 6. User answers within 10-30 seconds.

@@ -45,7 +45,7 @@ PostgreSQL
 
 - EF Core DbContext.
 - Repositories.
-- Google Account and Sign in with Apple validation adapters behind one identity boundary, plus a Development/Testing-only signed test issuer.
+- Google, Apple, Meta, and Snapchat validation adapters behind one identity boundary, plus a Development/Testing-only signed test issuer.
 - Android reminder preferences and analytics delivery integration.
 - Storage integration only when a specified feature requires server-owned media.
 
@@ -145,9 +145,9 @@ The first scale challenge is not compute. It is content operations and moderatio
 - Content source notes are internal but mandatory for editorial review.
 - Arabic is the required launch locale and localized content is stored in translation tables.
 - Private Family Majlis and region-specific editions are post-V1.
-- Google/Apple own account authentication and recovery; Majlis owns identity linking, local authorization, and privacy state and never auto-links by email.
+- External providers own account authentication and recovery; Majlis owns identity linking, local authorization, and privacy state and never auto-links by email.
 - Local Android scheduling owns V1 reminders; no marketing push channel is required.
 
 ## Delivery Boundary Before Logistics
 
-Feature development uses local PostgreSQL, configurable URLs, and a deterministic test identity issuer until the `Game Ready` milestone in `V1-DEC-011`. Google/Apple production credentials, Apple redirect/service configuration, hosting, public domains, verified App Links, signing, staging, backup, and deployment remain mandatory for Production V1 but begin after that milestone.
+Feature development uses local PostgreSQL, configurable URLs, and a deterministic test identity issuer until the `Game Ready` milestone in `V1-DEC-011`. Google, Apple, Meta, and Snapchat credentials/callbacks, hosting, public domains, verified App Links, signing, staging, backup, and deployment remain mandatory for Production V1 but begin after that milestone.

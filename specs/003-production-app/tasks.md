@@ -14,6 +14,7 @@ This is the release-wide checklist. Feature task files provide implementation de
 
 - [x] Configure PostgreSQL and EF Core in Infrastructure.
 - [ ] Add explicit reviewed migrations for all production entities.
+- [x] Add the identity/profile foundation migration.
 - [ ] Add a forward migration making source notes mandatory and introducing localized immutable content revisions.
 - [x] Add idempotent development/test seed and content initialization.
 - [x] Add database-backed health checks and configuration validation.
@@ -22,12 +23,15 @@ This is the release-wide checklist. Feature task files provide implementation de
 
 ## Identity and Profile
 
-- [x] Select Google Account and Sign in with Apple as the Production V1 identity providers.
-- [ ] Implement the provider-neutral identity boundary and Development/Testing issuer.
-- [ ] After `Game Ready`, configure live Google/Apple login, logout, renewal, linking, recovery, and revocation.
+- [x] Select Google Account, Sign in with Apple, Meta/Facebook Login, and Snapchat Login Kit as the Production V1 identity providers.
+- [x] Implement the provider-neutral identity boundary and Development/Testing issuer.
+- [ ] After `Game Ready`, configure live Google/Apple/Meta/Snapchat login, logout, renewal, linking, recovery, and revocation.
 - [ ] Implement authorization policies and least-privilege admin/moderator roles.
-- [ ] Implement profile, region/dialect, privacy, and notification preferences.
-- [ ] Test cross-user data isolation and privileged-route authorization.
+- [x] Implement local profile, region/dialect, locale, age-band, and privacy-default persistence/API behavior.
+- [ ] Implement reminder/analytics preference mutations defined by Specs 007 and 009.
+- [x] Test self-profile isolation.
+- [x] Require an active completed profile for the Daily Majlis endpoint.
+- [ ] Test privileged-route authorization after role-management endpoints exist.
 - [ ] Complete all required tasks in `specs/004-authentication-profile/tasks.md`.
 
 ## Daily Game

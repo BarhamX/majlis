@@ -14,10 +14,10 @@ Deliver a complete, running product that users, content editors, and moderators 
 
 ### Account and Profile
 
-- Google Account and Sign in with Apple registration/login, logout, session renewal, explicit identity linking, and provider-owned recovery.
+- Google Account, Sign in with Apple, Meta/Facebook Login, and Snapchat Login Kit registration/login, logout, session renewal, explicit identity linking, and provider-owned recovery.
 - Display name, generated initials, region/dialect preference, and notification preferences. Uploaded avatars are post-V1.
 - Private-by-default account and activity data.
-- Google/Apple external identity, explicit identity linking, age-band attestation for a 13+ service, session revocation, blocking, account deletion, and documented retention.
+- Four-provider external identity, explicit identity linking, age-band attestation for a 13+ service, session revocation, blocking, account deletion, and documented retention.
 
 ### Daily Cultural Experience
 

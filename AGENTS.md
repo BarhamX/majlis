@@ -34,7 +34,7 @@ Before making changes, read these files in order:
 - Do not add addictive dark patterns. Retention must be based on ritual, learning, competition, and social belonging.
 - Do not implement broad social-media behavior before moderation and reporting exist.
 - Do not hardcode daily cultural content into Flutter screens. Daily content must come from backend or seed data.
-- Use Development/Testing identity while building the local game. Do not provision production Google/Apple credentials, hosting, public domains, verified App Links, or signing until `Game Ready` is recorded in the handoff.
+- Use Development/Testing identity while building the local game. Do not provision production Google/Apple/Meta/Snapchat credentials, hosting, public domains, verified App Links, or signing until `Game Ready` is recorded in the handoff.
 
 ## Required Handoff
 

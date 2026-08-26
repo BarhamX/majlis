@@ -21,7 +21,7 @@ The app does not shame users for what they do not know. It playfully provokes cu
 
 ## Repository Status
 
-Majlis is under active implementation as a complete production Android application. The repository contains the product, business, UX, design, architecture, agent context, and specifications, plus the first .NET backend slice. The Flutter client and the remaining production capabilities are still to be implemented.
+Majlis is under active implementation as a complete production Android application. The repository contains the product, business, UX, design, architecture, agent context, and specifications, plus PostgreSQL-backed Daily Majlis retrieval and the local identity/profile backend foundation. The Flutter client and the remaining production capabilities are still to be implemented.
 
 ## Important Directories
 
@@ -43,14 +43,14 @@ src/backend/                        Active .NET backend solution
 ## Recommended Implementation Order
 
 1. Complete PostgreSQL persistence, migrations, health, and integration-test infrastructure.
-2. Implement the Spec 004 local identity/profile foundation using the Development/Testing issuer; production login is Google Account and Sign in with Apple.
+2. Implement the Spec 004 local identity/profile foundation using the Development/Testing issuer; production login providers are Google, Apple, Meta, and Snapchat.
 3. Complete challenge submission, scoring, streaks, history, and share contracts.
 4. Build the complete Flutter Android experience.
 5. Reach the internal `Game Ready` milestone with the persisted Arabic/RTL daily loop.
 6. Implement Specs 005-007 for leaderboard, native sharing/deep links, and user-controlled reminders.
 7. Implement community responses, reporting, and moderation.
 8. Implement Spec 008 content and moderation administration.
-9. After `Game Ready`, configure Google/Apple production identity, hosting, domains, verified App Links, signing, staging, and Spec 009 release operations; this can proceed alongside the remaining local product work.
+9. After `Game Ready`, configure Google/Apple/Meta/Snapchat production identity, hosting, domains, verified App Links, signing, staging, and Spec 009 release operations; this can proceed alongside the remaining local product work.
 
 ## Delivery Target
 
@@ -72,11 +72,16 @@ dotnet run --project src/backend/Majlis.Api/Majlis.Api.csproj --launch-profile h
 
 Development startup applies committed migrations and idempotently prepares the sample Daily Majlis for the current UTC date. Production does not migrate or seed automatically and must supply `ConnectionStrings__MajlisDatabase`.
 
+Development uses an ephemeral signed test issuer; its signing key is generated in memory and the mode is rejected outside Development/Testing. Obtain a local bearer token from `POST /api/v1/dev/auth/token`, then call `POST /api/v1/me/bootstrap`. Production Google/Apple/Meta/Snapchat credentials and callbacks are intentionally not configured before `Game Ready`.
+
 `dotnet test src/backend/Majlis.sln` starts an isolated PostgreSQL Testcontainer, so Docker Desktop must be running.
 
 The local endpoints are:
 
 - `GET https://localhost:7204/health`
+- `POST https://localhost:7204/api/v1/dev/auth/token` (Development/Testing only)
+- `POST https://localhost:7204/api/v1/me/bootstrap`
+- `GET/PUT https://localhost:7204/api/v1/me/profile`
 - `GET https://localhost:7204/api/v1/daily-majlis/today`
 
 Stop the local database without deleting its named volume:

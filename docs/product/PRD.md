@@ -76,7 +76,7 @@ Non-Arab or Arabic-learning users interested in Arab culture, language, and soci
 
 Production V1 is the complete Android Majlis app, not a prototype or a single feature slice:
 
-1. Google Account and Sign in with Apple registration/login.
+1. Google Account, Sign in with Apple, Meta/Facebook Login, and Snapchat Login Kit registration/login.
 2. Profile with display name, region preference, progress, and notification settings.
 3. Today's Majlis screen.
 4. One daily cultural challenge.

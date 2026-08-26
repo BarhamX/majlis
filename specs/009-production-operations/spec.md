@@ -6,7 +6,7 @@ Define objective release gates for performance, accessibility, compatibility, re
 
 ## Environment Requirements
 
-- **OPS-001**: Local, test, staging, and production shall use documented configuration schemas. After `Game Ready`, staging shall run the same deployable API artifact, migration set, Android release flavor, TLS behavior, Google/Apple identity integration, and PostgreSQL major version as production, with isolated secrets and data.
+- **OPS-001**: Local, test, staging, and production shall use documented configuration schemas. After `Game Ready`, staging shall run the same deployable API artifact, migration set, Android release flavor, TLS behavior, Google/Apple/Meta/Snapchat identity integrations, and PostgreSQL major version as production, with isolated secrets and data.
 - **OPS-002**: Production migrations shall run as an explicit reviewed deployment step with a pre-deploy backup and forward/rollback instructions. The API shall not auto-migrate or seed production.
 - **OPS-003**: Secrets shall come from an environment secret store, never source, images, logs, analytics, mobile assets, or checked-in configuration.
 - **OPS-004**: Liveness shall verify the process only; readiness shall verify required database connectivity and migration compatibility without leaking dependency details publicly.
@@ -52,7 +52,7 @@ Define objective release gates for performance, accessibility, compatibility, re
 
 - **OPS-027**: CI shall pass backend unit/integration/contract suites; Flutter analyze/unit/widget/golden/integration suites; migration drift; security scans; and link/Arabic/accessibility checks on the candidate commit.
 - **OPS-028**: The signed Android App Bundle shall be reproducible from the candidate commit, install on every device-matrix row, use production signing outside source control, and pass Play pre-launch checks with no blocking crash or policy issue.
-- **OPS-029**: Google and Apple new-user/returning-user, linked-identity, expired-session, deletion, publisher, moderator, backup/restore, deployment, and rollback journeys shall pass in staging with timestamps and artifact versions recorded.
+- **OPS-029**: Google, Apple, Meta, and Snapchat new-user/returning-user, linked-identity, expired-session, deletion, publisher, moderator, backup/restore, deployment, and rollback journeys shall pass in staging with timestamps and artifact versions recorded.
 - **OPS-030**: Release approval requires a completed `specs/003-production-app/tasks.md`, mapped evidence in `docs/quality/requirements-to-tests.md`, no open release blocker in the handoff, and named product, editorial, security/privacy, engineering, and operations approvers.
 
 ## Service-Level Indicators

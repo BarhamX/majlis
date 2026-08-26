@@ -1,4 +1,5 @@
 using Majlis.Domain.DailyMajlis;
+using Majlis.Domain.Identity;
 using Microsoft.EntityFrameworkCore;
 using DailyMajlisEntity = Majlis.Domain.DailyMajlis.DailyMajlis;
 
@@ -13,6 +14,20 @@ public sealed class MajlisDbContext(
     public DbSet<Challenge> Challenges => Set<Challenge>();
 
     public DbSet<ChallengeOption> ChallengeOptions => Set<ChallengeOption>();
+
+    public DbSet<UserAccount> Users => Set<UserAccount>();
+
+    public DbSet<UserIdentity> UserIdentities => Set<UserIdentity>();
+
+    public DbSet<UserProfile> Profiles => Set<UserProfile>();
+
+    public DbSet<UserPreferences> UserPreferences => Set<UserPreferences>();
+
+    public DbSet<UserConsent> UserConsents => Set<UserConsent>();
+
+    public DbSet<UserRoleAssignment> UserRoleAssignments => Set<UserRoleAssignment>();
+
+    public DbSet<AccountDeletionRequest> AccountDeletionRequests => Set<AccountDeletionRequest>();
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {

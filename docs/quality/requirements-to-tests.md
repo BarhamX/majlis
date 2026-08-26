@@ -56,7 +56,7 @@ Every normative requirement id must appear here before implementation starts and
 | REL-006-REL-007 | Arabic/source/publish invariants | ADM/DLY publication tests | Planned |
 | REL-008-REL-009 | No manual/hardcoded dependency; scope guard | release architecture and UX review | Planned |
 | REL-010 | Clean-environment bootstrap/migrations | CI clean-start job | Partial |
-| REL-011 | New-user Android journey | local test-identity flow before `Game Ready`; Google and Apple variants before release | Planned |
+| REL-011 | New-user Android journey | local test-identity flow before `Game Ready`; Google, Apple, Meta, and Snapchat variants before release | Planned |
 | REL-012 | Restart durability | PostgreSQL restart end-to-end test | Partial |
 | REL-013 | Publisher/moderator journeys | admin browser end-to-end suite | Planned |
 | REL-014 | Cross-user/admin authorization | security integration suite | Planned |
@@ -66,19 +66,19 @@ Every normative requirement id must appear here before implementation starts and
 
 | Requirement(s) | Verification | Planned test/evidence | Status |
 |---|---|---|---|
-| AUTH-001-AUTH-002 | Google/Apple OIDC PKCE, nonce, issuer/audience, and token validation matrix | test issuer first; live provider Android flows after `Game Ready` | Planned |
-| AUTH-003 | Idempotent issuer/subject bootstrap | `UserBootstrapTests` | Planned |
-| AUTH-004 | Verification, consent, and under-13 rejection | auth/profile integration tests | Planned |
-| AUTH-005-AUTH-006 | Display name and controlled profile codes | domain validation/property tests | Planned |
-| AUTH-007-AUTH-008 | Private defaults and adult-only opt-in | authorization + profile integration tests | Planned |
-| AUTH-009-AUTH-010 | Logout/revoke/recovery enumeration safety | provider staging journey + API tests | Planned |
+| AUTH-001-AUTH-002 | Google/Apple/Meta/Snapchat provider-flow and token validation matrix | signed test-token validation verified; live provider Android flows after `Game Ready` | Partial |
+| AUTH-003 | Idempotent provider/issuer/subject bootstrap | `IdentityProfileServiceTests`, `IdentityProfileApiTests`; PostgreSQL concurrency test pending Docker | Partial |
+| AUTH-004 | Verification, consent, and under-13 rejection | `IdentityProfileServiceTests` and functional API tests pass; live provider verification deferred | Partial |
+| AUTH-005-AUTH-006 | Display name and profile-code validation | `UserAccountTests` and `IdentityProfileApiTests` | Partial |
+| AUTH-007-AUTH-008 | Private defaults and adult-only opt-in | `UserAccountTests` and `IdentityProfileApiTests` | Partial |
+| AUTH-009-AUTH-010 | Logout/revoke/recovery enumeration safety | local revocation implemented; live provider recovery deferred | Partial |
 | AUTH-011 | Role audit and MFA policy | admin security test + provider evidence | Planned |
-| AUTH-012 | No target-user IDOR | cross-user fuzz/integration suite | Planned |
-| AUTH-013 | Deletion lifecycle/deadlines | deletion state tests + staging retention drill | Planned |
+| AUTH-012 | No target-user IDOR | `IdentityProfileApiTests` self-scope passes; PostgreSQL/security suite pending | Partial |
+| AUTH-013 | Deletion lifecycle/deadlines | `UserAccountTests` and `IdentityProfileApiTests` pass for request/revocation; purge/provider/staging drill pending | Partial |
 | AUTH-014 | Limits and safe errors | rate-limit/problem-contract tests | Planned |
 | AUTH-015 | Rename/audit identity behavior | profile/moderation integration tests | Planned |
-| AUTH-016 | Explicit linking, collision, last-identity, and no email merge | identity-link integration/security tests | Planned |
-| AUTH-017 | Test issuer environment isolation | production-startup configuration test | Planned |
+| AUTH-016 | Explicit linking, collision, last-identity, and no email merge | domain/persistence invariants added; provider endpoint tests pending | Partial |
+| AUTH-017 | Test issuer environment isolation | `TestIdentityTokenIssuerTests` and `AuthenticationConfigurationTests` | Verified |
 
 ## Spec 005 - Leaderboard
 

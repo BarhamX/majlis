@@ -4,9 +4,9 @@
 
 - Base path: `/api/v1`.
 - JSON uses UTF-8 and camelCase. Times are RFC 3339 UTC instants; content dates are ISO `yyyy-MM-dd` UTC dates.
-- Consumer endpoints require `Authorization: Bearer <access-token>` unless explicitly public. Production accepts only the configured Google Account and Sign in with Apple identity paths; Majlis has no email/password login API.
+- Consumer endpoints require `Authorization: Bearer <access-token>` unless explicitly public. Production accepts only configured Google, Apple, Meta, or Snapchat identity paths; Majlis has no email/password login API.
 - Localized endpoints accept `Accept-Language`, return `Content-Language`, and fall back from a regional Arabic tag to required `ar`.
-- Mutation endpoints marked idempotent require `Idempotency-Key: <uuid>`.
+- Except for profile bootstrap, mutation endpoints marked `(idempotent)` require `Idempotency-Key: <uuid>`. Profile bootstrap is naturally idempotent by external identity and does not require this header.
 - Idempotency records remain replayable for at least 24 hours; persistent business uniqueness continues to prevent duplicate resources after that window.
 - Errors use `application/problem+json` with `type`, `title`, `status`, `code`, `traceId`, and optional field `errors`. They never include stack traces or secrets.
 - Cursor collections return `items` and nullable `nextCursor`; clients must treat cursors as opaque.
@@ -29,9 +29,13 @@ Limits may be lowered during abuse response but not raised for release without s
 
 ## Authentication and Profile
 
-Production V1 supports Google Account and Sign in with Apple only. Android uses Google Credential Manager or the Sign in with Apple system-browser flow with provider-required state/nonce validation and PKCE where supported. Google/Apple own account verification and recovery; Majlis maps the validated provider/issuer/subject to a local user. A signed test issuer exists only in Development/Testing and Production startup rejects it.
+Production V1 supports Google Account, Sign in with Apple, Meta/Facebook Login, and Snapchat Login Kit. Android uses Google Credential Manager or provider-approved native/system-browser flows with required state/nonce validation and PKCE where supported. Providers own account verification/recovery; Majlis maps the validated provider/issuer/subject to a local user. A signed test issuer exists only in Development/Testing and Production startup rejects it.
 
-### POST `/me/bootstrap` (idempotent)
+### POST `/dev/auth/token` (Development/Testing only)
+
+Accepts `{ "subject": "local-user" }` and returns an ephemeral signed bearer token with `provider: test`. The route and signing service are unavailable outside Development/Testing, and Production startup fails if test authentication is configured. This endpoint exists only to unblock local game and automated test work; it is not a production login option.
+
+### POST `/me/bootstrap` (naturally idempotent)
 
 Creates or locates the local user for the validated provider/issuer/subject.
 
@@ -63,7 +67,15 @@ Response `201` on creation or `200` on replay:
   "dialectCode": "qa",
   "locale": "ar",
   "leaderboardVisibility": "private",
-  "createdAt": "2026-08-26T10:00:00Z"
+  "preferences": {
+    "reminderEnabled": false,
+    "reminderLocalTime": null,
+    "reminderTimeZoneId": null,
+    "analyticsConsent": false
+  },
+  "linkedProviders": ["google"],
+  "createdAt": "2026-08-26T10:00:00Z",
+  "updatedAt": "2026-08-26T10:00:00Z"
 }
 ```
 
@@ -71,8 +83,8 @@ Declaring `under_13` returns `422 age_not_eligible` and does not create a user.
 
 ### GET/POST/DELETE `/me/identities`
 
-- `GET /me/identities` returns linked provider names (`google` and/or `apple`) and link dates; it never returns provider subject, email, or credential material.
-- `POST /me/identities` requires a fresh authenticated Majlis session. Google accepts `{ "provider": "google", "idToken": "short-lived-token", "nonce": "original-nonce" }`; Apple accepts `{ "provider": "apple", "authorizationCode": "one-time-code", "identityToken": "short-lived-token", "state": "original-state", "nonce": "original-nonce" }`. The backend validates/exchanges the second provider result before linking it.
+- `GET /me/identities` returns linked provider names (`google`, `apple`, `meta`, and/or `snapchat`) and link dates; it never returns provider subject, email, or credential material.
+- `POST /me/identities` requires a fresh authenticated Majlis session and a short-lived provider authorization result. Google accepts its ID token/nonce; Apple accepts its authorization code, identity token, state, and nonce; Meta and Snapchat accept only the artifacts required by their approved Login Kit flows. Provider-specific request variants are finalized with their adapters after `Game Ready`; all are validated/exchanged server-side before linking.
 - `DELETE /me/identities/{provider}` requires recent authentication, is idempotent, and rejects removal with `409 last_identity_required` when it would leave no login identity.
 
 The same provider identity cannot belong to two users. Email equality never links or merges accounts. Provider authorization results are secrets: they are accepted only over TLS and excluded from logs, errors, traces, and analytics. Any provider-required revocation handle retained from the exchange is encrypted with a managed key and used only for unlink/deletion revocation.
@@ -97,15 +109,15 @@ The response is the updated profile. A minor leaderboard opt-in returns `422 lea
 
 ### POST `/me/sessions/revoke-all`
 
-Sets the local authentication-not-before instant so previously issued provider credentials are rejected, clears device credentials, and performs provider grant revocation when required/supported. Returns `204`. A later explicit Google/Apple sign-in may authenticate again unless the Majlis account is suspended or deletion-pending.
+Sets the local authentication-not-before instant so previously issued provider credentials are rejected, clears device credentials, and performs provider grant revocation when required/supported. Returns `204`. A later explicit sign-in through a supported provider may authenticate again unless the Majlis account is suspended or deletion-pending.
 
-### POST `/me/deletion-requests` (idempotent)
+### POST `/me/deletion-requests`
 
 ```json
 { "confirmation": "delete_my_account" }
 ```
 
-Returns `202` with `requestId`, `requestedAt`, and `purgeDueAt`. Access is revoked immediately. After `Game Ready`, the public web deletion page shall authenticate the user through Google or Apple and call this same endpoint; it shall not collect an email to locate an account. A user who cannot access either linked provider is directed to provider recovery and a documented support verification process.
+Returns `202` with `requestId`, `requestedAt`, and `purgeDueAt`. Access is revoked immediately. After `Game Ready`, the public web deletion page shall authenticate through a linked supported provider and call this same endpoint; it shall not collect an email to locate an account. A user who cannot access a linked provider is directed to provider recovery and a documented support verification process.
 
 ## Daily Majlis and Progress
 

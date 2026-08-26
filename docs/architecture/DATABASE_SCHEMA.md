@@ -20,7 +20,7 @@ Users
 UserIdentities
 - Id uuid primary key
 - UserId uuid not null references Users(Id)
-- Provider text not null -- google, apple; test only outside Production
+- Provider text not null -- google, apple, meta, snapchat; test only outside Production
 - Issuer text not null
 - Subject text not null
 - RevocationHandleCiphertext bytea nullable -- only when provider-required; encrypted outside database keys
@@ -88,7 +88,7 @@ DeletionTombstones
 - BackupExpiryDueAt timestamptz not null
 ```
 
-Majlis stores no password hash, password-reset token, provider email as an identity key, or full date of birth. A provider-required revocation handle may be retained only as managed-key ciphertext and is never exposed to application logs or consumer APIs. Google and Apple identities may be explicitly linked to one user, but are never merged by email equality. The `test` provider value is rejected by Production configuration.
+Majlis stores no password hash, password-reset token, provider email as an identity key, or full date of birth. A provider-required revocation handle may be retained only as managed-key ciphertext and is never exposed to application logs or consumer APIs. Google, Apple, Meta, and Snapchat identities may be explicitly linked to one user, but are never merged by email equality. The `test` provider value is rejected by Production configuration.
 
 ## Editorial Content
 

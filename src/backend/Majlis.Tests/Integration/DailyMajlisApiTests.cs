@@ -1,4 +1,6 @@
 using System.Net;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Text.Json;
 using Majlis.Domain.DailyMajlis;
 using Majlis.Infrastructure.Persistence;
@@ -24,7 +26,7 @@ public sealed class DailyMajlisApiTests(PostgreSqlFixture postgreSql) : IAsyncLi
         await postgreSql.ResetAsync();
         _factory = new MajlisApiFactory(postgreSql.ConnectionString, TestNow);
 
-        using var client = _factory.CreateClient();
+        using var client = CreateClient();
     }
 
     public Task DisposeAsync()
@@ -34,9 +36,29 @@ public sealed class DailyMajlisApiTests(PostgreSqlFixture postgreSql) : IAsyncLi
     }
 
     [Fact]
+    public async Task GetToday_WhenUnauthenticated_ReturnsUnauthorized()
+    {
+        using var client = CreateClient();
+
+        var response = await client.GetAsync("/api/v1/daily-majlis/today");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetToday_WhenProfileIsIncomplete_ReturnsForbidden()
+    {
+        using var client = await CreateTokenClientAsync("incomplete-profile-user");
+
+        var response = await client.GetAsync("/api/v1/daily-majlis/today");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
     public async Task GetToday_WhenPublishedContentExists_ReturnsPersistedSpoilerSafePayload()
     {
-        using var client = _factory.CreateClient();
+        using var client = await CreateAuthenticatedClientAsync("daily-content-user");
 
         var response = await client.GetAsync("/api/v1/daily-majlis/today");
         var json = await response.Content.ReadAsStringAsync();
@@ -58,13 +80,13 @@ public sealed class DailyMajlisApiTests(PostgreSqlFixture postgreSql) : IAsyncLi
     [Fact]
     public async Task GetToday_WhenPublishedContentDoesNotExist_ReturnsSafeNotFound()
     {
+        using var client = await CreateAuthenticatedClientAsync("no-content-user");
         await using (var scope = _factory.Services.CreateAsyncScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<MajlisDbContext>();
             await dbContext.DailyMajlis.ExecuteDeleteAsync();
         }
 
-        using var client = _factory.CreateClient();
         var response = await client.GetAsync("/api/v1/daily-majlis/today");
         var json = await response.Content.ReadAsStringAsync();
 
@@ -75,7 +97,7 @@ public sealed class DailyMajlisApiTests(PostgreSqlFixture postgreSql) : IAsyncLi
     [Fact]
     public async Task Health_WhenPostgreSqlIsAvailable_ReturnsHealthy()
     {
-        using var client = _factory.CreateClient();
+        using var client = CreateClient();
 
         var response = await client.GetAsync("/health");
         var body = await response.Content.ReadAsStringAsync();
@@ -146,6 +168,48 @@ public sealed class DailyMajlisApiTests(PostgreSqlFixture postgreSql) : IAsyncLi
             status);
     }
 
+    private async Task<HttpClient> CreateAuthenticatedClientAsync(string subject)
+    {
+        var client = await CreateTokenClientAsync(subject);
+
+        var bootstrapResponse = await client.PostAsJsonAsync(
+            "/api/v1/me/bootstrap",
+            new
+            {
+                displayName = "Test User",
+                ageBand = "18_plus",
+                countryCode = "QA",
+                regionCode = "gulf",
+                dialectCode = "qa",
+                locale = "ar",
+                acceptedTermsVersion = "2026-08-26",
+                acceptedPrivacyVersion = "2026-08-26",
+            });
+        bootstrapResponse.EnsureSuccessStatusCode();
+        return client;
+    }
+
+    private async Task<HttpClient> CreateTokenClientAsync(string subject)
+    {
+        var client = CreateClient();
+        var tokenResponse = await client.PostAsJsonAsync(
+            "/api/v1/dev/auth/token",
+            new { subject });
+        tokenResponse.EnsureSuccessStatusCode();
+
+        using var tokenJson = JsonDocument.Parse(await tokenResponse.Content.ReadAsStringAsync());
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            tokenJson.RootElement.GetProperty("accessToken").GetString());
+        return client;
+    }
+
+    private HttpClient CreateClient() => _factory.CreateClient(
+        new WebApplicationFactoryClientOptions
+        {
+            BaseAddress = new Uri("https://localhost"),
+        });
+
     private sealed class MajlisApiFactory(
         string connectionString,
         DateTimeOffset utcNow) : WebApplicationFactory<Program>
@@ -154,6 +218,7 @@ public sealed class DailyMajlisApiTests(PostgreSqlFixture postgreSql) : IAsyncLi
         {
             builder.UseEnvironment("Testing");
             builder.UseSetting("ConnectionStrings:MajlisDatabase", connectionString);
+            builder.UseSetting("Authentication:Mode", "Test");
             builder.ConfigureServices(services =>
             {
                 services.RemoveAll<TimeProvider>();

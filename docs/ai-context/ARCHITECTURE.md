@@ -42,7 +42,7 @@ This slice establishes the daily loop but is not the release boundary. The compl
 
 - One global UTC content day and no regional edition selection in V1.
 - Arabic launch UI with localized content records and RTL behavior.
-- Google Account and Sign in with Apple behind one OIDC identity boundary; Majlis stores no passwords and never auto-links by email.
-- Development/Testing uses a deterministic test issuer until the local game-ready milestone; production identity, hosting, domains, and other deployment logistics follow that milestone.
+- Google, Apple, Meta, and Snapchat behind one external-identity boundary; Majlis stores no passwords and never auto-links by email.
+- Development/Testing uses deterministic test identities from an ephemeral signed issuer until the local game-ready milestone; production provider integration, hosting, domains, and other deployment logistics follow that milestone.
 - Premoderated public comments, user blocking, and auditable moderation.
 - Private Family Majlis groups remain post-V1.
