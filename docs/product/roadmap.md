@@ -21,6 +21,7 @@ Majlis is delivered as one complete production Android app. The phases below seq
 ## Phase 2: Accounts and Daily Game Domain
 
 - Registration, login, session renewal, and profile/preferences.
+- Managed OIDC integration, age-band attestation, account recovery/deletion, blocking, and privacy defaults.
 - Answer submission and exactly-once scoring.
 - XP, streak, attempt history, and spoiler-safe result generation.
 - Authorization and rate limiting for user actions.
@@ -30,7 +31,8 @@ Majlis is delivered as one complete production Android app. The phases below seq
 - Flutter foundation, routing, Riverpod state, theme, and centralized copy.
 - Onboarding, authentication, Today, challenge, result, cultural card, leaderboard, and profile flows.
 - Native sharing, deep links, notifications, and all loading/error/offline/completed states.
-- Widget, integration, accessibility, and representative-device checks.
+- Widget and integration tests plus the Spec 009 accessibility and Android device-matrix gates.
+- Arabic launch localization and RTL verification.
 
 ## Phase 4: Community and Safety
 
@@ -60,6 +62,6 @@ Production V1 ships only after Phases 1-6 and `specs/003-production-app/tasks.md
 
 - iOS and web clients.
 - Advanced audio storytelling and deeper archives.
-- Expanded family/private-group experiences and regional programs.
+- Private Family Majlis groups, family-only leaderboards, and regional editions.
 - Premium content, sponsorships, and institutional products.
 - Pan-Arab editorial partnerships and localization refinement.

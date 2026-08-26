@@ -4,6 +4,8 @@
 
 Deliver Majlis as a complete, production-running Android application backed by an operational .NET API and PostgreSQL database. This specification is the release umbrella for all feature specs; it prevents an individual vertical slice from being treated as the finished product.
 
+Release-wide decisions are normative in `docs/product/v1-product-decisions.md`. Focused behavior is owned by Specs 001, 002, and 004-009.
+
 ## Primary User Story
 
 As a Majlis user, I want to install and use the complete app—from account creation through the daily challenge, progress, sharing, friendly comparison, and safe discussion—so that Majlis is a reliable daily cultural experience rather than a demonstration.
@@ -26,7 +28,7 @@ As an authorized content or moderation operator, I want to publish culturally re
 
 - Authenticated content creation, source attribution, editorial review, scheduling, publishing, correction, and unpublishing.
 - Authenticated moderation queue and auditable hide, restore, remove, and escalation actions.
-- Basic product and operational analytics.
+- The consent-aware product event catalog and bounded operational telemetry defined by Spec 009.
 
 ### Platform
 
@@ -37,23 +39,25 @@ As an authorized content or moderation operator, I want to publish culturally re
 
 ## Release Invariants
 
-- The backend is authoritative for challenge truth, scoring, streaks, publishing, and moderation state.
-- Correct answers are never exposed before a scored submission.
-- A user receives at most one score/XP/streak update per challenge.
-- User-generated content is reportable and hidden content never appears in normal public queries.
-- Private user, attempt, and group data is never exposed publicly.
-- Cultural content has source notes and editorial status before publication.
-- No production journey depends on hardcoded mobile content, in-memory-only state, manual database editing, or developer intervention.
+- **REL-001**: The backend is authoritative for challenge truth, scoring, streaks, publishing, and moderation state.
+- **REL-002**: Correct answers, explanations, and answer-derived data are never exposed before an accepted scored submission.
+- **REL-003**: A user receives at most one persisted attempt, XP-ledger award, and streak update per challenge under retries and concurrency.
+- **REL-004**: User-generated content is premoderated and reportable; non-visible content never appears directly or indirectly in consumer responses.
+- **REL-005**: Private user, attempt, preference, block, report, and operator data is never exposed publicly.
+- **REL-006**: Cultural content has a complete Arabic translation, non-empty internal source notes, and an approved immutable revision before publication.
+- **REL-007**: One official Daily Majlis is selected by UTC `PublishDate`; V1 profile region/dialect never selects a different edition.
+- **REL-008**: No production journey depends on hardcoded mobile content, in-memory-only state, manual database editing, or developer intervention.
+- **REL-009**: Private Family Majlis groups and regional editions are post-V1 and shall not be implied by V1 UI/contracts.
 
 ## Acceptance Criteria
 
-- A clean environment can start the database and API using documented commands and apply all committed migrations.
-- A new user can install the Android release build, authenticate, complete today's challenge, receive the correct persisted result/progress, share safely, and participate in moderated discussion.
-- Restarting the API does not lose accounts, content, attempts, streaks, comments, reports, or moderation state.
-- An authorized operator can publish the next Daily Majlis and process a report through supported tooling.
-- Unauthorized users cannot access another user's private state or administrative operations.
-- Automated unit, integration, contract, widget, and end-to-end tests cover the critical release paths.
-- Production configuration, secrets handling, health monitoring, logging, backup/restore, and release/rollback procedures are documented and verified.
+- **REL-010**: A clean environment can start the database and API using documented commands and apply all committed migrations.
+- **REL-011**: A new user can install the Android release build, authenticate, complete today's challenge, receive the correct persisted result/progress, share safely, and participate in moderated discussion.
+- **REL-012**: Restarting the API does not lose accounts, content, attempts, streaks, comments, reports, moderation state, editorial revisions, or audit events.
+- **REL-013**: Authorized operators can publish the next Daily Majlis and process a report/appeal through supported browser tooling.
+- **REL-014**: Unauthorized users cannot access another user's private state or administrative operations.
+- **REL-015**: Automated unit, integration, contract, widget, golden, security, and end-to-end tests cover the mapped release paths.
+- **REL-016**: Production configuration, secrets, health, telemetry, backup/restore, deployment, and rollback meet every measurable gate in Spec 009.
 
 ## Post-V1 Scope
 

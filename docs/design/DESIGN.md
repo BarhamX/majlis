@@ -12,6 +12,7 @@ Majlis should feel like entering a warm, modern Arab gathering: calm, social, th
 4. **Micro-Learning**: Explanations should be short and memorable.
 5. **Social After Learning**: Discussion should appear after the user has answered, so the user has context.
 6. **Share With Pride**: Share cards should look elegant and culturally grounded.
+7. **Arabic From First Paint**: Every core screen is designed and tested RTL before it is accepted.
 
 ## Core Screens
 
@@ -22,7 +23,7 @@ Purpose: Explain the concept quickly.
 Content:
 - App name and tagline.
 - One-line promise.
-- Region/dialect preference.
+- Optional region/dialect preference with clear copy that it does not change the official V1 daily edition.
 - Display name.
 - Notification opt-in after value is shown.
 
@@ -76,7 +77,7 @@ Purpose: Make app feel like a majlis.
 Elements:
 - Daily prompt.
 - Response input.
-- Community/family responses.
+- Approved community responses. Private family responses are post-V1.
 - Reactions.
 - Report action.
 
@@ -103,12 +104,19 @@ Production V1 bottom navigation:
 
 Admin tooling can be web/API-first and does not need mobile navigation, but an authenticated operational interface is required before production release.
 
+## Safety and Privacy States
+
+- Pending comments remain visible to their author with a clear "Awaiting review" label but never appear in public lists.
+- Hidden or removed comments use neutral status copy and provide an appeal route when eligible.
+- Block controls are available from a comment author's overflow action and do not notify the blocked user.
+- Minor accounts do not receive a leaderboard opt-in control.
+
 ## Empty States
 
 - No Daily Majlis: show calm fallback and invite user to check later.
 - No comments: invite user to be first to open the discussion.
 - No streak: invite user to start today.
-- No leaderboard: show after enough users/friends participate.
+- No leaderboard: explain opt-in eligibility and show the board after enough eligible users participate.
 
 ## Microcopy Direction
 

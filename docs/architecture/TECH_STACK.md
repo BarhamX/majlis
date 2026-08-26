@@ -21,7 +21,7 @@ Android-first mobile app with Flutter frontend and .NET backend.
 - Entity Framework Core.
 - PostgreSQL.
 - Clean architecture solution structure.
-- JWT authentication or hosted identity provider integration.
+- Managed OpenID Connect provider using Authorization Code with PKCE; the API validates bearer tokens and stores no passwords.
 
 ## Backend Solution Structure
 
@@ -42,12 +42,12 @@ Recommended production options:
 - API hosting: Azure App Service, Azure Container Apps, Railway, Render, or Fly.io.
 - Database: Managed PostgreSQL.
 - File/media storage: S3-compatible storage or Azure Blob Storage later.
-- Push notifications: Firebase Cloud Messaging.
+- V1 reminders: Android local notifications. Firebase Cloud Messaging requires a later remote-notification specification.
 - Analytics: Firebase Analytics, PostHog, or Application Insights plus product events.
 
 ## Admin
 
-Production V1 requires protected admin operations. They may begin as protected API endpoints, but a usable internal web interface or equivalent operational tool is required before release.
+Production V1 requires a protected browser-based admin interface backed by the same Application use cases as the API. Raw endpoints are not the sole operating interface.
 
 Admin capabilities:
 
@@ -77,7 +77,7 @@ Admin capabilities:
 ## Versioning
 
 - API route prefix: `/api/v1`.
-- Spec folders are numbered: `specs/001-feature-name`.
+- Spec folders are numbered: `specs/<sequence>-<feature-name>`.
 - Database migrations must be committed and reviewed.
 
 ## Security Baseline
@@ -87,3 +87,5 @@ Admin capabilities:
 - Least-privilege admin roles.
 - Input validation on all community content.
 - Rate limiting on auth, comment, report, and answer submission endpoints.
+- MFA for privileged roles, immutable audits, and separation of editorial duties.
+- OWASP ASVS Level 2 and OWASP MASVS baseline verification as defined in Spec 009.

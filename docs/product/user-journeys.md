@@ -13,22 +13,22 @@
 
 ## Journey 2: Daily Returning User
 
-1. User receives morning notification.
+1. An opted-in user receives the one daily reminder at their chosen local time.
 2. User opens today's Majlis.
 3. User answers the challenge.
-4. User checks whether friends/family answered.
+4. An eligible opted-in adult checks the global weekly leaderboard.
 5. User reads the short story/proverb context.
 6. User leaves a quick response to the discussion question.
 7. User shares a result card.
 
-## Journey 3: Family Competition
+## Journey 3: Family/Friend Sharing in V1
 
-1. User creates a Family Majlis.
-2. User invites relatives.
-3. Each member answers the daily challenge.
-4. Family leaderboard updates.
-5. Users discuss the proverb/story in a private group.
-6. Weekly family winner is shown.
+1. An adult user completes the daily challenge.
+2. The app generates a spoiler-safe card and universal link.
+3. The user shares it through an Android share target such as WhatsApp.
+4. A relative or friend opens the link and is routed to the same global UTC Daily Majlis or a safe expired-link fallback.
+5. Each person may opt into the global weekly leaderboard independently.
+6. Conversation remains in the external channel; Majlis does not create a private group in V1.
 
 ## Journey 4: Viral Share Recipient
 
@@ -37,7 +37,7 @@
 3. Recipient taps link.
 4. App opens today's challenge.
 5. Recipient plays and sees result.
-6. Recipient is invited to join sender's Majlis or create account.
+6. Recipient is invited to create an account; the sender's identity and private activity are not encoded in the link.
 
 ## Journey 5: Admin Publisher
 

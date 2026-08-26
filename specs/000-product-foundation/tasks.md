@@ -12,3 +12,5 @@
 - [x] Create architecture, API, database, and tech stack docs.
 - [x] Create prompt pack.
 - [x] Create initial feature specs.
+- [x] Harden Production V1 decisions, focused feature specs, API/schema contracts, measurable quality gates, and requirement-to-test traceability.
+- [x] Add repository-local documentation validation and pre-commit hook.

@@ -2,9 +2,58 @@
 
 ## Current Status
 
-Majlis remains governed as a complete Production V1 Android application. The Daily Majlis content path is now persisted in PostgreSQL with an explicit migration, database health checking, repeatable local setup, and real PostgreSQL integration coverage; the remaining Production V1 capabilities are still required.
+Majlis remains governed as a complete Production V1 Android application. The release documentation now closes the prior product contradictions, defines every major V1 feature and target contract, and maps 145 normative requirements to planned verification. The implemented backend still contains only the persisted read-only Daily Majlis slice; the focused implementation tasks remain required.
 
 ## Latest Task Completed
+
+### 2026-08-26 - Production V1 Specification Hardening
+
+- Reconciled family scope, UTC publishing, regional semantics, Arabic launch behavior, comments, gameplay, privacy, and retention in one normative V1 decision register.
+- Added focused spec/plan/task triplets for authentication/profile, leaderboard, sharing/deep links, reminders, content/moderation administration, and production operations.
+- Defined exact scoring, retries, streak boundaries, idempotency/concurrency, comment visibility, blocking, appeals, age safeguards, and account deletion behavior.
+- Replaced the draft API and database documents with complete V1 target contracts, including localized immutable content revisions and required source notes.
+- Added measurable performance, Android-version, accessibility, reliability, security, analytics, backup/restore, deployment, and release gates.
+- Added requirement-to-test traceability and a repository-local validation hook.
+- Archived the stale foundation work plan and made the reusable feature prompt select its focused spec instead of hardcoding Spec 001.
+
+### Files Changed
+
+- Product/business/design: `docs/product/`, `docs/business/`, and `docs/design/`.
+- Architecture/contracts: `docs/architecture/` and `docs/ai-context/`.
+- Specifications: hardened Specs 001-003 and added Specs 004-009.
+- Quality/tooling: `docs/quality/requirements-to-tests.md`, `scripts/validate-docs.ps1`, `.githooks/pre-commit`, and `.gitattributes`.
+- Repository guidance/inventory: `AGENTS.md`, `.github/copilot-instructions.md`, `README.md`, `MANIFEST.md`, `docs/prompts/PROMPT_PACK.md`, and the archived foundation plan.
+- No backend or Flutter implementation file was changed.
+
+### Decisions Made
+
+- One global Daily Majlis uses a UTC `PublishDate`; Qatar/Gulf is the initial editorial focus, not a segmented edition.
+- Arabic is the required launch locale, with Noto Sans Arabic, RTL-first UI, BCP 47 negotiation, and localized content records.
+- V1 has external family/friend sharing but no private Family Majlis, private discussion, or family leaderboard.
+- Managed OIDC with PKCE owns passwords/recovery; Majlis owns local users, roles, privacy, and deletion state.
+- One final attempt awards 10 completion XP plus 5 correct-answer XP; both outcomes advance a streak across eligible published UTC days.
+- Public comments are premoderated. Blocking, appeals, minor safeguards, deletion, and retention are explicit.
+- The V1 leaderboard is adult-only, opt-in, global, and weekly; reminders are local Android notifications and off by default.
+
+### Tests and Checks Run
+
+- `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-docs.ps1` - passed: 60 Markdown files and 145 requirement ids.
+- `git hook run pre-commit` - passed with the same documentation checks.
+- `git diff --check` - passed; only expected Git line-ending conversion warnings were printed.
+- Runtime backend/Flutter tests were not run because this task changed documentation and repository validation only.
+
+### Known Blockers
+
+- The current migration/domain still allow nullable source notes and non-localized content; the target schema explicitly requires a forward migration rather than editing the applied migration.
+- All implementation and evidence rows marked `Planned` in the traceability matrix remain release work.
+- Before Spec 004 implementation, select and prove a managed OIDC vendor in staging. Before deployment/link work, select hosting, canonical public hosts, signing fingerprints, secret owners, and release approvers.
+- Legal/product review must confirm enabled launch jurisdictions for 13-17 accounts and the documented retention windows before production launch.
+
+### Next Recommended Task
+
+Implement Spec 004 authentication/profile test-first: select the managed OIDC provider, add signed-test-token integration infrastructure, then add the local user/profile/consent/deletion migration and cross-user authorization tests.
+
+## Previous Work
 
 ### 2026-08-26 - PostgreSQL Daily Majlis Persistence
 
@@ -57,8 +106,6 @@ Majlis remains governed as a complete Production V1 Android application. The Dai
 ### Next Recommended Task
 
 Define the focused authentication/profile specification, choose the authentication provider, and implement the User/Profile foundation—including ISO country code—before answer submission, scoring, and streak persistence.
-
-## Previous Task Completed
 
 ### 2026-08-26 - Full Production App Scope Alignment
 
@@ -116,13 +163,11 @@ Define the focused authentication/profile specification, choose the authenticati
 
 - Most Production V1 implementation remains incomplete; use `specs/003-production-app/tasks.md` as the release gate.
 - The current PostgreSQL persistence work must be completed and returned to a green build before starting the next backend slice.
-- Authentication, hosting, content timezone, Arabic font, first regional focus, and initial comment visibility policy still require decisions.
+- At this point in history, authentication, hosting, content timezone, Arabic font, regional focus, and comment visibility were open; the later Production V1 Specification Hardening entry resolves the product policies and leaves only the listed implementation gates.
 
 ### Next Recommended Task
 
 Finish and validate the in-progress PostgreSQL persistence slice, including migrations, health checks, idempotent initialization, and PostgreSQL-backed integration tests. Then implement authentication/profile and the persisted attempt/scoring/streak slice in the order defined by `specs/003-production-app/plan.md`.
-
-## Earlier Task Completed
 
 ### 2026-08-26 - Initial Playable Daily Majlis Backend
 
@@ -151,7 +196,7 @@ Finish and validate the in-progress PostgreSQL persistence slice, including migr
 - Used the canonical versioned route `/api/v1/daily-majlis/today` from the conventions and API contract.
 - Kept the correct option, explanation, source notes, and editorial state in the Domain model; the pre-attempt response DTO exposes only option ids and text.
 - Placed the temporary seeded repository in Infrastructure so it can be replaced without changing the controller or application contract.
-- Used an injected `TimeProvider` and a UTC date boundary for deterministic tests. The product scheduling timezone remains to be decided before database-backed publishing.
+- Used an injected `TimeProvider` and a UTC date boundary for deterministic tests. The later persistence and specification tasks made UTC the canonical content day.
 - Returned a safe `404` problem response when no published Daily Majlis is available.
 - Kept `userState` at `hasAttempted: false` and `currentStreak: 0` until authentication and attempt persistence are implemented.
 
@@ -166,19 +211,19 @@ Finish and validate the in-progress PostgreSQL persistence slice, including migr
 
 - None for this slice.
 - PostgreSQL/EF Core, authentication, attempts, scoring, and persisted user state were outside that initial slice and remain required for Production V1.
-- The final content scheduling timezone is not yet specified; the placeholder query currently uses UTC.
+- At this point in history, content scheduling was unresolved; it is now fixed to the UTC content day.
 
 ### Next Recommended Task
 
 Add the health endpoint and PostgreSQL/EF Core configuration, create the first explicit migration for Daily Majlis content, replace the seed repository with persistence, and add an API integration test for the spoiler-safe response.
 
-## Open Decisions
+## Implementation Gates
 
-- Authentication provider: custom JWT vs managed identity provider.
-- Hosting provider.
-- Final Arabic font family.
-- First regional content focus: Qatar/Gulf, pan-Arab, or mixed.
-- Whether comments are visible immediately or pending review during beta.
+- Select the managed OIDC vendor that satisfies Spec 004; custom password authentication is no longer an option.
+- Select the hosting/managed PostgreSQL providers and record the Spec 009 RPO/RTO and data-residency evidence.
+- Configure the canonical production/staging hosts and Android signing fingerprints for verified App Links.
+- Confirm launch jurisdictions and obtain legal/product approval for minor accounts and retention.
+- Name the product, editorial, security/privacy, engineering, and operations release approvers.
 
 ## Last Updated
 

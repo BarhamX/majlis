@@ -4,7 +4,7 @@
 
 Majlis is a daily Arab culture challenge game for Android. Users enter a digital majlis, answer a short cultural challenge, discover the meaning behind a proverb, story, saying, or tradition, and then discuss or share the result with friends and family.
 
-The app combines daily puzzle behavior, cultural storytelling, family/social competition, and respectful community discussion.
+The app combines daily puzzle behavior, cultural storytelling, external family/friend sharing, opt-in global competition, and respectful community discussion.
 
 ## 2. Vision
 
@@ -89,15 +89,17 @@ Production V1 is the complete Android Majlis app, not a prototype or a single fe
 11. Daily discussion question, comments, and reactions.
 12. Reporting, moderation states, and moderator workflow.
 13. Authenticated admin content creation, review, scheduling, publishing, and correction workflow.
-14. User-controlled daily reminders and basic product analytics.
+14. User-controlled daily reminders and the consent-aware product event catalog defined by Spec 009.
 15. Production PostgreSQL persistence, security controls, observability, deployment configuration, and an Android release build.
+
+The release-wide policy decisions for content days, localization, family scope, identity, safety, privacy, scoring, reminders, and leaderboards are normative in `docs/product/v1-product-decisions.md`.
 
 ## 9. Core Product Loop
 
 1. Trigger: notification, friend share, or daily habit.
 2. Challenge: user answers the daily prompt.
 3. Reward: result, explanation, XP, streak.
-4. Social proof: compare with friends/family or global result distribution.
+4. Social proof: view an opt-in global weekly leaderboard or share externally with friends/family.
 5. Discussion: respond to one cultural question.
 6. Viral output: share card or invite link.
 7. Return: next day content and streak continuation.
@@ -108,7 +110,7 @@ Production V1 is the complete Android Majlis app, not a prototype or a single fe
 
 - The system shall serve one official Daily Majlis per calendar day.
 - The Daily Majlis shall include title, topic, challenge, explanation, proverb/story, and discussion question.
-- The system shall support region and dialect tags for content.
+- The system shall support region and dialect provenance tags without selecting different V1 editions.
 - The system shall support scheduled publishing.
 
 ### Challenge
@@ -117,13 +119,14 @@ Production V1 is the complete Android Majlis app, not a prototype or a single fe
 - The system shall prevent repeated scoring for the same daily challenge.
 - The system shall show correct/incorrect result after submission.
 - The system shall show a short explanation after answer submission.
+- The first submission is final in V1; there are no answer retries.
 
 ### Gamification
 
-- The system shall award XP for completing the daily challenge.
+- The system shall award 10 completion XP and 5 additional XP for a correct first attempt.
 - The system shall track current streak and longest streak.
 - The system shall support future streak protection tokens.
-- The system shall show result distribution or performance comparison when available.
+- The system shall show the opt-in global weekly leaderboard; aggregate answer distribution is post-V1 unless separately specified.
 
 ### Community
 
@@ -131,12 +134,13 @@ Production V1 is the complete Android Majlis app, not a prototype or a single fe
 - The user shall be able to submit a response.
 - The user shall be able to react to responses.
 - The user shall be able to report inappropriate responses.
-- Reported responses shall enter moderation review state.
+- New responses shall require moderator approval before public visibility.
+- Reported responses shall enter moderation review state, and users shall be able to block another user.
 
 ### Sharing
 
 - The system shall generate a shareable result card.
-- The card shall avoid revealing the answer before the daily reveal policy if spoiler mode is active.
+- The card shall never reveal the correct option or explanation.
 - The card shall include Majlis branding and an invitation to try today's challenge.
 
 ### Admin Content
@@ -147,10 +151,10 @@ Production V1 is the complete Android Majlis app, not a prototype or a single fe
 
 ## 11. Non-Functional Requirements
 
-- Daily challenge load should feel near-instant on common Android devices.
+- Daily challenge loading and every other release quality gate shall meet the measurable thresholds in `specs/009-production-operations/spec.md`.
 - Core daily challenge should be completable in 1-3 minutes.
 - Backend APIs should use clear versioning from the start.
-- The Android release shall support Arabic-first product content and layout; English internal documentation is acceptable during development.
+- The Android release shall ship Arabic consumer UI/content and RTL behavior; English internal documentation is acceptable during development.
 - Community features must be safe by default.
 - Personal data must be minimized.
 
@@ -175,7 +179,7 @@ Production V1 is the complete Android Majlis app, not a prototype or a single fe
 - Daily challenge completion rate.
 - Discussion response rate.
 - Share card generation rate.
-- Family/friend invite conversion.
+- Spoiler-safe shared-link open and activation conversion.
 
 ### Quality
 

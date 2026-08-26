@@ -35,6 +35,7 @@ The target is the full Majlis Production V1, not a prototype, reduced release, o
 - Admin content creation, review, scheduling, publishing, and moderation tools.
 - PostgreSQL persistence, migrations, health checks, logging, analytics, and production configuration.
 - Automated core-flow tests and a verified end-to-end Android release flow.
+- Arabic launch localization/RTL, privacy-safe identity, measurable operations, and requirement-to-test evidence.
 
 ## Delivery Rule
 

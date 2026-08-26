@@ -12,6 +12,9 @@
 - Prefix routes with `/api/v1`.
 - Use JSON.
 - Do not expose correct option before answer submission.
+- Require an authenticated local `User` mapped from a validated OIDC subject for user-state endpoints.
+- Use BCP 47 locale tags, `Content-Language`, RFC 7807 problem details, UTC timestamps, and UTC `PublishDate` values.
+- Require an `Idempotency-Key` UUID for mutation endpoints whose duplicate execution can award progress or create public content.
 
 ## C#
 
@@ -38,4 +41,5 @@
 
 - Backend domain/application logic requires unit tests.
 - Challenge scoring and streak logic require tests before release.
-- API endpoints require integration tests when infrastructure is ready.
+- API endpoints require PostgreSQL-backed integration tests for authorization, isolation, persistence, uniqueness, and response safety.
+- Requirement IDs in feature specs must be mapped in `docs/quality/requirements-to-tests.md` before implementation is marked complete.

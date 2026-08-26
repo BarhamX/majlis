@@ -40,13 +40,19 @@ Majlis should combine the emotional cues of hospitality, conversation, heritage,
 
 ## Typography
 
-### Arabic UI Later
+### Arabic Launch UI
 
-Use a high-quality Arabic typeface with excellent readability for short content and cards. Candidate families should be evaluated visually in Flutter before final selection.
+Arabic is the required launch locale, not a later enhancement. Bundle Noto Sans Arabic under its license and use it for app chrome, challenge content, discussion, and share cards. Verify Arabic glyph coverage, diacritics, mixed Arabic/Latin numerals, truncation, and readability at 200% text scaling. Theme tokens must keep the family replaceable after V1 evaluation.
 
 ### English/Internal
 
-Use system typography for development speed. Keep design tokens abstract so the final typeface can change.
+English is optional for V1. When present, use system typography and keep both families behind semantic typography tokens.
+
+### Directionality
+
+- Default to RTL for Arabic and derive direction from the active locale, never from individual strings.
+- Mirror navigation and directional icons; do not mirror logos, media controls, checkmarks, or numeric values.
+- Keep mixed Arabic/English text and URLs readable with explicit bidi isolation where needed.
 
 ## Component Direction
 
@@ -84,5 +90,5 @@ Share cards should be clean and elegant:
 - Majlis logo/name.
 - Result or proverb.
 - Minimal pattern background.
-- No answer spoiler unless reveal mode allows it.
+- No correct option or explanation in V1 share cards.
 - Deep link invitation.
