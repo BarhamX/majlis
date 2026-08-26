@@ -1,0 +1,6 @@
+@Majlis.Api_HostAddress = http://localhost:5129
+
+GET {{Majlis.Api_HostAddress}}/api/v1/daily-majlis/today
+Accept: application/json
+
+###

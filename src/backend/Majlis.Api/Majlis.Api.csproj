@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Majlis.Application\Majlis.Application.csproj" />
+    <ProjectReference Include="..\Majlis.Contracts\Majlis.Contracts.csproj" />
+    <ProjectReference Include="..\Majlis.Infrastructure\Majlis.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+</Project>
