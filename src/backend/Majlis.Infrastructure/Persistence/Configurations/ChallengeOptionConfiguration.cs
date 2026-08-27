@@ -12,9 +12,17 @@ internal sealed class ChallengeOptionConfiguration : IEntityTypeConfiguration<Ch
         builder.HasKey(option => option.Id);
 
         builder.Property(option => option.Id).ValueGeneratedNever();
-        builder.Property(option => option.Text).HasColumnType("text").IsRequired();
+        builder.Property(option => option.OptionKey).HasColumnType("text").IsRequired();
+        builder.HasIndex("ChallengeId", nameof(ChallengeOption.OptionKey)).IsUnique();
+        builder.HasIndex("ChallengeId", nameof(ChallengeOption.SortOrder)).IsUnique();
         builder.Property(option => option.IsCorrect).IsRequired();
         builder.Property(option => option.SortOrder).IsRequired();
         builder.Property<Guid>("ChallengeId");
+        builder.HasMany(option => option.Translations)
+            .WithOne()
+            .HasForeignKey(translation => translation.OptionId)
+            .OnDelete(DeleteBehavior.Cascade);
+        builder.Navigation(option => option.Translations)
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }

@@ -25,35 +25,36 @@ public sealed class DailyMajlisServiceTests
     {
         var today = new DateOnly(2026, 8, 26);
         var challengeId = Guid.Parse("10000000-0000-0000-0000-000000000001");
+        var revisionId = Guid.Parse("40000000-0000-0000-0000-000000000001");
+        var challenge = new Challenge(
+            challengeId,
+            revisionId,
+            ChallengeType.MultipleChoice,
+            [
+                new ChallengeOption(Guid.Parse("30000000-0000-0000-0000-000000000001"), "A guest is honored as a trust", true, 1),
+                new ChallengeOption(Guid.Parse("30000000-0000-0000-0000-000000000002"), "A guest should not stay long", false, 2),
+            ]);
+        var revision = new DailyMajlisRevision(
+            revisionId,
+            Guid.Parse("20000000-0000-0000-0000-000000000001"),
+            1,
+            "hospitality",
+            ChallengeDifficulty.Easy,
+            CardType.Proverb,
+            "Verified source notes.",
+            Guid.NewGuid(),
+            DateTimeOffset.UtcNow);
+        revision.SetChallenge(challenge);
+        revision.AddTranslation(new DailyMajlisTranslation(revision.Id, "ar", "العنوان", "السؤال", "الشرح", "النقاش", "البطاقة"));
+        foreach (var option in challenge.Options)
+        {
+            revision.AddOptionTranslation(new ChallengeOptionTranslation(option.Id, "ar", "خيار"));
+        }
         var dailyMajlis = new DailyMajlis(
             Guid.Parse("20000000-0000-0000-0000-000000000001"),
             today,
-            "The Guest Before the House",
-            "hospitality",
-            new Challenge(
-                challengeId,
-                "What does this proverb mean?",
-                ChallengeType.MultipleChoice,
-                ChallengeDifficulty.Easy,
-                "panArab",
-                "hospitality",
-                "This proverb reflects hospitality as honor and responsibility.",
-                "Seed content from docs/architecture/API_CONTRACTS.md.",
-                ContentReviewStatus.Reviewed,
-                [
-                    new ChallengeOption(
-                        Guid.Parse("30000000-0000-0000-0000-000000000001"),
-                        "A guest is honored as a trust",
-                        isCorrect: true,
-                        sortOrder: 1),
-                    new ChallengeOption(
-                        Guid.Parse("30000000-0000-0000-0000-000000000002"),
-                        "A guest should not stay long",
-                        isCorrect: false,
-                        sortOrder: 2),
-                ]),
-            "What is one hospitality habit your family still practices?",
-            DailyMajlisStatus.Published);
+            DailyMajlisStatus.Published,
+            revision);
         var repository = new StubDailyMajlisRepository(dailyMajlis);
         var service = new DailyMajlisService(
             repository,
@@ -63,7 +64,7 @@ public sealed class DailyMajlisServiceTests
 
         Assert.NotNull(result);
         Assert.Equal(dailyMajlis.Id, result.DailyMajlisId);
-        Assert.Equal(today, result.Date);
+        Assert.Equal(today, result.PublishDate);
         Assert.Equal(challengeId, result.Challenge.Id);
         Assert.Equal(2, result.Challenge.Options.Count);
         Assert.All(result.Challenge.Options, option =>

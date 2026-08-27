@@ -15,6 +15,16 @@ public sealed class MajlisDbContext(
 
     public DbSet<ChallengeOption> ChallengeOptions => Set<ChallengeOption>();
 
+    public DbSet<DailyMajlisRevision> DailyMajlisRevisions => Set<DailyMajlisRevision>();
+
+    public DbSet<DailyMajlisTranslation> DailyMajlisTranslations => Set<DailyMajlisTranslation>();
+
+    public DbSet<ChallengeOptionTranslation> ChallengeOptionTranslations => Set<ChallengeOptionTranslation>();
+
+    public DbSet<RevisionRegion> RevisionRegions => Set<RevisionRegion>();
+
+    public DbSet<RevisionDialect> RevisionDialects => Set<RevisionDialect>();
+
     public DbSet<UserAccount> Users => Set<UserAccount>();
 
     public DbSet<UserIdentity> UserIdentities => Set<UserIdentity>();
@@ -65,12 +75,5 @@ public sealed class MajlisDbContext(
             }
         }
 
-        foreach (var entry in ChangeTracker.Entries<Challenge>())
-        {
-            if (entry.State == EntityState.Added)
-            {
-                entry.Property<DateTimeOffset>("CreatedAt").CurrentValue = utcNow;
-            }
-        }
     }
 }

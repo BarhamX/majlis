@@ -66,15 +66,43 @@ public sealed class DailyMajlisApiTests(PostgreSqlFixture postgreSql) : IAsyncLi
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.DoesNotContain("correct", json, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("explanation", json, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("currentStreak", json, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("publishDate", json, StringComparison.Ordinal);
+        Assert.Contains("topicCode", json, StringComparison.Ordinal);
+        Assert.Contains("discussionPrompt", json, StringComparison.Ordinal);
+        Assert.Contains("hasAttempted", json, StringComparison.Ordinal);
+        Assert.Contains("Vary", response.Headers.ToString(), StringComparison.OrdinalIgnoreCase);
 
         using var document = JsonDocument.Parse(json);
         var root = document.RootElement;
-        Assert.Equal("2026-08-26", root.GetProperty("date").GetString());
+        Assert.Equal("2026-08-26", root.GetProperty("publishDate").GetString());
 
         var options = root.GetProperty("challenge").GetProperty("options");
         Assert.Equal(2, options.GetArrayLength());
-        Assert.Equal("A guest is honored as a trust", options[0].GetProperty("text").GetString());
-        Assert.Equal("A guest should not stay long", options[1].GetProperty("text").GetString());
+        Assert.Equal("إكرام الضيف أمانة", options[0].GetProperty("text").GetString());
+        Assert.Equal("لا ينبغي للضيف أن يطيل", options[1].GetProperty("text").GetString());
+        Assert.Contains("ar", response.Content.Headers.ContentLanguage);
+    }
+
+    [Fact]
+    public async Task GetToday_AcceptLanguageFallsBackFromRegionalArabicAndServesEnglishWhenRequested()
+    {
+        using var client = await CreateAuthenticatedClientAsync("localized-content-user");
+        client.DefaultRequestHeaders.AcceptLanguage.ParseAdd("ar-QA");
+
+        var arabicResponse = await client.GetAsync("/api/v1/daily-majlis/today");
+        var arabicJson = await arabicResponse.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(HttpStatusCode.OK, arabicResponse.StatusCode);
+        Assert.Contains("ar", arabicResponse.Content.Headers.ContentLanguage);
+        Assert.Equal("الضيف قبل البيت", arabicJson.GetProperty("title").GetString());
+
+        client.DefaultRequestHeaders.AcceptLanguage.Clear();
+        client.DefaultRequestHeaders.AcceptLanguage.ParseAdd("en-US");
+        var englishResponse = await client.GetAsync("/api/v1/daily-majlis/today");
+        var englishJson = await englishResponse.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(HttpStatusCode.OK, englishResponse.StatusCode);
+        Assert.Contains("en", englishResponse.Content.Headers.ContentLanguage);
+        Assert.Equal("The Guest Before the House", englishJson.GetProperty("title").GetString());
     }
 
     [Fact]
@@ -119,6 +147,9 @@ public sealed class DailyMajlisApiTests(PostgreSqlFixture postgreSql) : IAsyncLi
         Assert.Equal(1, await dbContext.DailyMajlis.CountAsync());
         Assert.Equal(1, await dbContext.Challenges.CountAsync());
         Assert.Equal(2, await dbContext.ChallengeOptions.CountAsync());
+        Assert.Equal(1, await dbContext.DailyMajlisRevisions.CountAsync());
+        Assert.Equal(2, await dbContext.DailyMajlisTranslations.CountAsync());
+        Assert.Equal(4, await dbContext.ChallengeOptionTranslations.CountAsync());
     }
 
     [Fact]
@@ -133,39 +164,62 @@ public sealed class DailyMajlisApiTests(PostgreSqlFixture postgreSql) : IAsyncLi
         await Assert.ThrowsAsync<DbUpdateException>(() => dbContext.SaveChangesAsync());
     }
 
+    [Fact]
+    public async Task ForwardMigration_PreservesLegacyEnglishAndExplicitlyUnpublishesIt()
+    {
+        _factory.Dispose();
+        await postgreSql.ResetAsync();
+        var options = new DbContextOptionsBuilder<MajlisDbContext>()
+            .UseNpgsql(postgreSql.ConnectionString)
+            .Options;
+        await using var dbContext = new MajlisDbContext(options, TimeProvider.System);
+        await dbContext.Database.MigrateAsync("20260826193542_AddIdentityProfileFoundation");
+        await dbContext.Database.ExecuteSqlRawAsync("""
+            INSERT INTO "Challenges" ("Id", "QuestionText", "Type", "Difficulty", "Region", "Topic", "Explanation", "SourceNotes", "ReviewStatus", "CreatedAt")
+            VALUES ('51000000-0000-0000-0000-000000000001', 'Legacy question', 'multipleChoice', 'easy', 'gulf', 'hospitality', 'Legacy explanation', 'Legacy source', 'reviewed', now());
+            INSERT INTO "ChallengeOptions" ("Id", "Text", "IsCorrect", "SortOrder", "ChallengeId")
+            VALUES ('52000000-0000-0000-0000-000000000001', 'Legacy answer', true, 1, '51000000-0000-0000-0000-000000000001'),
+                   ('52000000-0000-0000-0000-000000000002', 'Legacy distractor', false, 2, '51000000-0000-0000-0000-000000000001');
+            INSERT INTO "DailyMajlis" ("Id", "PublishDate", "Title", "Topic", "ChallengeId", "DiscussionQuestion", "Status", "CreatedAt", "UpdatedAt")
+            VALUES ('53000000-0000-0000-0000-000000000001', '2026-08-26', 'Legacy title', 'hospitality', '51000000-0000-0000-0000-000000000001', 'Legacy discussion', 'published', now(), now());
+            """);
+
+        await dbContext.Database.MigrateAsync();
+
+        var legacy = await dbContext.DailyMajlisRevisions
+            .Include(revision => revision.Translations)
+            .SingleAsync(revision => revision.DailyMajlisId == Guid.Parse("53000000-0000-0000-0000-000000000001"));
+        var daily = await dbContext.DailyMajlis.SingleAsync(item => item.Id == legacy.DailyMajlisId);
+        Assert.Equal("en", Assert.Single(legacy.Translations).Locale);
+        Assert.Equal(DailyMajlisStatus.Unpublished, daily.Status);
+        Assert.Null(daily.PublishedRevisionId);
+    }
+
     private static DailyMajlis CreateDailyMajlis(
         DateOnly publishDate,
         DailyMajlisStatus status)
     {
-        return new DailyMajlis(
-            Guid.Parse("20000000-0000-0000-0000-000000000002"),
-            publishDate,
-            "Another Daily Majlis",
-            "hospitality",
-            new Challenge(
-                Guid.Parse("10000000-0000-0000-0000-000000000002"),
-                "Another question?",
-                ChallengeType.MultipleChoice,
-                ChallengeDifficulty.Easy,
-                "panArab",
-                "hospitality",
-                "Another explanation.",
-                "Integration-test source notes.",
-                ContentReviewStatus.Reviewed,
-                [
-                    new ChallengeOption(
-                        Guid.Parse("30000000-0000-0000-0000-000000000003"),
-                        "First option",
-                        isCorrect: true,
-                        sortOrder: 1),
-                    new ChallengeOption(
-                        Guid.Parse("30000000-0000-0000-0000-000000000004"),
-                        "Second option",
-                        isCorrect: false,
-                        sortOrder: 2),
-                ]),
-            "Another discussion question?",
-            status);
+        var dailyId = Guid.Parse("20000000-0000-0000-0000-000000000002");
+        var revisionId = Guid.Parse("40000000-0000-0000-0000-000000000002");
+        var challenge = new Challenge(
+            Guid.Parse("10000000-0000-0000-0000-000000000002"),
+            revisionId,
+            ChallengeType.MultipleChoice,
+            [
+                new ChallengeOption(Guid.Parse("30000000-0000-0000-0000-000000000003"), "First option", true, 1),
+                new ChallengeOption(Guid.Parse("30000000-0000-0000-0000-000000000004"), "Second option", false, 2),
+            ]);
+        var revision = new DailyMajlisRevision(
+            revisionId, dailyId, 1, "hospitality", ChallengeDifficulty.Easy,
+            CardType.Proverb, "Integration-test source notes.", null, DateTimeOffset.UtcNow);
+        revision.SetChallenge(challenge);
+        revision.AddTranslation(new DailyMajlisTranslation(revisionId, "ar", "عنوان", "سؤال", "شرح", "نقاش", "بطاقة"));
+        foreach (var option in challenge.Options)
+        {
+            revision.AddOptionTranslation(new ChallengeOptionTranslation(option.Id, "ar", "خيار"));
+        }
+
+        return new DailyMajlis(dailyId, publishDate, status, revision);
     }
 
     private async Task<HttpClient> CreateAuthenticatedClientAsync(string subject)

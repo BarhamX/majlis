@@ -17,12 +17,24 @@ public sealed class DailyMajlisController(IDailyMajlisService dailyMajlisService
     public async Task<ActionResult<DailyMajlisResponse>> GetToday(
         CancellationToken cancellationToken)
     {
-        var dailyMajlis = await dailyMajlisService.GetTodayAsync(cancellationToken);
+        Response.Headers.Vary = "Accept-Language";
+        var localized = await dailyMajlisService.GetTodayAsync(
+            Request.Headers.AcceptLanguage.ToString(),
+            cancellationToken);
 
-        return dailyMajlis is null
-            ? Problem(
+        if (localized is null)
+        {
+            return Problem(
                 statusCode: StatusCodes.Status404NotFound,
-                title: "Today's Majlis is not available yet.")
-            : Ok(dailyMajlis);
+                title: "Today's Majlis is not available yet.",
+                extensions: new Dictionary<string, object?>
+                {
+                    ["code"] = "daily_majlis_unavailable",
+                });
+        }
+
+        Response.Headers.ContentLanguage = localized.ContentLanguage;
+        Response.Headers.Vary = "Accept-Language";
+        return Ok(localized.Response);
     }
 }

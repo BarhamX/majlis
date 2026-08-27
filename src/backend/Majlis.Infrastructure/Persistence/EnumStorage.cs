@@ -7,6 +7,8 @@ internal static class EnumStorage
     public static string ToStorage(DailyMajlisStatus value) => value switch
     {
         DailyMajlisStatus.Draft => "draft",
+        DailyMajlisStatus.InReview => "in_review",
+        DailyMajlisStatus.Approved => "approved",
         DailyMajlisStatus.Scheduled => "scheduled",
         DailyMajlisStatus.Published => "published",
         DailyMajlisStatus.Unpublished => "unpublished",
@@ -16,6 +18,8 @@ internal static class EnumStorage
     public static DailyMajlisStatus ToDailyMajlisStatus(string value) => value switch
     {
         "draft" => DailyMajlisStatus.Draft,
+        "in_review" => DailyMajlisStatus.InReview,
+        "approved" => DailyMajlisStatus.Approved,
         "scheduled" => DailyMajlisStatus.Scheduled,
         "published" => DailyMajlisStatus.Published,
         "unpublished" => DailyMajlisStatus.Unpublished,
@@ -50,19 +54,4 @@ internal static class EnumStorage
         _ => throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown stored challenge difficulty."),
     };
 
-    public static string ToStorage(ContentReviewStatus value) => value switch
-    {
-        ContentReviewStatus.Draft => "draft",
-        ContentReviewStatus.Reviewed => "reviewed",
-        ContentReviewStatus.Rejected => "rejected",
-        _ => throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown content review status."),
-    };
-
-    public static ContentReviewStatus ToContentReviewStatus(string value) => value switch
-    {
-        "draft" => ContentReviewStatus.Draft,
-        "reviewed" => ContentReviewStatus.Reviewed,
-        "rejected" => ContentReviewStatus.Rejected,
-        _ => throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown stored content review status."),
-    };
 }

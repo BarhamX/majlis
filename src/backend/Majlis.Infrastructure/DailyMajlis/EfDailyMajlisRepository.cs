@@ -17,8 +17,12 @@ public sealed class EfDailyMajlisRepository(MajlisDbContext dbContext) : IDailyM
             .Where(dailyMajlis =>
                 dailyMajlis.PublishDate == publishDate &&
                 dailyMajlis.Status == DailyMajlisStatus.Published)
-            .Include(dailyMajlis => dailyMajlis.Challenge)
-            .ThenInclude(challenge => challenge.Options.OrderBy(option => option.SortOrder))
+            .Include(dailyMajlis => dailyMajlis.PublishedRevision)
+            .ThenInclude(revision => revision!.Translations)
+            .Include(dailyMajlis => dailyMajlis.PublishedRevision)
+            .ThenInclude(revision => revision!.Challenge)
+            .ThenInclude(challenge => challenge!.Options)
+            .ThenInclude(option => option.Translations)
             .SingleOrDefaultAsync(cancellationToken);
     }
 }

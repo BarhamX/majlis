@@ -14,26 +14,31 @@ internal sealed class DailyMajlisConfiguration : IEntityTypeConfiguration<DailyM
 
         builder.Property(dailyMajlis => dailyMajlis.Id).ValueGeneratedNever();
         builder.Property(dailyMajlis => dailyMajlis.PublishDate).HasColumnType("date");
-        builder.Property(dailyMajlis => dailyMajlis.Title).HasColumnType("text").IsRequired();
-        builder.Property(dailyMajlis => dailyMajlis.Topic).HasColumnType("text").IsRequired();
-        builder.Property(dailyMajlis => dailyMajlis.DiscussionQuestion).HasColumnType("text").IsRequired();
         builder.Property(dailyMajlis => dailyMajlis.Status)
             .HasColumnType("text")
             .HasConversion(
                 status => EnumStorage.ToStorage(status),
                 value => EnumStorage.ToDailyMajlisStatus(value));
+        builder.Property(dailyMajlis => dailyMajlis.ScheduledRevisionId);
+        builder.Property(dailyMajlis => dailyMajlis.PublishedRevisionId);
 
-        builder.Property<Guid>("ChallengeId");
         builder.Property<DateTimeOffset>("CreatedAt").HasColumnType("timestamp with time zone");
         builder.Property<DateTimeOffset>("UpdatedAt").HasColumnType("timestamp with time zone");
 
-        builder.HasOne(dailyMajlis => dailyMajlis.Challenge)
+        builder.HasOne(dailyMajlis => dailyMajlis.ScheduledRevision)
             .WithMany()
-            .HasForeignKey("ChallengeId")
+            .HasForeignKey(dailyMajlis => dailyMajlis.ScheduledRevisionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(dailyMajlis => dailyMajlis.PublishedRevision)
+            .WithMany()
+            .HasForeignKey(dailyMajlis => dailyMajlis.PublishedRevisionId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(dailyMajlis => dailyMajlis.PublishDate)
             .IsUnique()
             .HasFilter("\"Status\" IN ('scheduled', 'published')");
+        builder.HasIndex(dailyMajlis => dailyMajlis.ScheduledRevisionId);
+        builder.HasIndex(dailyMajlis => dailyMajlis.PublishedRevisionId);
     }
 }

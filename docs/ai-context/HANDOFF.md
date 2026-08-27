@@ -4,6 +4,45 @@
 
 Majlis remains governed as a complete Production V1 Android application. The backend now has the local identity/profile foundation needed for game development: persisted users and external identities, private profiles/preferences/consents, deletion requests, a signed Development/Testing issuer, self-service profile endpoints, and completed-profile authorization for Daily Majlis. Google, Apple, Meta, and Snapchat are the selected production providers, but their credentials/callbacks and all hosting/domain logistics remain deferred until `Game Ready`.
 
+## Work in Progress
+
+### 2026-08-27 - Localized Daily Majlis Revision Checkpoint
+
+- Added the in-progress localized content-revision domain, persistence mappings, forward migrations, locale negotiation, canonical Today response fields, Arabic/English Development seed content, and focused tests.
+- This is a remote checkpoint for continued work on Spec 001. The localized revision slice is not complete and no task checkbox was closed.
+
+### Files Changed
+
+- Daily content domain and contracts under `src/backend/Majlis.Domain/DailyMajlis/` and `src/backend/Majlis.Contracts/DailyMajlis/`.
+- Today query/controller localization behavior under `src/backend/Majlis.Application/DailyMajlis/` and `src/backend/Majlis.Api/Controllers/`.
+- EF mappings, initializer, repository, model snapshot, and forward migrations under `src/backend/Majlis.Infrastructure/`.
+- Focused domain, application, and PostgreSQL integration tests under `src/backend/Majlis.Tests/`.
+
+### Decisions Made
+
+- Kept PostgreSQL as the authoritative store and retained the global UTC content day.
+- Localized consumer content is served from immutable revision-owned translations, with complete Arabic required and BCP 47 fallback behavior.
+- Production identity providers, hosting, domains, verified links, and signing remain deferred until `Game Ready`.
+
+### Tests and Checks Run
+
+- `dotnet test src/backend/Majlis.Tests/Majlis.Tests.csproj --configuration Release --no-restore --filter "Category!=Integration"` - passed: 41 tests, 0 failed, 0 skipped.
+- `dotnet format src/backend/Majlis.sln --verify-no-changes --no-restore` - passed.
+- `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-docs.ps1` - passed: 60 Markdown files and 147 requirement ids.
+- `git diff --check` - passed; only expected line-ending conversion warnings were printed.
+- `docker info` - failed because the Docker Desktop Linux engine pipe was unavailable, so PostgreSQL-backed integration verification was not rerun.
+- `dotnet tool run dotnet-ef migrations has-pending-model-changes ...` could not run because the local tool was not restored; the subsequent tool restore stalled against the configured package source and was stopped.
+
+### Known Blockers
+
+- PostgreSQL-backed clean initialization, forward-migration, rollover, scheduled-content conflict, and concurrency cases remain unverified while Docker is unavailable.
+- The initializer still requires follow-up for scheduled-content precedence, repeated day rollover, transactional publication-pointer assignment, and submitted-revision immutability before this slice can be marked complete.
+- Migration handling for legacy published rows and nullable Development/import provenance requires final review against the target schema.
+
+### Next Recommended Task
+
+Recover Docker, add the missing initializer and locale edge-case tests, fix the resulting failures test-first, then rerun the full PostgreSQL suite and migration checks before completing the localized-revision slice.
+
 ## Latest Task Completed
 
 ### 2026-08-26 - Local Identity and Profile Foundation

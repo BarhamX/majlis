@@ -4,60 +4,52 @@ public sealed class DailyMajlis
 {
     private DailyMajlis()
     {
-        Title = string.Empty;
-        Topic = string.Empty;
-        Challenge = null!;
-        DiscussionQuestion = string.Empty;
     }
 
     public DailyMajlis(
         Guid id,
         DateOnly publishDate,
-        string title,
-        string topic,
-        Challenge challenge,
-        string discussionQuestion,
-        DailyMajlisStatus status)
+        DailyMajlisStatus status,
+        DailyMajlisRevision publishedRevision)
     {
         if (id == Guid.Empty)
         {
             throw new ArgumentException("A Daily Majlis id is required.", nameof(id));
         }
 
+        ArgumentNullException.ThrowIfNull(publishedRevision);
+        if (publishedRevision.DailyMajlisId != id)
+        {
+            throw new ArgumentException("Revision belongs to another Daily Majlis.", nameof(publishedRevision));
+        }
+
         Id = id;
         PublishDate = publishDate;
-        Title = RequireText(title, nameof(title));
-        Topic = RequireText(topic, nameof(topic));
-        Challenge = challenge ?? throw new ArgumentNullException(nameof(challenge));
-        DiscussionQuestion = RequireText(discussionQuestion, nameof(discussionQuestion));
         Status = status;
+        PublishedRevision = publishedRevision;
+        PublishedRevisionId = publishedRevision.Id;
     }
 
     public Guid Id { get; private set; }
 
     public DateOnly PublishDate { get; private set; }
 
-    public string Title { get; private set; }
-
-    public string Topic { get; private set; }
-
-    public Challenge Challenge { get; private set; }
-
-    public string DiscussionQuestion { get; private set; }
-
     public DailyMajlisStatus Status { get; private set; }
 
-    private static string RequireText(string value, string parameterName)
-    {
-        return string.IsNullOrWhiteSpace(value)
-            ? throw new ArgumentException("A value is required.", parameterName)
-            : value;
-    }
+    public Guid? ScheduledRevisionId { get; private set; }
+
+    public Guid? PublishedRevisionId { get; private set; }
+
+    public DailyMajlisRevision? ScheduledRevision { get; private set; }
+
+    public DailyMajlisRevision? PublishedRevision { get; private set; }
 }
 
 public enum DailyMajlisStatus
 {
     Draft,
+    InReview,
+    Approved,
     Scheduled,
     Published,
     Unpublished,

@@ -15,14 +15,8 @@ public sealed class ChallengeTests
 
         var exception = Assert.Throws<ArgumentException>(() => new Challenge(
             Guid.NewGuid(),
-            "Question",
+            Guid.NewGuid(),
             ChallengeType.MultipleChoice,
-            ChallengeDifficulty.Easy,
-            "panArab",
-            "hospitality",
-            "Explanation",
-            "Editorial source notes",
-            ContentReviewStatus.Reviewed,
             options));
 
         Assert.Equal("options", exception.ParamName);
