@@ -221,6 +221,9 @@ public sealed class DailyMajlisApiTests(PostgreSqlFixture postgreSql) : IAsyncLi
         Assert.NotNull(repaired.PublishedRevision);
         Assert.True(repaired.PublishedRevision.IsImmutable);
         Assert.Equal(1, await verification.DailyMajlisRevisions.CountAsync());
+        Assert.Equal(1, await verification.DailyMajlisPublications.CountAsync(publication =>
+            publication.DailyMajlisId == LegacySeedDailyMajlisId &&
+            publication.PublishDate == new DateOnly(2026, 8, 26)));
     }
 
     [Fact]

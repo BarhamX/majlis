@@ -6,6 +6,38 @@ Majlis remains governed as a complete Production V1 Android application. The bac
 
 ## Work in Progress
 
+### 2026-08-28 - Task 4 Review Fix Round 4
+
+- Diagnosed hosted run `33174425481` (identity baseline passed; 121 of 122 full-suite tests passed): concurrent fixed-ID legacy repairs can both begin without a publication, and PostgreSQL can surface `PK_DailyMajlisPublications` before the already-supported revision-number race.
+- Restricted that primary-key collision to repair convergence only when the selected aggregate had no publication before repair. After the collision, initialization now re-reads and accepts convergence only when the same aggregate and publish date own the immutable publication fact and expose a complete immutable published revision.
+- Kept create-race classification limited to the two exact publish-date indexes and repair-race classification limited to the exact revision-number index plus the context-gated publication primary key. Unrelated `23505` constraints still propagate.
+- Strengthened the hosted concurrent legacy-repair regression to require exactly one publication fact for the repaired aggregate/date. Local PostgreSQL remains unavailable, so the regression was compiled but not executed locally.
+
+### Files Changed
+
+- `DailyMajlisDatabaseInitializer.cs`, `DailyMajlisInitializationConflict.cs`, their focused classifier tests, the PostgreSQL initializer regression, this handoff, and the ignored Task 4 fix-round report.
+- `MANIFEST.md` and the requirements matrix were unchanged because no file, schema, contract, or evidence status was added.
+
+### Decisions Made
+
+- A publication primary-key violation is not a generic repair conflict: it is convergent only when repair began with the publication missing and the winner persisted the same aggregate/date fact.
+- Preserved the existing initializer transaction and immutable publication model; no retry, schema, migration, or daily-loop behavior changed.
+
+### Tests and Checks Run
+
+- RED classifier run failed only for `PK_DailyMajlisPublications` as expected; the context-aware test API then also failed to compile until production accepted the missing-publication precondition.
+- Focused Release verification passed 18 tests; the full non-integration Release suite passed 76 tests.
+- Release build succeeded with 0 warnings and 0 errors, compiling the PostgreSQL integration regression.
+- EF reported no pending model changes, and scoped formatting plus format verification passed.
+
+### Known Blockers
+
+- Hosted PostgreSQL CI must rerun `DailyMajlisApiTests.Initializer_WhenConcurrentStartsRepairUnpublishedLegacySeed_Converges`; no local PostgreSQL execution is claimed.
+
+### Next Recommended Task
+
+- Rerun hosted Backend CI for Fix Round 4 and require the complete PostgreSQL suite to pass before Task 5.
+
 ### 2026-08-28 - Task 4 Review Fix Round 3
 
 - Corrected the remaining fixed legacy-ID leak in `CompleteSeedAsync`: replacement revision-number lookup and revision construction now use the selected repairable Daily Majlis aggregate ID.

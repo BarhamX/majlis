@@ -9,6 +9,8 @@ internal static class DailyMajlisInitializationConflict
         "IX_DailyMajlis_PublishDate";
     private const string PublicationPublishDateConstraint =
         "IX_DailyMajlisPublications_PublishDate";
+    private const string PublicationPrimaryKeyConstraint =
+        "PK_DailyMajlisPublications";
     private const string RevisionNumberConstraint =
         "IX_DailyMajlisRevisions_DailyMajlisId_RevisionNumber";
 
@@ -18,8 +20,12 @@ internal static class DailyMajlisInitializationConflict
             DailyMajlisPublishDateConstraint,
             PublicationPublishDateConstraint);
 
-    public static bool IsExpectedRepairRace(DbUpdateException exception) =>
-        HasUniqueConstraint(exception, RevisionNumberConstraint);
+    public static bool IsExpectedRepairRace(
+        DbUpdateException exception,
+        bool publicationWasMissing) =>
+        HasUniqueConstraint(exception, RevisionNumberConstraint) ||
+        (publicationWasMissing &&
+         HasUniqueConstraint(exception, PublicationPrimaryKeyConstraint));
 
     private static bool HasUniqueConstraint(
         DbUpdateException exception,

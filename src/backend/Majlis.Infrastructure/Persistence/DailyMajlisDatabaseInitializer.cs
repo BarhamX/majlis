@@ -68,16 +68,22 @@ public sealed class DailyMajlisDatabaseInitializer(
         DateOnly publishDate,
         CancellationToken cancellationToken)
     {
+        var publicationWasMissing = seedDailyMajlis.Publication is null;
         try
         {
             await CompleteSeedAsync(seedDailyMajlis, cancellationToken);
         }
         catch (DbUpdateException exception) when (
-            DailyMajlisInitializationConflict.IsExpectedRepairRace(exception))
+            DailyMajlisInitializationConflict.IsExpectedRepairRace(
+                exception,
+                publicationWasMissing))
         {
             dbContext.ChangeTracker.Clear();
             var persistedSeed = await GetRepairableSeedAsync(publishDate, cancellationToken);
-            if (!IsUsablePublishedSeed(persistedSeed))
+            if (!IsConvergedRepair(
+                    persistedSeed,
+                    seedDailyMajlis.Id,
+                    publishDate))
             {
                 throw;
             }
@@ -126,6 +132,16 @@ public sealed class DailyMajlisDatabaseInitializer(
             Status: DailyMajlisStatus.Published,
             PublishedRevision.IsImmutable: true,
         } && seedDailyMajlis.PublishedRevision.IsCompleteForServing();
+
+    private static bool IsConvergedRepair(
+        DailyMajlisEntity? persistedSeed,
+        Guid expectedDailyMajlisId,
+        DateOnly expectedPublishDate) =>
+        IsUsablePublishedSeed(persistedSeed) &&
+        persistedSeed!.Id == expectedDailyMajlisId &&
+        persistedSeed.Publication is not null &&
+        persistedSeed.Publication.DailyMajlisId == expectedDailyMajlisId &&
+        persistedSeed.Publication.PublishDate == expectedPublishDate;
 
     private Task<bool> EditorialContentExistsAsync(
         DateOnly publishDate,

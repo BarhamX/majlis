@@ -16,20 +16,42 @@ public sealed class DailyMajlisInitializationConflictTests
             CreateUniqueViolation(constraintName)));
     }
 
-    [Fact]
-    public void IsExpectedCreateRace_UnrelatedUniqueConstraint_IsNotConvergence()
+    [Theory]
+    [InlineData("PK_DailyMajlisPublications")]
+    [InlineData("IX_DailyMajlisRevisions_DailyMajlisId_RevisionNumber")]
+    [InlineData("UX_Unrelated_Test_Constraint")]
+    public void IsExpectedCreateRace_RepairAndUnrelatedConstraints_AreNotConvergence(
+        string constraintName)
     {
         Assert.False(DailyMajlisInitializationConflict.IsExpectedCreateRace(
-            CreateUniqueViolation("UX_Unrelated_Test_Constraint")));
+            CreateUniqueViolation(constraintName)));
     }
 
-    [Fact]
-    public void IsExpectedRepairRace_OnlyRecognizesRevisionNumberConstraint()
+    [Theory]
+    [InlineData("IX_DailyMajlisRevisions_DailyMajlisId_RevisionNumber", false)]
+    [InlineData("IX_DailyMajlisRevisions_DailyMajlisId_RevisionNumber", true)]
+    [InlineData("PK_DailyMajlisPublications", true)]
+    public void IsExpectedRepairRace_RecognizesOnlyRepairConvergenceConstraints(
+        string constraintName,
+        bool publicationWasMissing)
     {
         Assert.True(DailyMajlisInitializationConflict.IsExpectedRepairRace(
-            CreateUniqueViolation("IX_DailyMajlisRevisions_DailyMajlisId_RevisionNumber")));
+            CreateUniqueViolation(constraintName),
+            publicationWasMissing));
+    }
+
+    [Theory]
+    [InlineData("PK_DailyMajlisPublications", false)]
+    [InlineData("IX_DailyMajlis_PublishDate", true)]
+    [InlineData("IX_DailyMajlisPublications_PublishDate", true)]
+    [InlineData("UX_Unrelated_Test_Constraint", true)]
+    public void IsExpectedRepairRace_CreateAndUnrelatedConstraints_AreNotConvergence(
+        string constraintName,
+        bool publicationWasMissing)
+    {
         Assert.False(DailyMajlisInitializationConflict.IsExpectedRepairRace(
-            CreateUniqueViolation("IX_DailyMajlisPublications_PublishDate")));
+            CreateUniqueViolation(constraintName),
+            publicationWasMissing));
     }
 
     private static DbUpdateException CreateUniqueViolation(string constraintName) => new(
