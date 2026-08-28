@@ -15,7 +15,7 @@ This is the release-wide checklist. Feature task files provide implementation de
 - [x] Configure PostgreSQL and EF Core in Infrastructure.
 - [ ] Add explicit reviewed migrations for all production entities.
 - [x] Add the identity/profile foundation migration.
-- [ ] Add a forward migration making source notes mandatory and introducing localized immutable content revisions.
+- [x] Add a forward migration making source notes mandatory and introducing localized immutable content revisions.
 - [x] Add idempotent development/test seed and content initialization.
 - [x] Add database-backed health checks and configuration validation.
 - [x] Replace production use of the in-memory Daily Majlis repository.
@@ -37,9 +37,9 @@ This is the release-wide checklist. Feature task files provide implementation de
 ## Daily Game
 
 - [ ] Complete all required tasks in `specs/001-playable-daily-majlis/tasks.md`.
-- [ ] Persist exactly one scored attempt per user and challenge.
-- [ ] Implement XP, current/longest streak, missed-day, and duplicate-award rules.
-- [ ] Implement attempt history and spoiler-safe share result.
+- [x] Persist exactly one scored attempt per user and challenge.
+- [x] Implement XP, current/longest streak, missed-day, and duplicate-award rules.
+- [x] Implement attempt history and spoiler-safe share result.
 - [x] Resolve and test the content scheduling timezone.
 
 ## Android Application

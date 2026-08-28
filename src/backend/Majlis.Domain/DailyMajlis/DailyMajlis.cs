@@ -51,9 +51,15 @@ public sealed class DailyMajlis
         PublishedRevisionId = null;
     }
 
-    public void Publish(DailyMajlisRevision revision)
+    public void Publish(DailyMajlisRevision revision) => Publish(
+        revision,
+        revision.SubmittedAt ?? throw new InvalidOperationException(
+            "A submitted revision is required for publication."));
+
+    public void Publish(DailyMajlisRevision revision, DateTimeOffset publishedAt)
     {
         ValidatePublicationRevision(revision);
+        Publication ??= new DailyMajlisPublication(Id, PublishDate, publishedAt);
         Status = DailyMajlisStatus.Published;
         ScheduledRevision = null;
         ScheduledRevisionId = null;
@@ -74,6 +80,8 @@ public sealed class DailyMajlis
     public DailyMajlisRevision? ScheduledRevision { get; private set; }
 
     public DailyMajlisRevision? PublishedRevision { get; private set; }
+
+    public DailyMajlisPublication? Publication { get; private set; }
 
     private void ValidatePublicationRevision(DailyMajlisRevision revision)
     {

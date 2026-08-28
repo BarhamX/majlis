@@ -1,5 +1,6 @@
 using Majlis.Domain.DailyMajlis;
 using Majlis.Domain.Identity;
+using Majlis.Domain.Progress;
 using Microsoft.EntityFrameworkCore;
 using DailyMajlisEntity = Majlis.Domain.DailyMajlis.DailyMajlis;
 
@@ -10,6 +11,8 @@ public sealed class MajlisDbContext(
     TimeProvider timeProvider) : DbContext(options)
 {
     public DbSet<DailyMajlisEntity> DailyMajlis => Set<DailyMajlisEntity>();
+
+    public DbSet<DailyMajlisPublication> DailyMajlisPublications => Set<DailyMajlisPublication>();
 
     public DbSet<Challenge> Challenges => Set<Challenge>();
 
@@ -38,6 +41,14 @@ public sealed class MajlisDbContext(
     public DbSet<UserRoleAssignment> UserRoleAssignments => Set<UserRoleAssignment>();
 
     public DbSet<AccountDeletionRequest> AccountDeletionRequests => Set<AccountDeletionRequest>();
+
+    public DbSet<UserAttempt> UserAttempts => Set<UserAttempt>();
+
+    public DbSet<XpLedgerEntry> XpLedger => Set<XpLedgerEntry>();
+
+    public DbSet<UserProgress> UserProgress => Set<UserProgress>();
+
+    public DbSet<IdempotencyRecord> IdempotencyRecords => Set<IdempotencyRecord>();
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {

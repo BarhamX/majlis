@@ -2,9 +2,9 @@
 
 ## Status and Migration Rule
 
-This is the target logical PostgreSQL schema for Production V1. The committed initial migration currently contains only `DailyMajlis`, `Challenges`, and `ChallengeOptions`; its nullable `Challenges.SourceNotes` and non-localized text are known implementation gaps. Do not edit an applied migration. Add explicit reviewed forward migrations that preserve existing development data or document its reset.
+This is the target logical PostgreSQL schema for Production V1. The committed forward migration chain now implements the localized immutable Daily Majlis content model, Development/Testing identity/profile foundation, immutable publication history, and persisted attempt/XP/progress/idempotency model described below. Community, leaderboard, content-administration, moderation, analytics, retention-job, and production-operations tables remain target schema rather than implemented persistence. Do not edit an applied migration. Add explicit reviewed forward migrations that preserve existing development data or document its reset.
 
-Localized immutable content revisions establish an explicit forward-only migration boundary. Downgrading across that boundary is rejected before schema mutation because reconstructing the legacy non-localized model would discard revision history and translations. Recovery across the boundary must restore a compatible pre-migration backup or apply a reviewed forward recovery migration; direct EF downgrade is not a supported rollback path.
+Localized immutable content revisions establish an explicit forward-only migration boundary. Downgrading across that boundary is rejected before schema mutation because reconstructing the legacy non-localized model would discard revision history and translations. Every later migration must preserve that guarantee by rejecting `Down` before adding any migration operation; the daily-loop persistence and publication-history migrations both carry that guard. Recovery across the boundary must restore a compatible pre-migration backup or apply a reviewed forward recovery migration; direct EF downgrade is not a supported rollback path.
 
 All ids are UUIDs. All instants are `timestamptz` in UTC. Content days are PostgreSQL `date` values interpreted as UTC. User-visible text is Unicode `text`. Enum-like text values use named check constraints.
 
@@ -105,6 +105,11 @@ DailyMajlis
 - UpdatedAt timestamptz not null
 unique (PublishDate) where Status in ('scheduled','published')
 
+DailyMajlisPublications
+- DailyMajlisId uuid primary key references DailyMajlis(Id) on delete restrict
+- PublishDate date not null unique
+- PublishedAt timestamptz not null
+
 DailyMajlisRevisions
 - Id uuid primary key
 - DailyMajlisId uuid not null references DailyMajlis(Id)
@@ -184,7 +189,7 @@ Publication transition rules, enforced transactionally in Domain/Application wit
 - `SourceNotes` is non-empty.
 - The latest review is approved by someone other than `CreatedByUserId`.
 - `ScheduledRevisionId` and `PublishedRevisionId` belong to the same Daily Majlis.
-- A correction creates a new revision; attempts retain their original `ContentRevisionId`.
+- A submitted revision is immutable. A correction creates a new immutable revision; attempts retain their original `ContentRevisionId` and are not rewritten when content is corrected or unpublished.
 
 ## Attempts, XP, and Streaks
 
@@ -199,10 +204,15 @@ UserAttempts
 - IsCorrect boolean not null
 - CompletionXp int not null -- 10
 - CorrectnessXp int not null -- 0 or 5
+- ResultLocale text not null -- negotiated BCP 47 locale of the accepted result
+- LifetimeXpAfter bigint not null -- exact post-award snapshot
+- CurrentStreakAfter int not null -- exact post-award snapshot
+- LongestStreakAfter int not null -- exact post-award snapshot
 - AttemptedAt timestamptz not null
 unique (UserId, DailyMajlisId)
 foreign key (ChallengeId, ContentRevisionId) references Challenges(Id, RevisionId)
 foreign key (SelectedOptionId, ChallengeId) references ChallengeOptions(Id, ChallengeId)
+check (CompletionXp = 10 and CorrectnessXp in (0, 5) and LifetimeXpAfter >= 0 and CurrentStreakAfter >= 0 and LongestStreakAfter >= CurrentStreakAfter)
 
 XpLedger
 - Id uuid primary key
@@ -233,7 +243,9 @@ IdempotencyRecords
 primary key (UserId, Scope, IdempotencyKey)
 ```
 
-Attempt, XP-ledger, and progress mutations occur in one transaction. Weekly leaderboard totals are derived from `XpLedger.OccurredAt`; an indexed/materialized projection may be added without becoming a second scoring authority.
+`DailyMajlisPublications` is the immutable fact that a publish date became streak-eligible. Correction and unpublishing never remove or rewrite it. The forward migration backfills current `published` and historical `unpublished` rows, using the legacy `UpdatedAt` as the best available publication timestamp and a deterministic single row per publish date.
+
+`UserAttempts` are immutable after insertion. New attempt creation requires the challenge to belong to the current UTC-date `published` Daily Majlis; correction or unpublishing never rewrites or deletes an accepted attempt, its stored revision/locale/snapshots, its ledger row, or its progress effect. Attempt, XP-ledger, and `UserProgress` mutations occur in one transaction. `UserProgress` is the sole persistence authority for lifetime XP and streak state; no separate `UserStreak` table or aggregate is permitted. Weekly leaderboard totals are derived from `XpLedger.OccurredAt`; an indexed/materialized projection may be added without becoming a second scoring authority.
 
 ## Discussion and Safety
 
@@ -351,7 +363,7 @@ The outbox accepts only events/fields allowlisted by Spec 009. It must not conta
 
 - `UserIdentities(Issuer, Subject)` unique and `UserIdentities(UserId, Provider)` unique.
 - `DailyMajlis(PublishDate)` unique partial index for `scheduled|published`.
-- `UserAttempts(UserId, AttemptedAt desc)` and unique `(UserId, DailyMajlisId)`.
+- `UserAttempts(UserId, AttemptedAt desc, Id desc)` for stable newest-first keyset history pagination, and unique `(UserId, DailyMajlisId)`.
 - `XpLedger(OccurredAt, Amount)` and `XpLedger(UserId, OccurredAt)`.
 - `DiscussionComments(DailyMajlisId, CreatedAt desc)`.
 - `CommentRevisions(CommentId, RevisionNumber desc)` and `(Status, CreatedAt)`.

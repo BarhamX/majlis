@@ -36,6 +36,9 @@ namespace Majlis.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasAlternateKey("Id", "RevisionId")
+                        .HasName("AK_Challenges_Id_RevisionId");
+
                     b.HasIndex("RevisionId")
                         .IsUnique();
 
@@ -61,6 +64,9 @@ namespace Majlis.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasAlternateKey("Id", "ChallengeId")
+                        .HasName("AK_ChallengeOptions_Id_ChallengeId");
 
                     b.HasIndex("ChallengeId", "OptionKey")
                         .IsUnique();
@@ -123,6 +129,25 @@ namespace Majlis.Infrastructure.Persistence.Migrations
                     b.HasIndex("ScheduledRevisionId");
 
                     b.ToTable("DailyMajlis", (string)null);
+                });
+
+            modelBuilder.Entity("Majlis.Domain.DailyMajlis.DailyMajlisPublication", b =>
+                {
+                    b.Property<Guid>("DailyMajlisId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("PublishDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTimeOffset>("PublishedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("DailyMajlisId");
+
+                    b.HasIndex("PublishDate")
+                        .IsUnique();
+
+                    b.ToTable("DailyMajlisPublications", (string)null);
                 });
 
             modelBuilder.Entity("Majlis.Domain.DailyMajlis.DailyMajlisRevision", b =>
@@ -521,6 +546,178 @@ namespace Majlis.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Majlis.Domain.Progress.IdempotencyRecord", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Scope")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("IdempotencyKey")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RequestHash")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("ResourceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ResponseStatus")
+                        .HasColumnType("integer");
+
+                    b.HasKey("UserId", "Scope", "IdempotencyKey")
+                        .HasName("PK_IdempotencyRecords");
+
+                    b.HasIndex("ExpiresAt")
+                        .HasDatabaseName("IX_IdempotencyRecords_ExpiresAt");
+
+                    b.ToTable("IdempotencyRecords", (string)null);
+                });
+
+            modelBuilder.Entity("Majlis.Domain.Progress.UserAttempt", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("AttemptedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ChallengeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("CompletionXp")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("ContentRevisionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("CorrectnessXp")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CurrentStreakAfter")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("DailyMajlisId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsCorrect")
+                        .HasColumnType("boolean");
+
+                    b.Property<long>("LifetimeXpAfter")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("LongestStreakAfter")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ResultLocale")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("SelectedOptionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DailyMajlisId");
+
+                    b.HasIndex("ChallengeId", "ContentRevisionId");
+
+                    b.HasIndex("SelectedOptionId", "ChallengeId");
+
+                    b.HasIndex("UserId", "DailyMajlisId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_UserAttempts_UserId_DailyMajlisId");
+
+                    b.HasIndex("UserId", "AttemptedAt", "Id")
+                        .IsDescending(false, true, true)
+                        .HasDatabaseName("IX_UserAttempts_UserId_AttemptedAt_Id");
+
+                    b.ToTable("UserAttempts", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_UserAttempts_ExactXpAndSnapshots", "\"CompletionXp\" = 10 AND \"CorrectnessXp\" IN (0, 5) AND ((\"IsCorrect\" AND \"CorrectnessXp\" = 5) OR (NOT \"IsCorrect\" AND \"CorrectnessXp\" = 0)) AND \"LifetimeXpAfter\" >= 0 AND \"CurrentStreakAfter\" >= 0 AND \"LongestStreakAfter\" >= \"CurrentStreakAfter\"");
+                        });
+                });
+
+            modelBuilder.Entity("Majlis.Domain.Progress.UserProgress", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("CurrentStreak")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<DateOnly?>("LastCompletedPublishDate")
+                        .HasColumnType("date");
+
+                    b.Property<long>("LifetimeXp")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(0L);
+
+                    b.Property<int>("LongestStreak")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("UserProgress", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_UserProgress_NonNegative", "\"LifetimeXp\" >= 0 AND \"CurrentStreak\" >= 0 AND \"LongestStreak\" >= \"CurrentStreak\"");
+                        });
+                });
+
+            modelBuilder.Entity("Majlis.Domain.Progress.XpLedgerEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Amount")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("AttemptId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AttemptId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_XpLedger_AttemptId");
+
+                    b.HasIndex("OccurredAt", "Amount")
+                        .HasDatabaseName("IX_XpLedger_OccurredAt_Amount");
+
+                    b.HasIndex("UserId", "OccurredAt")
+                        .HasDatabaseName("IX_XpLedger_UserId_OccurredAt");
+
+                    b.ToTable("XpLedger", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_XpLedger_ExactAmount", "\"Amount\" IN (10, 15)");
+                        });
+                });
+
             modelBuilder.Entity("Majlis.Domain.DailyMajlis.Challenge", b =>
                 {
                     b.HasOne("Majlis.Domain.DailyMajlis.DailyMajlisRevision", null)
@@ -563,6 +760,15 @@ namespace Majlis.Infrastructure.Persistence.Migrations
                     b.Navigation("PublishedRevision");
 
                     b.Navigation("ScheduledRevision");
+                });
+
+            modelBuilder.Entity("Majlis.Domain.DailyMajlis.DailyMajlisPublication", b =>
+                {
+                    b.HasOne("Majlis.Domain.DailyMajlis.DailyMajlis", null)
+                        .WithOne("Publication")
+                        .HasForeignKey("Majlis.Domain.DailyMajlis.DailyMajlisPublication", "DailyMajlisId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Majlis.Domain.DailyMajlis.DailyMajlisRevision", b =>
@@ -666,6 +872,76 @@ namespace Majlis.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Majlis.Domain.Progress.IdempotencyRecord", b =>
+                {
+                    b.HasOne("Majlis.Domain.Identity.UserAccount", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_IdempotencyRecords_Users_UserId");
+                });
+
+            modelBuilder.Entity("Majlis.Domain.Progress.UserAttempt", b =>
+                {
+                    b.HasOne("Majlis.Domain.DailyMajlis.DailyMajlis", null)
+                        .WithMany()
+                        .HasForeignKey("DailyMajlisId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_UserAttempts_DailyMajlis_DailyMajlisId");
+
+                    b.HasOne("Majlis.Domain.Identity.UserAccount", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_UserAttempts_Users_UserId");
+
+                    b.HasOne("Majlis.Domain.DailyMajlis.Challenge", null)
+                        .WithMany()
+                        .HasForeignKey("ChallengeId", "ContentRevisionId")
+                        .HasPrincipalKey("Id", "RevisionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_UserAttempts_Challenges_ChallengeId_ContentRevisionId");
+
+                    b.HasOne("Majlis.Domain.DailyMajlis.ChallengeOption", null)
+                        .WithMany()
+                        .HasForeignKey("SelectedOptionId", "ChallengeId")
+                        .HasPrincipalKey("Id", "ChallengeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_UserAttempts_ChallengeOptions_SelectedOptionId_ChallengeId");
+                });
+
+            modelBuilder.Entity("Majlis.Domain.Progress.UserProgress", b =>
+                {
+                    b.HasOne("Majlis.Domain.Identity.UserAccount", null)
+                        .WithOne()
+                        .HasForeignKey("Majlis.Domain.Progress.UserProgress", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_UserProgress_Users_UserId");
+                });
+
+            modelBuilder.Entity("Majlis.Domain.Progress.XpLedgerEntry", b =>
+                {
+                    b.HasOne("Majlis.Domain.Progress.UserAttempt", null)
+                        .WithOne()
+                        .HasForeignKey("Majlis.Domain.Progress.XpLedgerEntry", "AttemptId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_XpLedger_UserAttempts_AttemptId");
+
+                    b.HasOne("Majlis.Domain.Identity.UserAccount", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_XpLedger_Users_UserId");
+                });
+
             modelBuilder.Entity("Majlis.Domain.DailyMajlis.Challenge", b =>
                 {
                     b.Navigation("Options");
@@ -674,6 +950,11 @@ namespace Majlis.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Majlis.Domain.DailyMajlis.ChallengeOption", b =>
                 {
                     b.Navigation("Translations");
+                });
+
+            modelBuilder.Entity("Majlis.Domain.DailyMajlis.DailyMajlis", b =>
+                {
+                    b.Navigation("Publication");
                 });
 
             modelBuilder.Entity("Majlis.Domain.DailyMajlis.DailyMajlisRevision", b =>

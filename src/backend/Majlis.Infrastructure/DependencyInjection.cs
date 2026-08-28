@@ -1,6 +1,8 @@
 using Majlis.Application.DailyMajlis;
+using Majlis.Application.DailyLoop;
 using Majlis.Application.Identity;
 using Majlis.Infrastructure.DailyMajlis;
+using Majlis.Infrastructure.DailyLoop;
 using Majlis.Infrastructure.Identity;
 using Majlis.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -25,6 +27,7 @@ public static class DependencyInjection
 
         services.AddDbContext<MajlisDbContext>(options => options.UseNpgsql(connectionString));
         services.AddScoped<IDailyMajlisRepository, EfDailyMajlisRepository>();
+        services.AddScoped<IDailyLoopRepository, EfDailyLoopRepository>();
         services.AddScoped<IUserAccountRepository, EfUserAccountRepository>();
         services.AddScoped<DailyMajlisDatabaseInitializer>();
         services.AddHealthChecks().AddDbContextCheck<MajlisDbContext>("postgresql");

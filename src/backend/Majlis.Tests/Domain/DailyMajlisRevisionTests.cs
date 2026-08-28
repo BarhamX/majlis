@@ -65,6 +65,23 @@ public sealed class DailyMajlisRevisionTests
         Assert.Same(revision, dailyMajlis.PublishedRevision);
     }
 
+    [Fact]
+    public void Publish_RecordsFirstPublicationOnceAcrossLaterCorrections()
+    {
+        var firstPublishedAt = new DateTimeOffset(2026, 8, 26, 10, 0, 0, TimeSpan.Zero);
+        var revision = CreateCompleteRevision();
+        revision.Submit(firstPublishedAt);
+        var dailyMajlis = new DailyMajlis(revision.DailyMajlisId, new DateOnly(2026, 8, 26));
+
+        dailyMajlis.Publish(revision, firstPublishedAt);
+        dailyMajlis.Publish(revision, firstPublishedAt.AddHours(2));
+
+        Assert.NotNull(dailyMajlis.Publication);
+        Assert.Equal(dailyMajlis.Id, dailyMajlis.Publication.DailyMajlisId);
+        Assert.Equal(dailyMajlis.PublishDate, dailyMajlis.Publication.PublishDate);
+        Assert.Equal(firstPublishedAt, dailyMajlis.Publication.PublishedAt);
+    }
+
     private static DailyMajlisRevision CreateCompleteRevision()
     {
         var revisionId = Guid.NewGuid();

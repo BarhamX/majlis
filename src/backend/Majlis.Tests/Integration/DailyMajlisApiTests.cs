@@ -221,6 +221,9 @@ public sealed class DailyMajlisApiTests(PostgreSqlFixture postgreSql) : IAsyncLi
         Assert.NotNull(repaired.PublishedRevision);
         Assert.True(repaired.PublishedRevision.IsImmutable);
         Assert.Equal(1, await verification.DailyMajlisRevisions.CountAsync());
+        Assert.Equal(1, await verification.DailyMajlisPublications.CountAsync(publication =>
+            publication.DailyMajlisId == LegacySeedDailyMajlisId &&
+            publication.PublishDate == new DateOnly(2026, 8, 26)));
     }
 
     [Fact]
@@ -228,12 +231,20 @@ public sealed class DailyMajlisApiTests(PostgreSqlFixture postgreSql) : IAsyncLi
     {
         await using var scope = _factory.Services.CreateAsyncScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<MajlisDbContext>();
-        var scheduled = await dbContext.DailyMajlis.SingleAsync();
+        await ResetDailyMajlisContentAsync(dbContext);
+        var scheduled = CreateDailyMajlis(
+            Guid.Parse("21000000-0000-0000-0000-000000000002"),
+            new DateOnly(2026, 8, 26),
+            DailyMajlisStatus.Published);
         var revisionId = scheduled.PublishedRevisionId;
-        dbContext.Entry(scheduled).Property(item => item.Status).CurrentValue = DailyMajlisStatus.Scheduled;
-        dbContext.Entry(scheduled).Property(item => item.ScheduledRevisionId).CurrentValue = revisionId;
-        dbContext.Entry(scheduled).Property(item => item.PublishedRevisionId).CurrentValue = null;
-        await dbContext.SaveChangesAsync();
+        await SavePublicationGraphAsync(dbContext, scheduled);
+        await dbContext.DailyMajlis
+            .Where(item => item.Id == scheduled.Id)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(item => item.Status, DailyMajlisStatus.Scheduled)
+                .SetProperty(item => item.ScheduledRevisionId, revisionId)
+                .SetProperty(item => item.PublishedRevisionId, (Guid?)null));
+        dbContext.ChangeTracker.Clear();
 
         var initializer = scope.ServiceProvider.GetRequiredService<DailyMajlisDatabaseInitializer>();
         await initializer.InitializeAsync();
@@ -244,6 +255,101 @@ public sealed class DailyMajlisApiTests(PostgreSqlFixture postgreSql) : IAsyncLi
         Assert.Equal(revisionId, actual.ScheduledRevisionId);
         Assert.Null(actual.PublishedRevisionId);
         Assert.Equal(1, await dbContext.DailyMajlisRevisions.CountAsync());
+    }
+
+    [Fact]
+    public async Task Initializer_WhenDraftEditorialContentExists_PreservesItWithoutCreatingSeed()
+    {
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<MajlisDbContext>();
+        await ResetDailyMajlisContentAsync(dbContext);
+        var draftId = Guid.Parse("21000000-0000-0000-0000-000000000003");
+        dbContext.DailyMajlis.Add(new DailyMajlis(
+            draftId,
+            new DateOnly(2026, 8, 26)));
+        await dbContext.SaveChangesAsync();
+
+        var initializer = scope.ServiceProvider.GetRequiredService<DailyMajlisDatabaseInitializer>();
+        await initializer.InitializeAsync();
+
+        dbContext.ChangeTracker.Clear();
+        var actual = await dbContext.DailyMajlis.SingleAsync();
+        Assert.Equal(draftId, actual.Id);
+        Assert.Equal(DailyMajlisStatus.Draft, actual.Status);
+        Assert.Equal(0, await dbContext.DailyMajlisRevisions.CountAsync());
+        Assert.Equal(0, await dbContext.DailyMajlisPublications.CountAsync());
+    }
+
+    [Fact]
+    public async Task Initializer_WhenNonSeedEditorialPublicationIsUnpublished_PreservesItAndKeepsSubmissionUnavailable()
+    {
+        var editorialId = Guid.Parse("21000000-0000-0000-0000-000000000001");
+        var publishDate = new DateOnly(2026, 8, 26);
+        Guid revisionId;
+        Guid challengeId;
+        Guid optionId;
+        string originalTitle;
+        await using (var setupScope = _factory.Services.CreateAsyncScope())
+        {
+            var dbContext = setupScope.ServiceProvider.GetRequiredService<MajlisDbContext>();
+            await ResetDailyMajlisContentAsync(dbContext);
+            var editorial = CreateDailyMajlis(
+                editorialId,
+                publishDate,
+                DailyMajlisStatus.Published);
+            revisionId = editorial.PublishedRevisionId!.Value;
+            challengeId = editorial.PublishedRevision!.Challenge!.Id;
+            optionId = editorial.PublishedRevision.Challenge.Options.First().Id;
+            originalTitle = editorial.PublishedRevision.Translations.Single().Title;
+            await SavePublicationGraphAsync(dbContext, editorial);
+            await dbContext.DailyMajlis
+                .Where(item => item.Id == editorialId)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(item => item.Status, DailyMajlisStatus.Unpublished)
+                    .SetProperty(item => item.PublishedRevisionId, (Guid?)null));
+        }
+
+        _factory.Dispose();
+        _factory = new MajlisApiFactory(postgreSql.ConnectionString, TestNow);
+        using var warmup = CreateClient();
+
+        await using (var verificationScope = _factory.Services.CreateAsyncScope())
+        {
+            var dbContext = verificationScope.ServiceProvider.GetRequiredService<MajlisDbContext>();
+            var preserved = await dbContext.DailyMajlis.SingleAsync();
+            var revision = await dbContext.DailyMajlisRevisions
+                .Include(item => item.Translations)
+                .SingleAsync();
+            var publication = await dbContext.DailyMajlisPublications.SingleAsync();
+
+            Assert.Equal(editorialId, preserved.Id);
+            Assert.Equal(DailyMajlisStatus.Unpublished, preserved.Status);
+            Assert.Null(preserved.PublishedRevisionId);
+            Assert.Equal(revisionId, revision.Id);
+            Assert.Equal(originalTitle, revision.Translations.Single().Title);
+            Assert.Equal(editorialId, publication.DailyMajlisId);
+            Assert.Equal(publishDate, publication.PublishDate);
+        }
+
+        using var client = await CreateAuthenticatedClientAsync("unpublished-editorial-user");
+        using var request = new HttpRequestMessage(
+            HttpMethod.Post,
+            $"/api/v1/challenges/{challengeId}/attempts")
+        {
+            Content = JsonContent.Create(new { selectedOptionId = optionId }),
+        };
+        request.Headers.Add("Idempotency-Key", Guid.NewGuid().ToString("D"));
+        var response = await client.SendAsync(request);
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal("daily_majlis_unavailable", body.GetProperty("code").GetString());
+        await using var finalScope = _factory.Services.CreateAsyncScope();
+        var finalDbContext = finalScope.ServiceProvider.GetRequiredService<MajlisDbContext>();
+        Assert.Equal(0, await finalDbContext.UserAttempts.CountAsync());
+        Assert.Equal(0, await finalDbContext.XpLedger.CountAsync());
+        Assert.Equal(0, await finalDbContext.UserProgress.CountAsync());
+        Assert.Equal(0, await finalDbContext.IdempotencyRecords.CountAsync());
     }
 
     [Fact]
@@ -270,14 +376,12 @@ public sealed class DailyMajlisApiTests(PostgreSqlFixture postgreSql) : IAsyncLi
     }
 
     [Fact]
-    public async Task Initializer_WhenConcurrentStartsRace_ConvergesOnOnePublishedDay()
+    public async Task Initializer_WhenConcurrentStartsCreateSeed_ConvergesOnDeterministicSeedOwner()
     {
         await using (var setupScope = _factory.Services.CreateAsyncScope())
         {
             var dbContext = setupScope.ServiceProvider.GetRequiredService<MajlisDbContext>();
-            await dbContext.DailyMajlis.ExecuteUpdateAsync(setters => setters
-                .SetProperty(item => item.Status, DailyMajlisStatus.Unpublished)
-                .SetProperty(item => item.PublishedRevisionId, (Guid?)null));
+            await ResetDailyMajlisContentAsync(dbContext);
         }
 
         await using var firstScope = _factory.Services.CreateAsyncScope();
@@ -289,9 +393,15 @@ public sealed class DailyMajlisApiTests(PostgreSqlFixture postgreSql) : IAsyncLi
 
         await using var verificationScope = _factory.Services.CreateAsyncScope();
         var verification = verificationScope.ServiceProvider.GetRequiredService<MajlisDbContext>();
-        Assert.Equal(1, await verification.DailyMajlis.CountAsync(item =>
-            item.PublishDate == new DateOnly(2026, 8, 26) &&
-            item.Status == DailyMajlisStatus.Published));
+        var dailyMajlis = await verification.DailyMajlis.SingleAsync();
+        var publication = await verification.DailyMajlisPublications.SingleAsync();
+        Assert.Equal(
+            Guid.Parse("20000000-0000-0000-0000-202608260000"),
+            dailyMajlis.Id);
+        Assert.Equal(new DateOnly(2026, 8, 26), dailyMajlis.PublishDate);
+        Assert.Equal(DailyMajlisStatus.Published, dailyMajlis.Status);
+        Assert.Equal(dailyMajlis.Id, publication.DailyMajlisId);
+        Assert.Equal(dailyMajlis.PublishDate, publication.PublishDate);
     }
 
     [Fact]
@@ -359,14 +469,17 @@ public sealed class DailyMajlisApiTests(PostgreSqlFixture postgreSql) : IAsyncLi
             StringComparison.Ordinal));
         var boundaryIndex = Array.IndexOf(migrations, boundary);
         Assert.True(boundaryIndex > 0);
-        await dbContext.Database.MigrateAsync();
+        await dbContext.Database.MigrateAsync(boundary);
+        var appliedBefore = (await dbContext.Database.GetAppliedMigrationsAsync()).ToArray();
 
         var exception = await Assert.ThrowsAsync<NotSupportedException>(() =>
             dbContext.Database.MigrateAsync(migrations[boundaryIndex - 1]));
 
         Assert.Contains("forward-only boundary", exception.Message, StringComparison.Ordinal);
         Assert.Equal(0, await dbContext.DailyMajlisRevisions.CountAsync());
-        Assert.Contains(boundary, await dbContext.Database.GetAppliedMigrationsAsync());
+        Assert.Equal(
+            appliedBefore,
+            (await dbContext.Database.GetAppliedMigrationsAsync()).ToArray());
     }
 
     private static DailyMajlis CreateDailyMajlis(

@@ -19,6 +19,8 @@ internal sealed class ChallengeConfiguration : IEntityTypeConfiguration<Challeng
             .HasConversion(
                 type => EnumStorage.ToStorage(type),
                 value => EnumStorage.ToChallengeType(value));
+        builder.HasAlternateKey(challenge => new { challenge.Id, challenge.RevisionId })
+            .HasName("AK_Challenges_Id_RevisionId");
         builder.HasIndex(challenge => challenge.RevisionId).IsUnique();
 
         builder.HasMany(challenge => challenge.Options)
