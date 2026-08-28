@@ -50,6 +50,7 @@ public sealed class DailyMajlisServiceTests
         {
             revision.AddOptionTranslation(new ChallengeOptionTranslation(option.Id, "ar", "خيار"));
         }
+        revision.Submit(DateTimeOffset.UtcNow);
         var dailyMajlis = new DailyMajlis(
             Guid.Parse("20000000-0000-0000-0000-000000000001"),
             today,
@@ -76,6 +77,53 @@ public sealed class DailyMajlisServiceTests
         var serializedResponse = JsonSerializer.Serialize(result);
         Assert.DoesNotContain("correct", serializedResponse, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("explanation", serializedResponse, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task GetTodayAsync_WhenPublishedRevisionIsMutable_ReturnsUnavailable()
+    {
+        var revisionId = Guid.NewGuid();
+        var dailyMajlisId = Guid.NewGuid();
+        var challenge = new Challenge(
+            Guid.NewGuid(),
+            revisionId,
+            ChallengeType.MultipleChoice,
+            [
+                new ChallengeOption(Guid.NewGuid(), "A", true, 1),
+                new ChallengeOption(Guid.NewGuid(), "B", false, 2),
+            ]);
+        var revision = new DailyMajlisRevision(
+            revisionId,
+            dailyMajlisId,
+            1,
+            "hospitality",
+            ChallengeDifficulty.Easy,
+            CardType.Proverb,
+            "Verified source notes.",
+            null,
+            DateTimeOffset.UtcNow);
+        revision.SetChallenge(challenge);
+        revision.AddTranslation(new DailyMajlisTranslation(
+            revision.Id, "ar", "العنوان", "السؤال", "الشرح", "النقاش", "البطاقة"));
+        foreach (var option in challenge.Options)
+        {
+            revision.AddOptionTranslation(new ChallengeOptionTranslation(option.Id, "ar", "خيار"));
+        }
+        revision.Submit(DateTimeOffset.UtcNow);
+
+        var dailyMajlis = new DailyMajlis(
+            dailyMajlisId,
+            new DateOnly(2026, 8, 26),
+            DailyMajlisStatus.Published,
+            revision);
+        typeof(DailyMajlisRevision)
+            .GetProperty(nameof(DailyMajlisRevision.SubmittedAt))!
+            .SetValue(revision, null);
+        var service = new DailyMajlisService(
+            new StubDailyMajlisRepository(dailyMajlis),
+            new FixedTimeProvider(new DateTimeOffset(2026, 8, 26, 12, 0, 0, TimeSpan.Zero)));
+
+        Assert.Null(await service.GetTodayAsync());
     }
 
     private sealed class StubDailyMajlisRepository(DailyMajlis? dailyMajlis)

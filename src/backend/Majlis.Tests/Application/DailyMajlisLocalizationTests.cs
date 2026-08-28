@@ -61,6 +61,7 @@ public sealed class DailyMajlisLocalizationTests
             revision.AddOptionTranslation(new ChallengeOptionTranslation(option.Id, "ar", "خيار"));
             revision.AddOptionTranslation(new ChallengeOptionTranslation(option.Id, "en", "Option"));
         }
+        revision.Submit(DateTimeOffset.UtcNow);
 
         return revision;
     }

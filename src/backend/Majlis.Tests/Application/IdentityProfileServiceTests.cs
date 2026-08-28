@@ -14,7 +14,7 @@ public sealed class IdentityProfileServiceTests
     public async Task Bootstrap_WhenIdentityIsNew_CreatesPrivateProfileAndRequiredConsents()
     {
         var repository = new FakeUserAccountRepository();
-        var service = new IdentityProfileService(repository, new FixedTimeProvider(Now));
+        var service = CreateService(repository);
 
         var result = await service.BootstrapAsync(
             TestIdentity("new-user"),
@@ -32,7 +32,7 @@ public sealed class IdentityProfileServiceTests
     public async Task Bootstrap_WhenIdentityAlreadyExists_ReturnsSameUser()
     {
         var repository = new FakeUserAccountRepository();
-        var service = new IdentityProfileService(repository, new FixedTimeProvider(Now));
+        var service = CreateService(repository);
         var identity = TestIdentity("same-user");
 
         var first = await service.BootstrapAsync(
@@ -55,7 +55,7 @@ public sealed class IdentityProfileServiceTests
     public async Task Bootstrap_WhenUnderThirteen_RejectsWithoutPersistence()
     {
         var repository = new FakeUserAccountRepository();
-        var service = new IdentityProfileService(repository, new FixedTimeProvider(Now));
+        var service = CreateService(repository);
 
         var exception = await Assert.ThrowsAsync<IdentityProfileException>(() =>
             service.BootstrapAsync(
@@ -69,10 +69,31 @@ public sealed class IdentityProfileServiceTests
     }
 
     [Fact]
+    public async Task Bootstrap_WhenConsentVersionIsNotCurrent_RejectsWithoutPersistence()
+    {
+        var repository = new FakeUserAccountRepository();
+        var service = CreateService(repository);
+        var request = BootstrapRequest("Consent User", "18_plus") with
+        {
+            AcceptedTermsVersion = "fabricated",
+        };
+
+        var exception = await Assert.ThrowsAsync<IdentityProfileException>(() =>
+            service.BootstrapAsync(
+                TestIdentity("invalid-consent"),
+                request,
+                CancellationToken.None));
+
+        Assert.Equal("validation_failed", exception.Code);
+        Assert.Empty(repository.Users);
+        Assert.Equal(0, repository.SaveCount);
+    }
+
+    [Fact]
     public async Task RequestDeletion_RevokesTheCurrentCredential()
     {
         var repository = new FakeUserAccountRepository();
-        var service = new IdentityProfileService(repository, new FixedTimeProvider(Now));
+        var service = CreateService(repository);
         var identity = TestIdentity("delete-user");
         await service.BootstrapAsync(
             identity,
@@ -95,6 +116,11 @@ public sealed class IdentityProfileServiceTests
         "https://test.majlis.local",
         subject,
         Now.AddMinutes(-1));
+
+    private static IdentityProfileService CreateService(IUserAccountRepository repository) => new(
+        repository,
+        new RequiredConsentVersions("2026-08-26", "2026-08-26"),
+        new FixedTimeProvider(Now));
 
     private static BootstrapProfileRequest BootstrapRequest(string displayName, string ageBand) => new(
         displayName,

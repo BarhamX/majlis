@@ -8,6 +8,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton(new RequiredConsentVersions(
+    builder.Configuration["ConsentVersions:Terms"] ?? string.Empty,
+    builder.Configuration["ConsentVersions:Privacy"] ?? string.Empty));
 builder.Services.AddScoped<IDailyMajlisService, DailyMajlisService>();
 builder.Services.AddScoped<IIdentityProfileService, IdentityProfileService>();
 builder.Services.AddMajlisAuthentication(builder.Configuration, builder.Environment);

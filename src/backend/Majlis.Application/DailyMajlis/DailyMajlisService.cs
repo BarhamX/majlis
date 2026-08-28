@@ -24,7 +24,8 @@ public sealed class DailyMajlisService(
         var dailyMajlis = await repository.GetPublishedByDateAsync(today, cancellationToken);
         var revision = dailyMajlis?.PublishedRevision;
 
-        if (dailyMajlis is null || revision is null || !revision.IsCompleteForServing())
+        if (dailyMajlis is null || revision is null ||
+            !revision.IsImmutable || !revision.IsCompleteForServing())
         {
             return null;
         }

@@ -1,5 +1,6 @@
 using Majlis.Domain.DailyMajlis;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using DailyMajlisEntity = Majlis.Domain.DailyMajlis.DailyMajlis;
 
 namespace Majlis.Infrastructure.Persistence;
@@ -10,45 +11,79 @@ public sealed class DailyMajlisDatabaseInitializer(
 {
     private static readonly Guid SeedDailyMajlisId =
         Guid.Parse("20000000-0000-0000-0000-000000000001");
-    private static readonly Guid SeedChallengeId =
-        Guid.Parse("10000000-0000-0000-0000-000000000001");
-    private static readonly Guid LegacyReplacementChallengeId =
-        Guid.Parse("10000000-0000-0000-0000-000000000002");
-
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
         await dbContext.Database.MigrateAsync(cancellationToken);
 
         var today = DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime);
-        var officialContentExists = await dbContext.DailyMajlis.AnyAsync(
-            dailyMajlis =>
-                dailyMajlis.PublishDate == today &&
-                dailyMajlis.Status == DailyMajlisStatus.Published &&
-                dailyMajlis.PublishedRevisionId != null,
-            cancellationToken);
-        if (officialContentExists)
+        if (await OfficialContentExistsAsync(today, cancellationToken))
         {
             return;
         }
 
         var seedDailyMajlis = await dbContext.DailyMajlis
-            .SingleOrDefaultAsync(item => item.Id == SeedDailyMajlisId, cancellationToken);
+            .SingleOrDefaultAsync(
+                item => item.Id == SeedDailyMajlisId && item.PublishDate == today,
+                cancellationToken);
         if (seedDailyMajlis is not null)
         {
-            await CompleteLegacySeedAsync(seedDailyMajlis, today, cancellationToken);
+            await CompleteLegacySeedAsync(seedDailyMajlis, cancellationToken);
             return;
         }
 
+        await CreatePublishedSeedAsync(today, cancellationToken);
+    }
+
+    private async Task CreatePublishedSeedAsync(
+        DateOnly publishDate,
+        CancellationToken cancellationToken)
+    {
+        var dailyMajlisId = Guid.NewGuid();
         var revisionId = Guid.NewGuid();
         var challenge = CreateSeedChallenge(revisionId);
-        var revision = CreateSeedRevision(SeedDailyMajlisId, revisionId, challenge);
-        var dailyMajlis = new DailyMajlisEntity(
-            SeedDailyMajlisId,
-            today,
-            DailyMajlisStatus.Published,
-            revision);
+        var revision = CreateSeedRevision(dailyMajlisId, revisionId, challenge);
+        revision.Submit(timeProvider.GetUtcNow());
+        var dailyMajlis = new DailyMajlisEntity(dailyMajlisId, publishDate);
+        dailyMajlis.Publish(revision);
         dbContext.DailyMajlis.Add(dailyMajlis);
 
+        try
+        {
+            await SaveNewPublicationAsync(dailyMajlis, revision, cancellationToken);
+        }
+        catch (DbUpdateException exception) when (IsUniqueViolation(exception))
+        {
+            dbContext.ChangeTracker.Clear();
+            if (!await OfficialContentExistsAsync(publishDate, cancellationToken))
+            {
+                throw;
+            }
+        }
+    }
+
+    private async Task CompleteLegacySeedAsync(
+        DailyMajlisEntity seedDailyMajlis,
+        CancellationToken cancellationToken)
+    {
+        var revisionId = Guid.NewGuid();
+        var challenge = CreateSeedChallenge(revisionId);
+        var revisionNumber = (await dbContext.DailyMajlisRevisions
+            .Where(revision => revision.DailyMajlisId == SeedDailyMajlisId)
+            .Select(revision => (int?)revision.RevisionNumber)
+            .MaxAsync(cancellationToken) ?? 0) + 1;
+        var revision = CreateSeedRevision(SeedDailyMajlisId, revisionId, challenge, revisionNumber);
+        revision.Submit(timeProvider.GetUtcNow());
+
+        dbContext.DailyMajlisRevisions.Add(revision);
+        seedDailyMajlis.Publish(revision);
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task SaveNewPublicationAsync(
+        DailyMajlisEntity dailyMajlis,
+        DailyMajlisRevision revision,
+        CancellationToken cancellationToken)
+    {
         var publishedRevision = dbContext.Entry(dailyMajlis)
             .Reference(item => item.PublishedRevision);
         publishedRevision.CurrentValue = null;
@@ -59,33 +94,25 @@ public sealed class DailyMajlisDatabaseInitializer(
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        publishedRevision.CurrentValue = revision;
-        dbContext.Entry(dailyMajlis)
-            .Property(item => item.PublishedRevisionId)
-            .CurrentValue = revision.Id;
+        dailyMajlis.Publish(revision);
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
     }
 
-    private async Task CompleteLegacySeedAsync(
-        DailyMajlisEntity seedDailyMajlis,
-        DateOnly today,
-        CancellationToken cancellationToken)
-    {
-        var revisionId = Guid.NewGuid();
-        var challenge = CreateSeedChallenge(revisionId, LegacyReplacementChallengeId);
-        var revisionNumber = (await dbContext.DailyMajlisRevisions
-            .Where(revision => revision.DailyMajlisId == SeedDailyMajlisId)
-            .Select(revision => (int?)revision.RevisionNumber)
-            .MaxAsync(cancellationToken) ?? 0) + 1;
-        var revision = CreateSeedRevision(SeedDailyMajlisId, revisionId, challenge, revisionNumber);
+    private Task<bool> OfficialContentExistsAsync(
+        DateOnly publishDate,
+        CancellationToken cancellationToken) => dbContext.DailyMajlis.AnyAsync(
+        dailyMajlis =>
+            dailyMajlis.PublishDate == publishDate &&
+            (dailyMajlis.Status == DailyMajlisStatus.Scheduled ||
+             dailyMajlis.Status == DailyMajlisStatus.Published),
+        cancellationToken);
 
-        dbContext.DailyMajlisRevisions.Add(revision);
-        dbContext.Entry(seedDailyMajlis).Property(item => item.PublishDate).CurrentValue = today;
-        dbContext.Entry(seedDailyMajlis).Property(item => item.Status).CurrentValue = DailyMajlisStatus.Published;
-        dbContext.Entry(seedDailyMajlis).Property(item => item.PublishedRevisionId).CurrentValue = revision.Id;
-        await dbContext.SaveChangesAsync(cancellationToken);
-    }
+    private static bool IsUniqueViolation(DbUpdateException exception) =>
+        exception.InnerException is PostgresException
+        {
+            SqlState: PostgresErrorCodes.UniqueViolation,
+        };
 
     private DailyMajlisRevision CreateSeedRevision(
         Guid dailyMajlisId,
@@ -128,10 +155,10 @@ public sealed class DailyMajlisDatabaseInitializer(
         return revision;
     }
 
-    private static Challenge CreateSeedChallenge(Guid revisionId, Guid? challengeId = null)
+    private static Challenge CreateSeedChallenge(Guid revisionId)
     {
         return new Challenge(
-            challengeId ?? SeedChallengeId,
+            Guid.NewGuid(),
             revisionId,
             ChallengeType.MultipleChoice,
             [

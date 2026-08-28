@@ -2,26 +2,35 @@
 
 ## Current Status
 
-Majlis remains governed as a complete Production V1 Android application. The backend now has the local identity/profile foundation needed for game development: persisted users and external identities, private profiles/preferences/consents, deletion requests, a signed Development/Testing issuer, self-service profile endpoints, and completed-profile authorization for Daily Majlis. Google, Apple, Meta, and Snapchat are the selected production providers, but their credentials/callbacks and all hosting/domain logistics remain deferred until `Game Ready`.
+Majlis remains governed as a complete Production V1 Android application. The backend now has the local identity/profile foundation needed for game development plus a persisted, localized Daily Majlis checkpoint with immutable published revisions, history-safe UTC rollover, scheduled-content precedence, and concurrency-safe Development/Testing initialization. Google, Apple, Meta, and Snapchat are the selected production providers, but their credentials/callbacks and all hosting/domain logistics remain deferred until `Game Ready`.
 
 ## Work in Progress
 
-### 2026-08-28 - Localized Revision Integration Repair
+### 2026-08-28 - Daily Majlis Pre-Merge Review Corrections
 
 - Recovered the Docker Desktop Linux engine and reran the previously blocked PostgreSQL suite.
 - Fixed clean Development/Testing initialization so the new Daily Majlis aggregate and revision are saved before the publication pointer is assigned, with both saves committed in one transaction.
+- Preserved prior published days during UTC rollover, gave scheduled or published editorial content precedence over seed content, and made concurrent startup converge on one official row.
+- Enforced domain publication through complete submitted revisions, rejected mutable or incomplete revisions in the serving path, and loaded persisted region provenance for API responses.
+- Enforced server-owned terms and privacy versions before any profile bootstrap persistence.
+- Added a forward-only migration boundary so a downgrade cannot reach the historical destructive localized-content rollback; recovery is by compatible backup restore or reviewed forward migration.
 - Updated integration-test setup for the localized revision ownership model so unavailable-content and duplicate-publish-date tests exercise their intended API/database behavior.
-- This repair makes the current checkpoint testable and green; the broader localized-revision slice remains incomplete and no task checkbox was closed.
+- This repair makes the current checkpoint testable and mergeable; the broader localized-revision slice remains incomplete and no specification task checkbox was closed.
 
 ### Files Changed
 
-- `src/backend/Majlis.Infrastructure/Persistence/DailyMajlisDatabaseInitializer.cs`
-- `src/backend/Majlis.Tests/Integration/DailyMajlisApiTests.cs`
-- `docs/ai-context/HANDOFF.md`
+- Daily content domain/application/persistence: `DailyMajlis.cs`, `DailyMajlisService.cs`, `EfDailyMajlisRepository.cs`, and `DailyMajlisDatabaseInitializer.cs`.
+- Identity consent enforcement: `RequiredConsentVersions.cs`, `IdentityProfileService.cs`, API composition/configuration, and their unit/PostgreSQL tests.
+- Migration safety: `20260828064802_EstablishForwardOnlyLocalizedContentBoundary` plus its designer and the database-schema recovery guidance.
+- Daily Majlis domain/application/PostgreSQL tests, this handoff, the pre-merge implementation plan, and `MANIFEST.md`.
 
 ### Decisions Made
 
 - Kept `PublishedRevisionId` nullable during the first persistence phase, then assigned it before committing the same database transaction, avoiding the EF insert cycle without weakening atomic publication.
+- Treated any current-day scheduled or published row as authoritative and never moved an earlier seed aggregate to a later date.
+- Required publication revisions to belong to their aggregate, be submitted/immutable, and contain complete Arabic serving content.
+- Stored required consent versions in server configuration and compared them exactly before repository lookup or user construction.
+- Preserved applied migration history by adding an explicit forward-only boundary rather than editing the earlier localized-content migration.
 - Represented unavailable content in the API integration test by unpublishing the current aggregate instead of deleting revision-owned content.
 - Kept the duplicate-date test focused on the partial unique index by omitting the unrelated publication pointer from its candidate insert.
 
@@ -30,22 +39,27 @@ Majlis remains governed as a complete Production V1 Android application. The bac
 - Red phase: the recovered PostgreSQL suite failed 11 integration tests on the EF `DailyMajlis`/`DailyMajlisRevision` publication-pointer cycle.
 - `dotnet test src/backend/Majlis.Tests/Majlis.Tests.csproj --configuration Release --no-restore --filter "FullyQualifiedName~DailyMajlisApiTests.Initializer_WhenRunMoreThanOnce_RemainsIdempotent"` - passed: 1 test, 0 failed after the transactional fix.
 - A subsequent full run exposed two stale integration-test setup assumptions; their focused rerun passed: 2 tests, 0 failed.
-- `dotnet test src/backend/Majlis.sln --configuration Release --no-restore` - passed: 52 tests, 0 failed, 0 skipped against PostgreSQL 17.
+- Red phase: publication/rollover tests did not compile before the explicit schedule/publish API existed; focused domain and PostgreSQL verification then passed: 11 tests, 0 failed.
+- Red phase: fabricated consent versions were accepted and the PostgreSQL API returned Created; focused identity verification then passed: 8 tests, 0 failed.
+- Red phase: the forward-only boundary test failed because the named migration did not exist; its focused PostgreSQL rerun passed: 1 test, 0 failed.
+- `dotnet test src/backend/Majlis.sln --configuration Release --no-restore` - passed: 61 tests, 0 failed, 0 skipped against PostgreSQL 17.
+- Final isolated rerun after Docker Desktop storage stalls: `Category=Integration` passed 16 tests and `Category!=Integration` passed 45 tests, for the same complete 61-test coverage with 0 failures and 0 skipped.
 - `dotnet format src/backend/Majlis.sln --verify-no-changes --no-restore` - passed.
 - `dotnet tool restore` - restored repository-pinned `dotnet-ef` 10.0.11.
 - `dotnet tool run dotnet-ef migrations has-pending-model-changes ... --configuration Release --no-build` - passed with no pending model changes.
 - `dotnet tool run dotnet-ef migrations script --idempotent ... --configuration Release --no-build` - passed.
-- `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-docs.ps1` - passed: 60 Markdown files and 147 requirement ids.
+- `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-docs.ps1` - passed: 61 Markdown files and 147 requirement ids.
 - `git diff --check` - passed; only expected line-ending conversion warnings were printed.
 
 ### Known Blockers
 
-- The localized revision slice still needs scheduled-content precedence, repeated-day rollover, concurrency, submitted-revision immutability, locale edge cases, and final legacy-migration/provenance review before its task checkbox can close.
-- Flutter, attempts, XP, and streak work remain outside this repair and are still required for `Game Ready`.
+- The localized revision slice still needs its remaining locale edge cases and content-management/import workflow before its specification task can close.
+- Flutter, attempts, XP, streaks, and the rest of the complete Production V1 remain outside this checkpoint and are still required for `Game Ready`.
+- Production provider credentials, hosting, domains, verified links, and signing remain intentionally deferred until `Game Ready`.
 
 ### Next Recommended Task
 
-Add the remaining initializer, publication, migration, and locale edge-case tests test-first; then complete the localized-revision slice before starting persisted attempts, XP, and streaks.
+Complete the remaining locale/content-management cases test-first, then implement persisted attempts, scoring, XP, and streaks as the next end-to-end Daily Majlis slice.
 
 ### 2026-08-27 - Localized Daily Majlis Revision Checkpoint
 

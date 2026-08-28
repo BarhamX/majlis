@@ -77,6 +77,33 @@ public sealed class IdentityProfilePostgreSqlTests(PostgreSqlFixture postgreSql)
         Assert.Equal(1, await dbContext.UserIdentities.CountAsync());
     }
 
+    [Fact]
+    public async Task Bootstrap_WhenConsentVersionIsNotCurrent_PersistsNothing()
+    {
+        using var client = await CreateTokenClientAsync("invalid-consent-version");
+
+        var response = await client.PostAsJsonAsync(
+            "/api/v1/me/bootstrap",
+            new
+            {
+                displayName = "Consent User",
+                ageBand = "18_plus",
+                countryCode = "QA",
+                regionCode = "gulf",
+                dialectCode = "qa",
+                locale = "ar",
+                acceptedTermsVersion = "fabricated",
+                acceptedPrivacyVersion = "2026-08-26",
+            });
+
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
+
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<MajlisDbContext>();
+        Assert.Equal(0, await dbContext.Users.CountAsync());
+        Assert.Equal(0, await dbContext.UserConsents.CountAsync());
+    }
+
     private HttpClient CreateClient() => _factory.CreateClient(
         new WebApplicationFactoryClientOptions
         {

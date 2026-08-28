@@ -4,6 +4,8 @@
 
 This is the target logical PostgreSQL schema for Production V1. The committed initial migration currently contains only `DailyMajlis`, `Challenges`, and `ChallengeOptions`; its nullable `Challenges.SourceNotes` and non-localized text are known implementation gaps. Do not edit an applied migration. Add explicit reviewed forward migrations that preserve existing development data or document its reset.
 
+Localized immutable content revisions establish an explicit forward-only migration boundary. Downgrading across that boundary is rejected before schema mutation because reconstructing the legacy non-localized model would discard revision history and translations. Recovery across the boundary must restore a compatible pre-migration backup or apply a reviewed forward recovery migration; direct EF downgrade is not a supported rollback path.
+
 All ids are UUIDs. All instants are `timestamptz` in UTC. Content days are PostgreSQL `date` values interpreted as UTC. User-visible text is Unicode `text`. Enum-like text values use named check constraints.
 
 ## Identity and Profile

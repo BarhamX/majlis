@@ -42,6 +42,29 @@ public sealed class DailyMajlisRevisionTests
             method => method.Name == "AddTranslation");
     }
 
+    [Fact]
+    public void Publish_WhenRevisionIsMutable_RejectsPublication()
+    {
+        var revision = CreateCompleteRevision();
+        var dailyMajlis = new DailyMajlis(revision.DailyMajlisId, new DateOnly(2026, 8, 26));
+
+        Assert.Throws<InvalidOperationException>(() => dailyMajlis.Publish(revision));
+    }
+
+    [Fact]
+    public void Publish_WhenRevisionIsCompleteAndSubmitted_SetsPublishedRevision()
+    {
+        var revision = CreateCompleteRevision();
+        revision.Submit(new DateTimeOffset(2026, 8, 26, 10, 0, 0, TimeSpan.Zero));
+        var dailyMajlis = new DailyMajlis(revision.DailyMajlisId, new DateOnly(2026, 8, 26));
+
+        dailyMajlis.Publish(revision);
+
+        Assert.Equal(DailyMajlisStatus.Published, dailyMajlis.Status);
+        Assert.Equal(revision.Id, dailyMajlis.PublishedRevisionId);
+        Assert.Same(revision, dailyMajlis.PublishedRevision);
+    }
+
     private static DailyMajlisRevision CreateCompleteRevision()
     {
         var revisionId = Guid.NewGuid();

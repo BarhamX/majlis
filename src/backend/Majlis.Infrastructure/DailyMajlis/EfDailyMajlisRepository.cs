@@ -20,6 +20,8 @@ public sealed class EfDailyMajlisRepository(MajlisDbContext dbContext) : IDailyM
             .Include(dailyMajlis => dailyMajlis.PublishedRevision)
             .ThenInclude(revision => revision!.Translations)
             .Include(dailyMajlis => dailyMajlis.PublishedRevision)
+            .ThenInclude(revision => revision!.Regions)
+            .Include(dailyMajlis => dailyMajlis.PublishedRevision)
             .ThenInclude(revision => revision!.Challenge)
             .ThenInclude(challenge => challenge!.Options)
             .ThenInclude(option => option.Translations)

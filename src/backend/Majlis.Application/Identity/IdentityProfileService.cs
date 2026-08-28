@@ -6,6 +6,7 @@ namespace Majlis.Application.Identity;
 
 public sealed class IdentityProfileService(
     IUserAccountRepository userAccountRepository,
+    RequiredConsentVersions requiredConsentVersions,
     TimeProvider timeProvider) : IIdentityProfileService
 {
     public async Task<(UserProfileResponse Profile, bool Created)> BootstrapAsync(
@@ -14,6 +15,7 @@ public sealed class IdentityProfileService(
         CancellationToken cancellationToken)
     {
         var ageBand = ParseAgeBand(request.AgeBand);
+        ValidateConsentVersions(request);
 
         var now = timeProvider.GetUtcNow();
         var user = await userAccountRepository.FindByIdentityAsync(
@@ -200,6 +202,23 @@ public sealed class IdentityProfileService(
             throw new IdentityProfileException(
                 "authentication_required",
                 "The Majlis session is no longer active.");
+        }
+    }
+
+    private void ValidateConsentVersions(BootstrapProfileRequest request)
+    {
+        if (!string.Equals(
+                request.AcceptedTermsVersion,
+                requiredConsentVersions.Terms,
+                StringComparison.Ordinal) ||
+            !string.Equals(
+                request.AcceptedPrivacyVersion,
+                requiredConsentVersions.Privacy,
+                StringComparison.Ordinal))
+        {
+            throw new IdentityProfileException(
+                "validation_failed",
+                "Accept the current terms and privacy versions.");
         }
     }
 

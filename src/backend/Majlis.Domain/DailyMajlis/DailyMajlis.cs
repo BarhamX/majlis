@@ -6,28 +6,59 @@ public sealed class DailyMajlis
     {
     }
 
-    public DailyMajlis(
-        Guid id,
-        DateOnly publishDate,
-        DailyMajlisStatus status,
-        DailyMajlisRevision publishedRevision)
+    public DailyMajlis(Guid id, DateOnly publishDate)
     {
         if (id == Guid.Empty)
         {
             throw new ArgumentException("A Daily Majlis id is required.", nameof(id));
         }
 
-        ArgumentNullException.ThrowIfNull(publishedRevision);
-        if (publishedRevision.DailyMajlisId != id)
-        {
-            throw new ArgumentException("Revision belongs to another Daily Majlis.", nameof(publishedRevision));
-        }
-
         Id = id;
         PublishDate = publishDate;
-        Status = status;
-        PublishedRevision = publishedRevision;
-        PublishedRevisionId = publishedRevision.Id;
+        Status = DailyMajlisStatus.Draft;
+    }
+
+    public DailyMajlis(
+        Guid id,
+        DateOnly publishDate,
+        DailyMajlisStatus status,
+        DailyMajlisRevision publishedRevision)
+        : this(id, publishDate)
+    {
+        switch (status)
+        {
+            case DailyMajlisStatus.Scheduled:
+                Schedule(publishedRevision);
+                break;
+            case DailyMajlisStatus.Published:
+                Publish(publishedRevision);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(
+                    nameof(status),
+                    status,
+                    "A revision may be assigned only when scheduling or publishing a Daily Majlis.");
+        }
+    }
+
+    public void Schedule(DailyMajlisRevision revision)
+    {
+        ValidatePublicationRevision(revision);
+        Status = DailyMajlisStatus.Scheduled;
+        ScheduledRevision = revision;
+        ScheduledRevisionId = revision.Id;
+        PublishedRevision = null;
+        PublishedRevisionId = null;
+    }
+
+    public void Publish(DailyMajlisRevision revision)
+    {
+        ValidatePublicationRevision(revision);
+        Status = DailyMajlisStatus.Published;
+        ScheduledRevision = null;
+        ScheduledRevisionId = null;
+        PublishedRevision = revision;
+        PublishedRevisionId = revision.Id;
     }
 
     public Guid Id { get; private set; }
@@ -43,6 +74,21 @@ public sealed class DailyMajlis
     public DailyMajlisRevision? ScheduledRevision { get; private set; }
 
     public DailyMajlisRevision? PublishedRevision { get; private set; }
+
+    private void ValidatePublicationRevision(DailyMajlisRevision revision)
+    {
+        ArgumentNullException.ThrowIfNull(revision);
+        if (revision.DailyMajlisId != Id)
+        {
+            throw new ArgumentException("Revision belongs to another Daily Majlis.", nameof(revision));
+        }
+
+        if (!revision.IsImmutable || !revision.IsCompleteForServing())
+        {
+            throw new InvalidOperationException(
+                "Only a complete submitted revision may be scheduled or published.");
+        }
+    }
 }
 
 public enum DailyMajlisStatus

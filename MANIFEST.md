@@ -37,6 +37,7 @@ This manifest lists version-controlled and pending source files. Run `scripts/va
 - `docs/prompts/PROMPT_PACK.md`
 - `docs/quality/requirements-to-tests.md`
 - `docs/superpowers/plans/2026-08-26-majlis-foundation.md`
+- `docs/superpowers/plans/2026-08-28-pre-merge-review-fixes.md`
 - `MANIFEST.md`
 - `README.md`
 - `scripts/validate-docs.ps1`
@@ -95,6 +96,7 @@ This manifest lists version-controlled and pending source files. Run `scripts/va
 - `src/backend/Majlis.Application/Identity/IdentityProfileService.cs`
 - `src/backend/Majlis.Application/Identity/IIdentityProfileService.cs`
 - `src/backend/Majlis.Application/Identity/IUserAccountRepository.cs`
+- `src/backend/Majlis.Application/Identity/RequiredConsentVersions.cs`
 - `src/backend/Majlis.Application/Majlis.Application.csproj`
 - `src/backend/Majlis.Contracts/DailyMajlis/DailyMajlisResponse.cs`
 - `src/backend/Majlis.Contracts/Identity/IdentityProfileContracts.cs`
@@ -144,6 +146,8 @@ This manifest lists version-controlled and pending source files. Run `scripts/va
 - `src/backend/Majlis.Infrastructure/Persistence/Migrations/20260827085437_AddLocalizedDailyMajlisRevisions.cs`
 - `src/backend/Majlis.Infrastructure/Persistence/Migrations/20260827085653_AddChallengeOptionOwnershipIndexes.Designer.cs`
 - `src/backend/Majlis.Infrastructure/Persistence/Migrations/20260827085653_AddChallengeOptionOwnershipIndexes.cs`
+- `src/backend/Majlis.Infrastructure/Persistence/Migrations/20260828064802_EstablishForwardOnlyLocalizedContentBoundary.Designer.cs`
+- `src/backend/Majlis.Infrastructure/Persistence/Migrations/20260828064802_EstablishForwardOnlyLocalizedContentBoundary.cs`
 - `src/backend/Majlis.Infrastructure/Persistence/Migrations/MajlisDbContextModelSnapshot.cs`
 - `src/backend/Majlis.sln`
 - `src/backend/Majlis.Tests/Application/DailyMajlisServiceTests.cs`
