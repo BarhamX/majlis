@@ -18,6 +18,8 @@ internal sealed class ChallengeOptionConfiguration : IEntityTypeConfiguration<Ch
         builder.Property(option => option.IsCorrect).IsRequired();
         builder.Property(option => option.SortOrder).IsRequired();
         builder.Property<Guid>("ChallengeId");
+        builder.HasAlternateKey("Id", "ChallengeId")
+            .HasName("AK_ChallengeOptions_Id_ChallengeId");
         builder.HasMany(option => option.Translations)
             .WithOne()
             .HasForeignKey(translation => translation.OptionId)

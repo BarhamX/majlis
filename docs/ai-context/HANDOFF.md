@@ -6,6 +6,45 @@ Majlis remains governed as a complete Production V1 Android application. The bac
 
 ## Work in Progress
 
+### 2026-08-28 - Daily-Loop Domain and Persistence Foundation
+
+- Implemented Task 3 of the persisted backend daily loop test-first: exact attempt scoring, published-content-day streak rules, immutable attempt/ledger/idempotency records, the single mutable `UserProgress` aggregate, EF ownership/constraint mappings, and a forward migration.
+- Added PostgreSQL fresh-database and upgrade-from-current migration tests, but did not mark Spec 001 tasks or traceability evidence complete because local Docker remains unhealthy and hosted execution is still required.
+
+### Files Changed
+
+- `src/backend/Majlis.Domain/Progress/` - exact scoring, `UserProgress`, `UserAttempt`, `XpLedgerEntry`, and `IdempotencyRecord`.
+- `src/backend/Majlis.Infrastructure/Persistence/` - DbSets, EF configurations, composite ownership keys, immutable after-save behavior, named checks/indexes/foreign keys, model snapshot, and migration `20260828114928_AddDailyLoopPersistence`.
+- `src/backend/Majlis.Tests/` - scoring/streak boundary tests, persistence-model tests, and PostgreSQL fresh/upgrade migration tests.
+- `MANIFEST.md` - registered all new Task 3 source, configuration, migration, and test files.
+- `docs/ai-context/HANDOFF.md` - this task handoff.
+
+### Decisions Made
+
+- Kept `UserProgress` as the sole authority for lifetime XP, current streak, longest streak, last completed publish date, and its update timestamp; no `UserStreak` authority was added.
+- Calculated streak continuity from intervening published `PublishDate` values: calendar gaps without publication are exempt, an intervening publication resets the next completion, and a repeated completion date is a complete no-op.
+- Derived and constrained attempt XP so completion is always 10 and correctness is 5 only for a correct result; immutable attempts store the accepted locale and exact post-award XP/streak snapshots.
+- Used restrictive content ownership foreign keys so accepted history cannot be removed through content deletion, while user-owned attempt/progress/idempotency data remains cascade-purgeable for account deletion.
+
+### Tests and Checks Run
+
+- RED: `dotnet test src/backend/Majlis.Tests/Majlis.Tests.csproj --configuration Release --no-restore --filter "FullyQualifiedName~XpAwardTests|FullyQualifiedName~UserProgressServiceTests|FullyQualifiedName~DailyLoopPersistenceModelTests"` failed with CS0234/CS0246 because the Progress domain types did not exist.
+- GREEN: the same focused scoring/streak/model filter passed 12 tests, 0 failed.
+- `dotnet test src/backend/Majlis.sln --configuration Release --no-restore --filter "FullyQualifiedName!~Majlis.Tests.Integration"` - passed: 46 tests, 0 failed, 0 skipped.
+- `dotnet build src/backend/Majlis.sln --configuration Release --no-restore` - passed with 0 warnings and 0 errors.
+- Repository-pinned `dotnet-ef` 10.0.11 generated `20260828114928_AddDailyLoopPersistence`; `migrations has-pending-model-changes` passed and the idempotent script contained the new tables, exact checks, ownership constraints, and ordered history index.
+- Scoped `dotnet format --verify-no-changes` for all Task 3 C# files passed. Repository-wide format verification remains blocked by the existing CRLF/LF baseline in unrelated files.
+- `git diff --check` passed; only expected line-ending conversion warnings were printed.
+
+### Known Blockers
+
+- `DailyLoopMigrationTests` fresh-database and upgrade-from-current cases were authored and compile, but were not run locally: localhost PostgreSQL refused connections during EF migration scaffold cleanup and repeated `docker info` checks did not return a healthy engine response. The controller must run the hosted PostgreSQL CI before relying on runtime migration evidence.
+- Transactional submission, API/idempotency replay, authorization, concurrency, history, result retrieval, and rate limiting remain Task 4/5 work; no Spec 001 task or traceability status was changed in this checkpoint.
+
+### Next Recommended Task
+
+Run the Task 3 commit through hosted Backend CI, including the new fresh/upgrade migration tests. If green, implement Task 4 test-first: the transactional attempt/ledger/progress/idempotency application flow and owned result/history/progress APIs.
+
 ### 2026-08-28 - Persisted Daily-Loop Contract and Traceability Clarification
 
 - Clarified the planned backend-only daily-loop contract before feature code; Flutter, admin UI, share rendering, and deep-link behavior remain out of scope for this task.
