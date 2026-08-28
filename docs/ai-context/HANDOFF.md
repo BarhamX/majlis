@@ -6,6 +6,41 @@ Majlis remains governed as a complete Production V1 Android application. The bac
 
 ## Work in Progress
 
+### 2026-08-28 - Backend CI and Identity PostgreSQL Baseline
+
+- Added GitHub Actions backend CI for pull requests and pushes to `main` and `feat/**`.
+- The Ubuntu runner restores and builds the Release solution, verifies its hosted Linux Docker engine, runs the three `IdentityProfilePostgreSqlTests` first, then runs the complete backend Release suite.
+- CI writes focused and full-suite TRX results and uploads them only when a workflow step fails; repository permissions are read-only.
+
+### Files Changed
+
+- `.github/workflows/backend-ci.yml` - backend CI workflow.
+- `docs/superpowers/plans/2026-08-28-persist-backend-daily-loop.md` - implementation plan recorded for the persisted daily-loop branch.
+- `docs/ai-context/HANDOFF.md` - this task handoff.
+
+### Decisions Made
+
+- Relied on GitHub-hosted Ubuntu’s default Docker endpoint for Testcontainers and verified it with `docker info` before PostgreSQL integration execution.
+- Kept test-result artifacts failure-only and emitted distinct named TRX files under `TestResults`.
+
+### Tests and Checks Run
+
+- Workflow structural/content validation passed, including triggers, permissions, action versions, .NET version, focused-before-full execution order, TRX output paths, and failure-only artifact condition.
+- `npx --yes prettier@3.7.4 --check .github/workflows/backend-ci.yml` - passed.
+- `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-docs.ps1` - passed: 64 Markdown files and 147 requirement ids.
+- `dotnet build src/backend/Majlis.sln --configuration Release --no-restore` - passed: 0 warnings and 0 errors.
+- `git diff --check` - passed.
+- `docker info` - failed against the local Docker Desktop Linux engine with HTTP 500; no local PostgreSQL test run was attempted.
+- GitHub-hosted execution of the PostgreSQL identity baseline remains required before Task 2 because local Docker Desktop is unhealthy.
+
+### Known Blockers
+
+- Local Docker Desktop remains unhealthy, so the PostgreSQL baseline cannot be reproven locally; the new GitHub Actions workflow must pass before Task 2 starts.
+
+### Next Recommended Task
+
+Wait for the `Backend CI` workflow to pass its identity PostgreSQL baseline, then begin Task 2 contract and traceability clarification.
+
 ### 2026-08-28 - Daily Majlis Pre-Merge Review Corrections
 
 - Recovered the Docker Desktop Linux engine and reran the previously blocked PostgreSQL suite.

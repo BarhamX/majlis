@@ -7,6 +7,7 @@ This manifest lists version-controlled and pending source files. Run `scripts/va
 - `.gitattributes`
 - `.githooks/pre-commit`
 - `.github/copilot-instructions.md`
+- `.github/workflows/backend-ci.yml`
 - `.gitignore`
 - `.specify/memory/constitution.md`
 - `AGENTS.md`
@@ -38,6 +39,7 @@ This manifest lists version-controlled and pending source files. Run `scripts/va
 - `docs/quality/requirements-to-tests.md`
 - `docs/superpowers/plans/2026-08-26-majlis-foundation.md`
 - `docs/superpowers/plans/2026-08-28-pre-merge-review-fixes.md`
+- `docs/superpowers/plans/2026-08-28-persist-backend-daily-loop.md`
 - `MANIFEST.md`
 - `README.md`
 - `scripts/validate-docs.ps1`
