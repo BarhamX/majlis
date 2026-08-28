@@ -6,6 +6,36 @@ Majlis remains governed as a complete Production V1 Android application. The bac
 
 ## Work in Progress
 
+### 2026-08-28 - Persisted Daily-Loop Contract and Traceability Clarification
+
+- Clarified the planned backend-only daily-loop contract before feature code; Flutter, admin UI, share rendering, and deep-link behavior remain out of scope for this task.
+
+### Files Changed
+
+- `specs/001-playable-daily-majlis/spec.md` and `tasks.md` - current-published-only submission, immutable result behavior, stored snapshots, and `UserProgress` wording.
+- `docs/architecture/API_CONTRACTS.md` and `DATABASE_SCHEMA.md` - stored result locale/snapshot fields, non-enumerating reads, stable cursor behavior, and immutable attempt semantics.
+- `docs/quality/requirements-to-tests.md` - more precise planned ATT/PROG evidence; no evidence status changed.
+- `docs/ai-context/HANDOFF.md` - this task handoff.
+
+### Decisions Made
+
+- `UserProgress` remains the single authority for lifetime XP, current streak, longest streak, and last completed publish date; the stale `UserStreak` checklist item was reconciled rather than duplicated.
+- New attempts are limited to the current UTC-date, currently `published` Daily Majlis; already accepted owned results remain immutable and retrievable after correction or unpublishing.
+- Result retrieval replays the accepted result's stored BCP 47 locale, immutable source revision, and exact post-award lifetime-XP/current-streak/longest-streak snapshots.
+- Attempt history uses newest-first opaque keyset cursors with `(AttemptedAt, Id)` as the stable boundary; missing and non-owned attempt reads share `404 attempt_not_found`.
+
+### Tests and Checks Run
+
+- Documentation validation and diff checks are required for this documentation-only task; no executable feature tests were added or claimed.
+
+### Known Blockers
+
+- The persisted attempts/XP/streak implementation and its executable evidence remain planned; all affected traceability rows remain `Planned`.
+
+### Next Recommended Task
+
+Implement Task 3 test-first: domain rules, `UserAttempt`, `XpLedgerEntry`, `UserProgress`, `IdempotencyRecord`, and an explicit forward migration.
+
 ### 2026-08-28 - Backend CI and Identity PostgreSQL Baseline
 
 - Added GitHub Actions backend CI for pull requests and pushes to `main` and `feat/**`.

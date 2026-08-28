@@ -14,21 +14,21 @@
 - [x] Create `Challenge` entity.
 - [x] Create `ChallengeOption` entity.
 - [ ] Create `UserAttempt` entity.
-- [ ] Create `UserStreak` entity.
+- [ ] Create the `UserProgress` aggregate for lifetime XP, current streak, longest streak, and last completed publish date; do not create a separate `UserStreak` entity.
 - [ ] Create immutable XP ledger entity.
 - [x] Add domain rule: exactly one correct option per multiple-choice challenge.
-- [ ] Add domain rule: one scored attempt per user per challenge.
+- [ ] Add domain rule: one scored attempt per user per Daily Majlis, accepted only for the current UTC-date `published` challenge.
 
 ## Backend Use Cases
 
 - [x] Implement query: get today's Daily Majlis.
-- [ ] Implement command: submit challenge answer.
+- [ ] Implement command: submit a challenge answer only for the current UTC-date `published` challenge.
 - [ ] Implement scoring service.
-- [ ] Implement streak service.
+- [ ] Implement streak updates through the single `UserProgress` aggregate.
 - [ ] Implement duplicate attempt handling.
 - [ ] Implement idempotency-key replay and concurrent submission handling.
 - [ ] Implement UTC published-content-day streak calculation.
-- [ ] Implement own attempt history.
+- [ ] Implement owned attempt result retrieval and newest-first opaque-cursor attempt history.
 - [ ] Add spoiler-safe share summary generation.
 
 ## Backend API
@@ -49,7 +49,8 @@
 - [ ] Test missing unpublished content day does not reset streak.
 - [ ] Test exact 10/15 XP awards and immutable ledger uniqueness.
 - [ ] Test idempotency-key mismatch and concurrent requests.
-- [ ] Test attempt ownership and result-revision preservation.
+- [ ] Test historical, future, superseded-correction, scheduled, draft, and unpublished challenges cannot receive a new attempt.
+- [ ] Test stable `attempt_not_found` ownership non-enumeration, opaque-cursor stability, stored result locale/snapshots, and result-revision preservation after correction/unpublishing.
 - [x] Test today's endpoint hides correct answer.
 
 ## Flutter Foundation

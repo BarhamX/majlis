@@ -184,7 +184,7 @@ Publication transition rules, enforced transactionally in Domain/Application wit
 - `SourceNotes` is non-empty.
 - The latest review is approved by someone other than `CreatedByUserId`.
 - `ScheduledRevisionId` and `PublishedRevisionId` belong to the same Daily Majlis.
-- A correction creates a new revision; attempts retain their original `ContentRevisionId`.
+- A submitted revision is immutable. A correction creates a new immutable revision; attempts retain their original `ContentRevisionId` and are not rewritten when content is corrected or unpublished.
 
 ## Attempts, XP, and Streaks
 
@@ -199,10 +199,15 @@ UserAttempts
 - IsCorrect boolean not null
 - CompletionXp int not null -- 10
 - CorrectnessXp int not null -- 0 or 5
+- ResultLocale text not null -- negotiated BCP 47 locale of the accepted result
+- LifetimeXpAfter bigint not null -- exact post-award snapshot
+- CurrentStreakAfter int not null -- exact post-award snapshot
+- LongestStreakAfter int not null -- exact post-award snapshot
 - AttemptedAt timestamptz not null
 unique (UserId, DailyMajlisId)
 foreign key (ChallengeId, ContentRevisionId) references Challenges(Id, RevisionId)
 foreign key (SelectedOptionId, ChallengeId) references ChallengeOptions(Id, ChallengeId)
+check (CompletionXp = 10 and CorrectnessXp in (0, 5) and LifetimeXpAfter >= 0 and CurrentStreakAfter >= 0 and LongestStreakAfter >= CurrentStreakAfter)
 
 XpLedger
 - Id uuid primary key
@@ -233,7 +238,7 @@ IdempotencyRecords
 primary key (UserId, Scope, IdempotencyKey)
 ```
 
-Attempt, XP-ledger, and progress mutations occur in one transaction. Weekly leaderboard totals are derived from `XpLedger.OccurredAt`; an indexed/materialized projection may be added without becoming a second scoring authority.
+`UserAttempts` are immutable after insertion. New attempt creation requires the challenge to belong to the current UTC-date `published` Daily Majlis; correction or unpublishing never rewrites or deletes an accepted attempt, its stored revision/locale/snapshots, its ledger row, or its progress effect. Attempt, XP-ledger, and `UserProgress` mutations occur in one transaction. `UserProgress` is the sole persistence authority for lifetime XP and streak state; no separate `UserStreak` table or aggregate is permitted. Weekly leaderboard totals are derived from `XpLedger.OccurredAt`; an indexed/materialized projection may be added without becoming a second scoring authority.
 
 ## Discussion and Safety
 
@@ -351,7 +356,7 @@ The outbox accepts only events/fields allowlisted by Spec 009. It must not conta
 
 - `UserIdentities(Issuer, Subject)` unique and `UserIdentities(UserId, Provider)` unique.
 - `DailyMajlis(PublishDate)` unique partial index for `scheduled|published`.
-- `UserAttempts(UserId, AttemptedAt desc)` and unique `(UserId, DailyMajlisId)`.
+- `UserAttempts(UserId, AttemptedAt desc, Id desc)` for stable newest-first keyset history pagination, and unique `(UserId, DailyMajlisId)`.
 - `XpLedger(OccurredAt, Amount)` and `XpLedger(UserId, OccurredAt)`.
 - `DiscussionComments(DailyMajlisId, CreatedAt desc)`.
 - `CommentRevisions(CommentId, RevisionNumber desc)` and `(Status, CreatedAt)`.

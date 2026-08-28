@@ -45,19 +45,19 @@ Items listed here are outside this feature slice only. Production V1 requirement
 
 ### Attempt and Result
 
-- **ATT-001**: Only an authenticated user with a completed Majlis profile may submit an option belonging to the requested challenge.
-- **ATT-002**: `POST /challenges/{challengeId}/attempts` shall require an `Idempotency-Key` UUID. The first accepted request shall atomically create one `UserAttempt`, one XP-ledger entry, and the streak mutation.
+- **ATT-001**: Only an authenticated user with a completed Majlis profile may submit an option belonging to the challenge in the one Daily Majlis whose status is currently `published` and whose `PublishDate` is the current UTC date. Historical and future challenges, superseded correction revisions, and challenges belonging to scheduled, draft, or unpublished Daily Majlis content shall not accept a new attempt.
+- **ATT-002**: `POST /challenges/{challengeId}/attempts` shall require an `Idempotency-Key` UUID. The first accepted request shall atomically create one immutable `UserAttempt`, one XP-ledger entry, and the `UserProgress` mutation, including the accepted result locale and the exact post-award lifetime-XP/current-streak/longest-streak snapshots.
 - **ATT-003**: Replaying the same key and payload shall return the original result without mutation. Reusing a key with a different payload shall return `409 idempotency_key_reused`.
 - **ATT-004**: A different key after an attempt already exists shall return `409 attempt_already_completed` with the existing `attemptId`. Concurrent requests shall converge on the same persisted attempt and award progress once.
-- **ATT-005**: The first accepted response shall return the attempt id, correctness, correct option, localized explanation and cultural card, XP breakdown, and current/longest streak. Only this post-attempt contract may reveal the answer and learning content.
-- **ATT-006**: The first accepted option is final. V1 shall not allow answer retries, replacement attempts, or rescoring.
-- **ATT-007**: `GET /attempts/{attemptId}` and paginated `GET /me/attempts` shall return only the authenticated user's attempts and shall preserve the content revision used for each result.
+- **ATT-005**: The first accepted response shall return the attempt id, correctness, correct option, localized explanation and cultural card, XP breakdown, and current/longest streak. It shall use and store the negotiated result locale and exact post-award progress snapshots; same-key replay and later owned result retrieval shall return those stored values and the learning content from the immutable stored content revision. Only this post-attempt contract may reveal the answer and learning content.
+- **ATT-006**: The first accepted option is final. V1 shall not allow answer retries, replacement attempts, or rescoring. A later correction or unpublishing shall neither change an accepted attempt, ledger entry, or stored progress snapshot nor prevent its owned retrieval; it shall only prevent new attempts when the challenge is no longer the current published challenge.
+- **ATT-007**: `GET /attempts/{attemptId}` shall return the result only to its authenticated owner and otherwise return the non-enumerating `404 attempt_not_found`. Newest-first `GET /me/attempts` shall return only the authenticated user's attempts, preserve the content revision and stored result locale used for each result, and use an opaque stable cursor so continuation starts strictly after the prior page boundary.
 - **ATT-008**: Attempt submission shall enforce the per-account and per-IP limits in `docs/architecture/API_CONTRACTS.md`, returning `429` and `Retry-After` without creating or modifying an attempt.
 
 ### XP and Streak
 
 - **PROG-001**: The first accepted attempt shall award 10 completion XP plus 5 additional XP when correct. An incorrect attempt therefore awards 10 XP and a correct attempt 15 XP.
-- **PROG-002**: The immutable XP ledger shall reference the attempt with a unique constraint so a challenge contributes once to lifetime and weekly totals.
+- **PROG-002**: The immutable XP ledger shall reference the attempt with a unique constraint so a challenge contributes once to lifetime and weekly totals. `UserProgress` is the single aggregate authority for lifetime XP, current streak, longest streak, and last completed publish date; V1 shall not introduce a separate `UserStreak` authority.
 - **PROG-003**: Both correct and incorrect accepted attempts complete the Daily Majlis `PublishDate` for streak purposes.
 - **PROG-004**: Completing the next eligible published content day increments current streak; repeating the same day leaves it unchanged; skipping an eligible published day resets the next completion to 1.
 - **PROG-005**: A UTC date for which no Daily Majlis was published is not an eligible content day and shall not break a streak.

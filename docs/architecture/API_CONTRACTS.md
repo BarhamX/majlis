@@ -154,6 +154,8 @@ The response never contains correctness, explanation, internal sources, review s
 
 ### POST `/challenges/{challengeId}/attempts` (idempotent)
 
+A new attempt is accepted only when `challengeId` is the challenge in the one Daily Majlis whose status is currently `published` and whose `PublishDate` is the current UTC date, and `selectedOptionId` belongs to that challenge. Historical and future challenges, superseded correction revisions, and challenges belonging to scheduled, draft, or unpublished Daily Majlis content never accept a new attempt. This restriction does not affect a same-key replay or an owned read of an already accepted attempt.
+
 Request:
 
 ```json
@@ -189,19 +191,20 @@ First accepted response `201`:
     "longest": 5,
     "updated": true
   },
-  "contentRevisionId": "uuid"
+  "contentRevisionId": "uuid",
+  "resultLocale": "ar"
 }
 ```
 
-Same key/payload returns `200` with the same body. Same key/different payload returns `409 idempotency_key_reused`. A later key after completion returns `409 attempt_already_completed` with extension `attemptId`. Option/challenge mismatch returns `422 option_not_in_challenge`.
+`resultLocale` is the negotiated BCP 47 locale stored when the first attempt is accepted. `xp.lifetimeTotal`, `streak.current`, and `streak.longest` are the exact post-award snapshots stored with the attempt, not recalculated from later progress. The explanation and cultural card are served from the immutable stored `contentRevisionId` in that stored locale. Same key/payload returns `200` with the same body. Same key/different payload returns `409 idempotency_key_reused`. A later key after completion returns `409 attempt_already_completed` with extension `attemptId`. Option/challenge mismatch returns `422 option_not_in_challenge`.
 
 ### GET `/attempts/{attemptId}`
 
-Returns the same result contract only when owned by the caller; otherwise returns non-enumerating `404 attempt_not_found`.
+Returns the same stored result contract only when owned by the caller. A missing or non-owned attempt always returns the same non-enumerating `404 attempt_not_found`; the response must not distinguish those cases. Result retrieval remains available after the content day, a correction, or unpublishing and never changes the accepted option, correctness, XP, streak snapshots, stored locale, or source revision.
 
 ### GET `/me/attempts?cursor=&limit=20`
 
-Returns the user's newest-first attempt summaries with attempt id, publish date, localized title, correctness, XP awarded, and content revision id. `limit` is 1-50.
+Returns the user's newest-first attempt summaries with attempt id, publish date, title in the stored result locale, correctness, XP awarded, stored result locale, and content revision id. `limit` defaults to 20 and is 1-50. `cursor` is opaque and represents the final `(attemptedAt, attemptId)` boundary of the prior page under descending `attemptedAt`, then descending `attemptId` ordering; a continuation returns only rows strictly after that boundary. Attempts created after the first page that sort before its boundary do not shift, duplicate, or replace continuation items.
 
 ### GET `/me/progress`
 

@@ -14,20 +14,20 @@ Every normative requirement id must appear here before implementation starts and
 | DLY-004 | Safe unavailable problem and Flutter state | API integration + `today_unavailable_test.dart` | Partial |
 | DLY-005 | Completed-state attempt pointer | API integration + Flutter state test | Planned |
 | DLY-006 | Result-to-share metadata boundary | contract snapshot + Spec 006 suite | Planned |
-| ATT-001 | Authentication/profile and option ownership | `AttemptAuthorizationTests` | Planned |
-| ATT-002 | Atomic attempt/XP/streak transaction | `AttemptTransactionTests` | Planned |
+| ATT-001 | Authentication/profile, option ownership, and current-published-only submission | `AttemptAuthorizationTests.CurrentPublishedChallengeOnly` | Planned |
+| ATT-002 | Atomic attempt/XP/UserProgress transaction with stored locale and post-award snapshots | `AttemptTransactionTests.AtomicAttemptLedgerProgressAndSnapshots` | Planned |
 | ATT-003 | Same-key replay and payload mismatch | `AttemptIdempotencyTests` | Planned |
 | ATT-004 | Unique attempt and concurrent requests | `AttemptConcurrencyTests` against PostgreSQL | Planned |
-| ATT-005 | Post-attempt result allowlist/localization | `AttemptContractTests` | Planned |
-| ATT-006 | No replacement/retry/rescore | domain + API integration tests | Planned |
-| ATT-007 | History ownership, pagination, revision | `AttemptHistoryTests` | Planned |
+| ATT-005 | Post-attempt result allowlist, stored locale, and immutable progress snapshots | `AttemptContractTests.StoredLocaleAndSnapshots` | Planned |
+| ATT-006 | No replacement/retry/rescore after correction or unpublishing | domain + API integration tests | Planned |
+| ATT-007 | Stable `attempt_not_found`, owned history, opaque cursor, and source revision | `AttemptHistoryTests.StableCursorAndOwnedResults` | Planned |
 | ATT-008 | Attempt rate limits and no mutation | rate-limit integration tests | Planned |
 | PROG-001 | Exact incorrect/correct XP (10/15) | `XpAwardTests` | Planned |
-| PROG-002 | Ledger uniqueness | PostgreSQL uniqueness/concurrency tests | Planned |
-| PROG-003 | Correct and incorrect streak eligibility | `StreakServiceTests` | Planned |
-| PROG-004 | Consecutive/repeat/missed day behavior | `StreakServiceTests` with fake time | Planned |
-| PROG-005 | Missing publication exemption | `StreakServiceTests.MissingPublicationDoesNotBreakStreak` | Planned |
-| PROG-006 | Longest streak monotonicity | property/unit tests | Planned |
+| PROG-002 | Ledger uniqueness and `UserProgress` as the single scoring/streak authority | PostgreSQL uniqueness/concurrency and persistence-model tests | Planned |
+| PROG-003 | Correct and incorrect streak eligibility through `UserProgress` | `UserProgressServiceTests.CorrectAndIncorrectAreEligible` | Planned |
+| PROG-004 | Consecutive/repeat/missed day behavior through `UserProgress` | `UserProgressServiceTests` with fake time | Planned |
+| PROG-005 | Missing publication exemption | `UserProgressServiceTests.MissingPublicationDoesNotBreakStreak` | Planned |
+| PROG-006 | Longest streak monotonicity | `UserProgressServiceTests.LongestStreakNeverDecreases` | Planned |
 
 ## Spec 002 - Community
 
