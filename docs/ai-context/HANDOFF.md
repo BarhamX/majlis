@@ -4,7 +4,7 @@
 
 Majlis remains governed as a complete Production V1 Android application. The backend now has the local identity/profile foundation and persisted Daily Majlis loop needed for Android game development: immutable localized publications and accepted results, exact XP, UTC published-day streaks, idempotent/concurrent submission, owned history/progress/share metadata, real Today completion state, and account/IP submission limits. Google, Apple, Meta, and Snapchat are the selected production providers, but their credentials/callbacks and all hosting/domain logistics remain deferred until `Game Ready`.
 
-## Work in Progress
+## Latest Delivery
 
 ### 2026-08-28 - Final Persisted Daily-Loop Review Fix Wave
 
@@ -30,17 +30,20 @@ Majlis remains governed as a complete Production V1 Android application. The bac
 ### Tests and Checks Run
 
 - RED: the focused Release suite produced the four expected failures for deterministic seed primary-key classification, both destructive feature-migration `Down` methods, and acceptance after a publication-lock midnight rollover.
-- GREEN: the expanded focused Release suite passed 22 tests; the full non-integration Release suite passed 92 tests; Release build succeeded with 0 warnings and 0 errors.
+- GREEN: the resumed focused Release review suite passed 35 tests; the full non-integration Release suite passed 92 tests; Release build succeeded with 0 warnings and 0 errors.
 - The PostgreSQL regressions compile and cover unpublished editorial restart preservation and unavailable submission, deterministic concurrent seed creation, a proven blocked `FOR SHARE` rollover, both intermediate/latest migration heads, and representative latest daily-loop data plus exact migration-history preservation.
-- EF reported no pending model changes. The idempotent script contained both feature migrations and all five persisted daily-loop/publication tables; scoped format/verification, documentation validation for 80 Markdown files and 147 requirement ids, and `git diff --check` passed.
+- EF reported no pending model changes. The idempotent script contained both feature migrations and all five persisted daily-loop/publication tables; scoped format/verification, documentation validation for 81 Markdown files and 147 requirement ids, and `git diff --check` passed.
+- Hosted Backend CI run [`33184727167`](https://github.com/BarhamX/majlis/actions/runs/33184727167) supplied the RED evidence for a brittle SQL-text lock probe: the identity baseline passed and 158 of 159 full-suite tests passed, but the new rollover test could not prove that it reached the blocked publication read.
+- Commit `5a60085` replaced that provider-specific SQL-text match with PostgreSQL's authoritative `pg_blocking_pids()` relationship to the exact connection holding the row lock. Hosted Backend CI run [`33184958679`](https://github.com/BarhamX/majlis/actions/runs/33184958679) then passed the Release build with 0 warnings/errors, the identity PostgreSQL baseline 3/3, and the complete backend suite 159/159 with no failures or skips.
+- The resumed review rechecked the original three blocking findings against `97396bf..5a60085` and found no remaining Critical or Important issue in the fix wave.
 
 ### Known Blockers
 
-- Local Docker Desktop/PostgreSQL remains unavailable, so the new hosted PostgreSQL cases have not been executed locally and no local database pass is claimed. Backend CI must be green before this fix wave is accepted.
+- No implementation blocker remains for this backend slice. Local Docker Desktop/PostgreSQL is still unavailable and no local database pass is claimed; the green Linux/Testcontainers run above is the authoritative PostgreSQL evidence.
 
 ### Next Recommended Task
 
-- Run the final fix commit through hosted Backend CI, complete the final whole-branch re-review, and merge only after the PostgreSQL suite and review are green.
+- Add the remaining explicit Spec 001 submission status/authentication matrix tests, then build the Arabic/RTL Flutter daily journey against the Development/Testing identity without provisioning production credentials or hosting.
 
 ### 2026-08-28 - Task 6 Persisted Backend Daily-Loop Documentation and Evidence
 

@@ -9,25 +9,25 @@ Every normative requirement id must appear here before implementation starts and
 | Requirement(s) | Verification | Planned test/evidence | Status |
 |---|---|---|---|
 | DLY-001 | UTC selection; region/timezone invariance | `DailyMajlisSelectionTests`, PostgreSQL API date-boundary cases | Partial |
-| DLY-002 | Arabic completeness, language fallback/header | `DailyMajlisLocalizationTests`, `DailyMajlisRevisionTests.Revision_IsServableOnlyWhenArabicAndEveryOptionAreComplete`, and `DailyMajlisApiTests.GetToday_AcceptLanguageFallsBackFromRegionalArabicAndServesEnglishWhenRequested`; hosted Backend CI run `33177107954` | Verified |
+| DLY-002 | Arabic completeness, language fallback/header | `DailyMajlisLocalizationTests`, `DailyMajlisRevisionTests.Revision_IsServableOnlyWhenArabicAndEveryOptionAreComplete`, and `DailyMajlisApiTests.GetToday_AcceptLanguageFallsBackFromRegionalArabicAndServesEnglishWhenRequested`; hosted Backend CI run `33184958679` | Verified |
 | DLY-003 | Pre-attempt field allowlist/spoiler scan | `DailyMajlisServiceTests.GetTodayAsync_WhenPublishedMajlisExists_ReturnsValidSpoilerSafePayload` and `DailyMajlisApiTests.GetToday_WhenPublishedContentExists_ReturnsPersistedSpoilerSafePayload`; an exact full-field allowlist test remains pending | Partial |
 | DLY-004 | Safe unavailable problem and Flutter state | API integration + `today_unavailable_test.dart` | Partial |
-| DLY-005 | Completed-state attempt pointer | `DailyLoopPostgreSqlTests.AcceptedAttempt_SurvivesApplicationRestart` covers backend `hasAttempted`/`attemptId` state plus authoritative owned result retrieval, and duplicate-prevention cases preserve that attempt; hosted Backend CI run `33177107954`; Flutter completed-state retrieval remains pending | Partial |
-| DLY-006 | Result-to-share metadata boundary | `DailyLoopServiceTests.GetShare_ReturnsOnlySpoilerSafeConfiguredMetadata` and `DailyLoopPostgreSqlTests.Share_ReturnsConfiguredSpoilerSafeContractOnly`; hosted Backend CI run `33177107954` | Verified |
-| ATT-001 | Authentication/profile, option ownership, and current-published-only submission | completed-profile policy and locked-account revalidation; application current-challenge/option cases and hosted PostgreSQL historical/option/racing-unpublish cases pass in run `33177107954`; direct unauthenticated/incomplete-profile submission cases and the full status/revision matrix remain pending | Partial |
-| ATT-002 | Atomic attempt/XP/UserProgress transaction with stored locale and post-award snapshots | `DailyLoopPostgreSqlTests.Submit_FirstAcceptedAttempt_CommitsExactAwardOnce`, `Submit_WhenLedgerPersistenceFails_RollsBackEveryDailyLoopRow`, and unsupported-locale persistence; hosted Backend CI run `33177107954` | Verified |
-| ATT-003 | Same-key replay and payload mismatch | application and PostgreSQL replay/reuse cases; hosted Backend CI run `33177107954` | Verified |
-| ATT-004 | Unique attempt and concurrent requests | same-key/different-key PostgreSQL race cases assert one attempt, ledger, progress, and idempotency row; hosted Backend CI run `33177107954` | Verified |
-| ATT-005 | Post-attempt result, stored locale, immutable revision, and progress snapshots | PostgreSQL replay/restart/correction/later-progress cases; hosted Backend CI run `33177107954` | Verified |
-| ATT-006 | No replacement/retry/rescore after correction or unpublishing | completion-conflict, correction, and unpublishing snapshot/retrieval cases; hosted Backend CI run `33177107954` | Verified |
-| ATT-007 | Stable `attempt_not_found`, owned history, opaque cursor, and source revision | PostgreSQL ownership, correction, and stable-cursor cases; hosted Backend CI run `33177107954` | Verified |
-| ATT-008 | Attempt rate limits and no mutation | authenticated pipeline account/IP tests plus PostgreSQL row-count proofs; hosted Backend CI run `33177107954` | Verified |
-| PROG-001 | Exact incorrect/correct XP (10/15) | `XpAwardTests` plus application and PostgreSQL exact-award cases; hosted Backend CI run `33177107954` | Verified |
-| PROG-002 | Ledger uniqueness and `UserProgress` as the single scoring/streak authority | persistence-model tests and PostgreSQL replay/race row-count proofs; hosted Backend CI run `33177107954` | Verified |
-| PROG-003 | Correct and incorrect streak eligibility through `UserProgress` | `UserProgressServiceTests.CorrectAndIncorrectAreEligible` and PostgreSQL correct/incorrect submissions; hosted Backend CI run `33177107954` | Verified |
-| PROG-004 | Consecutive/repeat/missed day behavior through `UserProgress` | domain boundary suite and PostgreSQL consecutive/skipped-day cases; hosted Backend CI run `33177107954` | Verified |
-| PROG-005 | Missing publication exemption | domain missing-publication case and `DailyLoopPostgreSqlTests.Submit_MissingUnpublishedContentDay_DoesNotBreakStreak`; hosted Backend CI run `33177107954` | Verified |
-| PROG-006 | Longest streak monotonicity | domain monotonicity and PostgreSQL reset/stored-snapshot cases; hosted Backend CI run `33177107954` | Verified |
+| DLY-005 | Completed-state attempt pointer | `DailyLoopPostgreSqlTests.AcceptedAttempt_SurvivesApplicationRestart` covers backend `hasAttempted`/`attemptId` state plus authoritative owned result retrieval, and duplicate-prevention cases preserve that attempt; hosted Backend CI run `33184958679`; Flutter completed-state retrieval remains pending | Partial |
+| DLY-006 | Result-to-share metadata boundary | `DailyLoopServiceTests.GetShare_ReturnsOnlySpoilerSafeConfiguredMetadata` and `DailyLoopPostgreSqlTests.Share_ReturnsConfiguredSpoilerSafeContractOnly`; hosted Backend CI run `33184958679` | Verified |
+| ATT-001 | Authentication/profile, option ownership, and current-published-only submission | completed-profile policy and locked-account revalidation; application current-challenge/option cases and hosted PostgreSQL historical/option/racing-unpublish/midnight-lock cases pass in run `33184958679`; direct unauthenticated/incomplete-profile submission cases and the full status/revision matrix remain pending | Partial |
+| ATT-002 | Atomic attempt/XP/UserProgress transaction with stored locale and post-award snapshots | `DailyLoopPostgreSqlTests.Submit_FirstAcceptedAttempt_CommitsExactAwardOnce`, `Submit_WhenLedgerPersistenceFails_RollsBackEveryDailyLoopRow`, and unsupported-locale persistence; hosted Backend CI run `33184958679` | Verified |
+| ATT-003 | Same-key replay and payload mismatch | application and PostgreSQL replay/reuse cases; hosted Backend CI run `33184958679` | Verified |
+| ATT-004 | Unique attempt and concurrent requests | same-key/different-key PostgreSQL race cases assert one attempt, ledger, progress, and idempotency row; hosted Backend CI run `33184958679` | Verified |
+| ATT-005 | Post-attempt result, stored locale, immutable revision, and progress snapshots | PostgreSQL replay/restart/correction/later-progress cases; hosted Backend CI run `33184958679` | Verified |
+| ATT-006 | No replacement/retry/rescore after correction or unpublishing | completion-conflict, correction, and unpublishing snapshot/retrieval cases; hosted Backend CI run `33184958679` | Verified |
+| ATT-007 | Stable `attempt_not_found`, owned history, opaque cursor, and source revision | PostgreSQL ownership, correction, and stable-cursor cases; hosted Backend CI run `33184958679` | Verified |
+| ATT-008 | Attempt rate limits and no mutation | authenticated pipeline account/IP tests plus PostgreSQL row-count proofs; hosted Backend CI run `33184958679` | Verified |
+| PROG-001 | Exact incorrect/correct XP (10/15) | `XpAwardTests` plus application and PostgreSQL exact-award cases; hosted Backend CI run `33184958679` | Verified |
+| PROG-002 | Ledger uniqueness and `UserProgress` as the single scoring/streak authority | persistence-model tests and PostgreSQL replay/race row-count proofs; hosted Backend CI run `33184958679` | Verified |
+| PROG-003 | Correct and incorrect streak eligibility through `UserProgress` | `UserProgressServiceTests.CorrectAndIncorrectAreEligible` and PostgreSQL correct/incorrect submissions; hosted Backend CI run `33184958679` | Verified |
+| PROG-004 | Consecutive/repeat/missed day behavior through `UserProgress` | domain boundary suite and PostgreSQL consecutive/skipped-day cases; hosted Backend CI run `33184958679` | Verified |
+| PROG-005 | Missing publication exemption | domain missing-publication case and `DailyLoopPostgreSqlTests.Submit_MissingUnpublishedContentDay_DoesNotBreakStreak`; hosted Backend CI run `33184958679` | Verified |
+| PROG-006 | Longest streak monotonicity | domain monotonicity and PostgreSQL reset/stored-snapshot cases; hosted Backend CI run `33184958679` | Verified |
 
 ## Spec 002 - Community
 
@@ -51,13 +51,13 @@ Every normative requirement id must appear here before implementation starts and
 |---|---|---|---|
 | REL-001 | Authority boundaries | architecture review + controller/domain tests | Partial |
 | REL-002 | Spoiler safety | pre-attempt contract snapshot and response scan | Partial |
-| REL-003 | Exactly-once progress | application replay/conflict cases and PostgreSQL same-key/different-key races pass with one attempt, ledger, progress, and idempotency row in hosted Backend CI run `33177107954` | Verified |
+| REL-003 | Exactly-once progress | application replay/conflict cases and PostgreSQL same-key/different-key races pass with one attempt, ledger, progress, and idempotency row in hosted Backend CI run `33184958679` | Verified |
 | REL-004-REL-005 | Community/private-data non-disclosure | COM/MOD/Auth security suites | Planned |
 | REL-006-REL-007 | Arabic/source/publish invariants | ADM/DLY publication tests | Planned |
 | REL-008-REL-009 | No manual/hardcoded dependency; scope guard | release architecture and UX review | Planned |
 | REL-010 | Clean-environment bootstrap/migrations | CI clean-start job | Partial |
 | REL-011 | New-user Android journey | local test-identity flow before `Game Ready`; Google, Apple, Meta, and Snapchat variants before release | Planned |
-| REL-012 | Restart durability | daily content and accepted attempt/result/progress restart persistence pass in hosted Backend CI run `33177107954`; community, moderation, reports, and audit-event durability remain pending | Partial |
+| REL-012 | Restart durability | daily content and accepted attempt/result/progress restart persistence pass in hosted Backend CI run `33184958679`; community, moderation, reports, and audit-event durability remain pending | Partial |
 | REL-013 | Publisher/moderator journeys | admin browser end-to-end suite | Planned |
 | REL-014 | Cross-user/admin authorization | identity self-scope and daily attempt/share ownership non-enumeration pass; administrative authorization remains pending | Partial |
 | REL-015-REL-016 | Complete automated/operational gates | Spec 009 evidence pack | Planned |
@@ -96,7 +96,7 @@ Every normative requirement id must appear here before implementation starts and
 
 | Requirement(s) | Verification | Planned test/evidence | Status |
 |---|---|---|---|
-| SHR-001-SHR-002 | Spoiler/private-field absence and ownership | `DailyLoopServiceTests.GetShare_ReturnsOnlySpoilerSafeConfiguredMetadata`, `DailyLoopPostgreSqlTests.Share_ReturnsConfiguredSpoilerSafeContractOnly`, and `AttemptReads_AreOwnedAndNonEnumerating`; hosted Backend CI run `33177107954` | Verified |
+| SHR-001-SHR-002 | Spoiler/private-field absence and ownership | `DailyLoopServiceTests.GetShare_ReturnsOnlySpoilerSafeConfiguredMetadata`, `DailyLoopPostgreSqlTests.Share_ReturnsConfiguredSpoilerSafeContractOnly`, and `AttemptReads_AreOwnedAndNonEnumerating`; hosted Backend CI run `33184958679` | Verified |
 | SHR-003-SHR-004 | Local render, semantics, explicit Sharesheet | Flutter widget/integration tests | Planned |
 | SHR-005 | HTTPS App Link verification | hosted `assetlinks.json` check + adb test | Planned |
 | SHR-006, SHR-007, SHR-008 | Current/expired/auth/invalid routing | Android deep-link matrix | Planned |
