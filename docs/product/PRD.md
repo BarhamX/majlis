@@ -4,7 +4,7 @@
 
 Majlis is a daily Arab culture challenge game for Android. Users enter a digital majlis, answer a short cultural challenge, discover the meaning behind a proverb, story, saying, or tradition, and then discuss or share the result with friends and family.
 
-The app combines daily puzzle behavior, cultural storytelling, family/social competition, and respectful community discussion.
+The app combines daily puzzle behavior, cultural storytelling, external family/friend sharing, opt-in global competition, and respectful community discussion.
 
 ## 2. Vision
 
@@ -36,7 +36,7 @@ Existing cultural content is often either too academic, too passive, too long, o
 - Create a shareable format that can travel through WhatsApp, Instagram, TikTok, Snapchat, and X.
 - Build a safe, moderated community around cultural curiosity.
 
-## 6. Non-Goals for MVP
+## 6. Post-V1 Product Expansion
 
 - Full course marketplace.
 - Long-form lectures.
@@ -44,7 +44,7 @@ Existing cultural content is often either too academic, too passive, too long, o
 - Real-money rewards.
 - AI-generated cultural facts without editorial review.
 - Full school/university dashboard.
-- iOS release before Android MVP validation.
+- iOS and web clients before the Android production release is proven.
 
 ## 7. Target Users
 
@@ -70,32 +70,36 @@ Arabs living outside the Arab world who want to preserve connection to language,
 
 ### Culture-Curious Users
 
-Non-Arab or Arabic-learning users interested in Arab culture, language, and social customs. This is a secondary audience after the Arab-first MVP.
+Non-Arab or Arabic-learning users interested in Arab culture, language, and social customs. This is a secondary audience after the Arab-first Android launch.
 
-## 8. MVP Scope
+## 8. Production V1 Scope
 
-The MVP is Playable Daily Majlis:
+Production V1 is the complete Android Majlis app, not a prototype or a single feature slice:
 
-1. User registration/login.
-2. Basic profile with display name and region preference.
+1. Google Account, Sign in with Apple, Meta/Facebook Login, and Snapchat Login Kit registration/login.
+2. Profile with display name, region preference, progress, and notification settings.
 3. Today's Majlis screen.
 4. One daily cultural challenge.
 5. Multiple-choice answer submission.
 6. Result and short explanation.
-7. Proverb/story card.
-8. Streak and XP update.
-9. Shareable result card.
-10. Daily discussion question.
-11. Basic comments and reactions.
-12. Report comment.
-13. Admin content seed/import workflow.
+7. Curated proverb/story card with internal source traceability.
+8. Persistent attempts, streaks, XP, and duplicate-award protection.
+9. Basic privacy-safe leaderboard and friendly comparison.
+10. Shareable spoiler-safe result/cultural card and deep-link handling.
+11. Daily discussion question, comments, and reactions.
+12. Reporting, moderation states, and moderator workflow.
+13. Authenticated admin content creation, review, scheduling, publishing, and correction workflow.
+14. User-controlled daily reminders and the consent-aware product event catalog defined by Spec 009.
+15. Production PostgreSQL persistence, security controls, observability, deployment configuration, and an Android release build.
+
+The release-wide policy decisions for content days, localization, family scope, identity, safety, privacy, scoring, reminders, and leaderboards are normative in `docs/product/v1-product-decisions.md`.
 
 ## 9. Core Product Loop
 
 1. Trigger: notification, friend share, or daily habit.
 2. Challenge: user answers the daily prompt.
 3. Reward: result, explanation, XP, streak.
-4. Social proof: compare with friends/family or global result distribution.
+4. Social proof: view an opt-in global weekly leaderboard or share externally with friends/family.
 5. Discussion: respond to one cultural question.
 6. Viral output: share card or invite link.
 7. Return: next day content and streak continuation.
@@ -106,7 +110,7 @@ The MVP is Playable Daily Majlis:
 
 - The system shall serve one official Daily Majlis per calendar day.
 - The Daily Majlis shall include title, topic, challenge, explanation, proverb/story, and discussion question.
-- The system shall support region and dialect tags for content.
+- The system shall support region and dialect provenance tags without selecting different V1 editions.
 - The system shall support scheduled publishing.
 
 ### Challenge
@@ -115,13 +119,14 @@ The MVP is Playable Daily Majlis:
 - The system shall prevent repeated scoring for the same daily challenge.
 - The system shall show correct/incorrect result after submission.
 - The system shall show a short explanation after answer submission.
+- The first submission is final in V1; there are no answer retries.
 
 ### Gamification
 
-- The system shall award XP for completing the daily challenge.
+- The system shall award 10 completion XP and 5 additional XP for a correct first attempt.
 - The system shall track current streak and longest streak.
 - The system shall support future streak protection tokens.
-- The system shall show result distribution or performance comparison when available.
+- The system shall show the opt-in global weekly leaderboard; aggregate answer distribution is post-V1 unless separately specified.
 
 ### Community
 
@@ -129,12 +134,13 @@ The MVP is Playable Daily Majlis:
 - The user shall be able to submit a response.
 - The user shall be able to react to responses.
 - The user shall be able to report inappropriate responses.
-- Reported responses shall enter moderation review state.
+- New responses shall require moderator approval before public visibility.
+- Reported responses shall enter moderation review state, and users shall be able to block another user.
 
 ### Sharing
 
 - The system shall generate a shareable result card.
-- The card shall avoid revealing the answer before the daily reveal policy if spoiler mode is active.
+- The card shall never reveal the correct option or explanation.
 - The card shall include Majlis branding and an invitation to try today's challenge.
 
 ### Admin Content
@@ -145,10 +151,10 @@ The MVP is Playable Daily Majlis:
 
 ## 11. Non-Functional Requirements
 
-- Daily challenge load should feel near-instant on common Android devices.
+- Daily challenge loading and every other release quality gate shall meet the measurable thresholds in `specs/009-production-operations/spec.md`.
 - Core daily challenge should be completable in 1-3 minutes.
 - Backend APIs should use clear versioning from the start.
-- The app should support Arabic-first UI later; English internal docs are acceptable during development.
+- The Android release shall ship Arabic consumer UI/content and RTL behavior; English internal documentation is acceptable during development.
 - Community features must be safe by default.
 - Personal data must be minimized.
 
@@ -173,7 +179,7 @@ The MVP is Playable Daily Majlis:
 - Daily challenge completion rate.
 - Discussion response rate.
 - Share card generation rate.
-- Family/friend invite conversion.
+- Spoiler-safe shared-link open and activation conversion.
 
 ### Quality
 
@@ -193,4 +199,4 @@ The MVP is Playable Daily Majlis:
 
 ## 14. Release Recommendation
 
-Release the MVP only when the Playable Daily Majlis loop is smooth, short, and shareable. Do not wait for advanced courses, full regional personalization, or institutional dashboards.
+Release Majlis Production V1 only when the complete scope in `docs/product/full-app-scope.md` works end to end. Playable Daily Majlis is an implementation milestone, not the release boundary. Advanced courses, institutional dashboards, and other explicitly post-V1 products do not block the Android release.

@@ -1,6 +1,43 @@
-@Majlis.Api_HostAddress = http://localhost:5129
+@Majlis.Api_HostAddress = https://localhost:7204
+@AccessToken = paste-development-token-here
+
+POST {{Majlis.Api_HostAddress}}/api/v1/dev/auth/token
+Content-Type: application/json
+
+{
+  "subject": "local-user"
+}
+
+###
+
+POST {{Majlis.Api_HostAddress}}/api/v1/me/bootstrap
+Authorization: Bearer {{AccessToken}}
+Content-Type: application/json
+
+{
+  "displayName": "مريم",
+  "ageBand": "18_plus",
+  "countryCode": "QA",
+  "regionCode": "gulf",
+  "dialectCode": "qa",
+  "locale": "ar",
+  "acceptedTermsVersion": "2026-08-26",
+  "acceptedPrivacyVersion": "2026-08-26"
+}
+
+###
+
+GET {{Majlis.Api_HostAddress}}/api/v1/me/profile
+Authorization: Bearer {{AccessToken}}
+
+###
 
 GET {{Majlis.Api_HostAddress}}/api/v1/daily-majlis/today
+Authorization: Bearer {{AccessToken}}
 Accept: application/json
+
+###
+
+GET {{Majlis.Api_HostAddress}}/health
 
 ###

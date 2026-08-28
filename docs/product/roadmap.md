@@ -1,58 +1,68 @@
-# Majlis Roadmap
+# Majlis Delivery Roadmap
 
-## Phase 0: Specs and Prototype
+## Delivery Principle
 
-- Product and business specs.
-- UX flow sketches.
-- Theme system.
-- Architecture and database plan.
-- First sample content pack.
+Majlis is delivered as one complete production Android app. The phases below sequence implementation and validation; none of them is the final product by itself.
 
-## Phase 1: Playable Daily Majlis
+## Phase 0: Product and Engineering Foundation
 
-- Authentication.
-- Daily content API.
-- Challenge submission.
-- Results and explanation.
-- Streak/XP.
-- Shareable cards.
+- Product, business, safety, UX, and architecture specifications.
+- Theme and content-voice systems.
+- Clean-architecture backend skeleton.
+- Release-wide acceptance criteria.
 
-## Phase 2: Social Majlis
+## Phase 1: Persistent Backend Foundation
 
-- Discussion responses.
-- Reactions.
-- Reporting.
-- Basic moderation queue.
-- Friend/family invite link.
+- PostgreSQL and EF Core.
+- Explicit migrations and repeatable seed/initialization flow.
+- Health checks, configuration validation, logging, and integration-test infrastructure.
+- Published Daily Majlis query backed by persistent data.
 
-## Phase 3: Family and Regional Competition
+## Phase 2: Accounts and Daily Game Domain
 
-- Private family Majlis.
-- Friend leagues.
-- Region/dialect leaderboards.
-- Weekly challenges.
-- Streak protection.
+- Provider-neutral local identity/profile/authorization using the Development/Testing issuer.
+- Google/Apple/Meta/Snapchat-ready identity boundaries with Development/Testing authentication, age-band attestation, account recovery/deletion, blocking, and privacy defaults.
+- Answer submission and exactly-once scoring.
+- XP, streak, attempt history, and spoiler-safe result generation.
+- Authorization and rate limiting for user actions.
 
-## Phase 4: Content Depth
+## Phase 3: Complete Android Experience
 
-- Audio storytelling.
-- Archive access.
-- Regional packs.
-- Themed weeks.
-- Cultural organization content sponsorship.
+- Flutter foundation, routing, Riverpod state, theme, and centralized copy.
+- Onboarding, authentication, Today, challenge, result, cultural card, leaderboard, and profile flows.
+- Native sharing, deep links, notifications, and all loading/error/offline/completed states.
+- Widget and integration tests plus the Spec 009 accessibility and Android device-matrix gates.
+- Arabic launch localization and RTL verification.
 
-## Phase 5: Institutional Product
+## Phase 4: Community and Safety
 
-- School/university groups.
-- Teacher dashboard.
-- Classroom discussion prompts.
-- Institutional analytics.
-- Licensed content packs.
+- Daily discussion, comments, reactions, and reporting.
+- Moderation statuses, visible-content filtering, rate limits, and moderation queue.
+- Community rules and privacy-safe leaderboard/social behavior.
 
-## Phase 6: Pan-Arab Scale
+## Phase 5: Content and Operations
 
-- Editorial partners per region.
-- Region-specific calendars.
-- Localization refinements.
-- Cultural reviewer network.
-- Sponsorship marketplace.
+- Authenticated content and moderation administration.
+- Source notes, regional/dialect tags, editorial review, scheduling, publishing, correction, and unpublishing.
+- Product analytics and operational dashboards or equivalent protected tooling.
+
+## Phase 6: Production Release Readiness
+
+- After the local `Game Ready` milestone, configure live Google, Apple, Meta, and Snapchat identity, hosting, public domains, verified App Links, production signing, and production-shaped staging.
+- End-to-end validation of every release journey.
+- Security, privacy, backup/restore, observability, and failure-recovery checks.
+- Deployable backend and database configuration.
+- Reproducible signed Android release build and release runbook.
+- Production content and moderation readiness.
+
+## Production V1 Release Gate
+
+Production V1 ships only after Phases 1-6 and `specs/003-production-app/tasks.md` are complete. Internal alpha and beta builds are validation channels, not reduced product definitions.
+
+## Post-V1 Evolution
+
+- iOS and web clients.
+- Advanced audio storytelling and deeper archives.
+- Private Family Majlis groups, family-only leaderboards, and regional editions.
+- Premium content, sponsorships, and institutional products.
+- Pan-Arab editorial partnerships and localization refinement.

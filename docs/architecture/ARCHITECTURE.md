@@ -45,9 +45,9 @@ PostgreSQL
 
 - EF Core DbContext.
 - Repositories.
-- Auth provider integration.
-- Notification integration.
-- Storage integration later.
+- Google, Apple, Meta, and Snapchat validation adapters behind one identity boundary, plus a Development/Testing-only signed test issuer.
+- Android reminder preferences and analytics delivery integration.
+- Storage integration only when a specified feature requires server-owned media.
 
 ### Majlis.Contracts
 
@@ -57,7 +57,7 @@ PostgreSQL
 ### Majlis.Tests
 
 - Unit tests for domain/application logic.
-- Integration tests for API endpoints later.
+- PostgreSQL-backed integration tests for API authorization, persistence, uniqueness, idempotency, and response safety from the first endpoint implementation.
 
 ## 4. Core Domain Areas
 
@@ -71,6 +71,11 @@ PostgreSQL
 - Reports and Moderation
 - Admin Content Workflow
 - Analytics Events
+- Identity, Consent, and Deletion
+- Localized Content Revisions
+- Leaderboard Projection
+- User Blocking and Appeals
+- Immutable Audit Events
 
 ## 5. Mobile Architecture
 
@@ -93,6 +98,8 @@ lib/
     discussion/
     profile/
     leaderboard/
+    sharing/
+    reminders/
 ```
 
 State management: Riverpod.
@@ -100,30 +107,30 @@ State management: Riverpod.
 ## 6. Data Flow: Daily Challenge
 
 1. App requests `GET /api/v1/daily-majlis/today`.
-2. Backend resolves today's published Majlis.
-3. Backend returns challenge, options, and content metadata without exposing correct answer.
-4. User submits answer to `POST /api/v1/challenges/{challengeId}/attempts`.
-5. Backend validates answer and creates attempt.
-6. Backend updates XP/streak if first valid completion today.
-7. Backend returns result, explanation, streak, and share summary.
+2. Backend resolves the one publication for today's UTC date and the requested locale.
+3. Backend returns challenge, options, and content metadata without correct answer, explanation, sources, or review state.
+4. User submits one final answer with an idempotency key to `POST /api/v1/challenges/{challengeId}/attempts`.
+5. Backend atomically creates the attempt, 10/15 XP ledger entry, and UTC content-day streak mutation.
+6. Duplicate and concurrent submissions converge on the original attempt without another award.
+7. Backend returns result, explanation, progress, and content revision.
 8. App displays result and share card.
 
 ## 7. Content Publishing Flow
 
 1. Admin creates challenge, story/proverb, and discussion prompt.
-2. Admin tags content with region, difficulty, topic, and source notes.
-3. Admin marks content as reviewed.
-4. Admin schedules Daily Majlis date.
-5. System serves published item for that date.
+2. Admin provides complete Arabic text, region/dialect provenance tags, difficulty, topic, and required source notes in an immutable draft revision.
+3. A different reviewer approves the revision.
+4. A publisher schedules the revision for one UTC date.
+5. An idempotent scheduler publishes it at `00:00:00Z` and the API serves that revision globally.
 
 ## 8. Moderation Flow
 
-1. User posts comment.
-2. Comment is saved as visible or pending depending on policy.
-3. User reports comment.
-4. Comment receives report count and moderation state.
-5. Admin reviews report.
-6. Admin hides, restores, or escalates.
+1. User posts or edits one response after completing the Daily Majlis.
+2. The revision is pending and visible only to its author and moderators.
+3. A moderator approves it for public visibility.
+4. A user may report or block from a visible response.
+5. A moderator reviews the prioritized report and records an audited action.
+6. An eligible user may appeal; a different moderator decides the appeal.
 
 ## 9. Scalability Notes
 
@@ -136,3 +143,11 @@ The first scale challenge is not compute. It is content operations and moderatio
 - Flutter never receives correct answer before submission.
 - Community features require reporting and moderation state.
 - Content source notes are internal but mandatory for editorial review.
+- Arabic is the required launch locale and localized content is stored in translation tables.
+- Private Family Majlis and region-specific editions are post-V1.
+- External providers own account authentication and recovery; Majlis owns identity linking, local authorization, and privacy state and never auto-links by email.
+- Local Android scheduling owns V1 reminders; no marketing push channel is required.
+
+## Delivery Boundary Before Logistics
+
+Feature development uses local PostgreSQL, configurable URLs, and a deterministic test identity issuer until the `Game Ready` milestone in `V1-DEC-011`. Google, Apple, Meta, and Snapchat credentials/callbacks, hosting, public domains, verified App Links, signing, staging, backup, and deployment remain mandatory for Production V1 but begin after that milestone.

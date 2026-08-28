@@ -2,14 +2,11 @@ namespace Majlis.Domain.DailyMajlis;
 
 public sealed class DailyMajlis
 {
-    public DailyMajlis(
-        Guid id,
-        DateOnly publishDate,
-        string title,
-        string topic,
-        Challenge challenge,
-        string discussionQuestion,
-        DailyMajlisStatus status)
+    private DailyMajlis()
+    {
+    }
+
+    public DailyMajlis(Guid id, DateOnly publishDate)
     {
         if (id == Guid.Empty)
         {
@@ -18,38 +15,87 @@ public sealed class DailyMajlis
 
         Id = id;
         PublishDate = publishDate;
-        Title = RequireText(title, nameof(title));
-        Topic = RequireText(topic, nameof(topic));
-        Challenge = challenge ?? throw new ArgumentNullException(nameof(challenge));
-        DiscussionQuestion = RequireText(discussionQuestion, nameof(discussionQuestion));
-        Status = status;
+        Status = DailyMajlisStatus.Draft;
     }
 
-    public Guid Id { get; }
-
-    public DateOnly PublishDate { get; }
-
-    public string Title { get; }
-
-    public string Topic { get; }
-
-    public Challenge Challenge { get; }
-
-    public string DiscussionQuestion { get; }
-
-    public DailyMajlisStatus Status { get; }
-
-    private static string RequireText(string value, string parameterName)
+    public DailyMajlis(
+        Guid id,
+        DateOnly publishDate,
+        DailyMajlisStatus status,
+        DailyMajlisRevision publishedRevision)
+        : this(id, publishDate)
     {
-        return string.IsNullOrWhiteSpace(value)
-            ? throw new ArgumentException("A value is required.", parameterName)
-            : value;
+        switch (status)
+        {
+            case DailyMajlisStatus.Scheduled:
+                Schedule(publishedRevision);
+                break;
+            case DailyMajlisStatus.Published:
+                Publish(publishedRevision);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(
+                    nameof(status),
+                    status,
+                    "A revision may be assigned only when scheduling or publishing a Daily Majlis.");
+        }
+    }
+
+    public void Schedule(DailyMajlisRevision revision)
+    {
+        ValidatePublicationRevision(revision);
+        Status = DailyMajlisStatus.Scheduled;
+        ScheduledRevision = revision;
+        ScheduledRevisionId = revision.Id;
+        PublishedRevision = null;
+        PublishedRevisionId = null;
+    }
+
+    public void Publish(DailyMajlisRevision revision)
+    {
+        ValidatePublicationRevision(revision);
+        Status = DailyMajlisStatus.Published;
+        ScheduledRevision = null;
+        ScheduledRevisionId = null;
+        PublishedRevision = revision;
+        PublishedRevisionId = revision.Id;
+    }
+
+    public Guid Id { get; private set; }
+
+    public DateOnly PublishDate { get; private set; }
+
+    public DailyMajlisStatus Status { get; private set; }
+
+    public Guid? ScheduledRevisionId { get; private set; }
+
+    public Guid? PublishedRevisionId { get; private set; }
+
+    public DailyMajlisRevision? ScheduledRevision { get; private set; }
+
+    public DailyMajlisRevision? PublishedRevision { get; private set; }
+
+    private void ValidatePublicationRevision(DailyMajlisRevision revision)
+    {
+        ArgumentNullException.ThrowIfNull(revision);
+        if (revision.DailyMajlisId != Id)
+        {
+            throw new ArgumentException("Revision belongs to another Daily Majlis.", nameof(revision));
+        }
+
+        if (!revision.IsImmutable || !revision.IsCompleteForServing())
+        {
+            throw new InvalidOperationException(
+                "Only a complete submitted revision may be scheduled or published.");
+        }
     }
 }
 
 public enum DailyMajlisStatus
 {
     Draft,
+    InReview,
+    Approved,
     Scheduled,
     Published,
     Unpublished,

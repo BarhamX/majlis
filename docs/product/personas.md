@@ -7,7 +7,7 @@
 **Context:** University student, active on social apps, enjoys quick daily games.  
 **Motivation:** Wants to prove he knows Arab sayings and family traditions.  
 **Pain:** Finds cultural learning boring when it feels like school.  
-**Majlis Need:** Short challenge, leaderboard, friends comparison, shareable score.
+**Majlis Need:** Short challenge, opt-in global leaderboard, and a result that is easy to share with friends.
 
 ## Persona 2: The Family Connector
 
@@ -16,7 +16,7 @@
 **Context:** Parent, wants her children to stay connected to culture.  
 **Motivation:** Wants family discussion without forcing lectures.  
 **Pain:** Children ignore long cultural content.  
-**Majlis Need:** Family Majlis, daily prompt, simple explanation, safe discussion.
+**Majlis Need:** Daily prompt, simple explanation, safe public discussion, and easy external family sharing. Private Family Majlis groups are a post-V1 need.
 
 ## Persona 3: The Diaspora Learner
 

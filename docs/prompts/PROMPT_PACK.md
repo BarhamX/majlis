@@ -14,9 +14,14 @@ Before editing anything:
 - Read docs/ai-context/ARCHITECTURE.md
 - Read docs/ai-context/CONVENTIONS.md
 - Read docs/ai-context/HANDOFF.md
+- Read docs/product/full-app-scope.md
+- Read docs/product/v1-product-decisions.md
+- Read specs/003-production-app/spec.md, plan.md, and tasks.md
+- Read docs/architecture/API_CONTRACTS.md and DATABASE_SCHEMA.md
+- Read docs/quality/requirements-to-tests.md
 
 Task:
-Summarize the project goal, current repo structure, MVP scope, and the next safest implementation step.
+Summarize the project goal, current repo structure, full production-app scope, and the next safest implementation step toward the complete release.
 
 Scope:
 - Read documentation only.
@@ -41,6 +46,11 @@ Before doing anything:
 - Read docs/ai-context/ARCHITECTURE.md
 - Read docs/ai-context/CONVENTIONS.md
 - Read docs/ai-context/HANDOFF.md
+- Read docs/product/full-app-scope.md
+- Read docs/product/v1-product-decisions.md
+- Read specs/003-production-app/spec.md, plan.md, and tasks.md
+- Read docs/architecture/API_CONTRACTS.md and DATABASE_SCHEMA.md
+- Read docs/quality/requirements-to-tests.md
 - Read the relevant specs/<feature>/spec.md, plan.md, and tasks.md
 - Then inspect only the files needed for the task
 
@@ -77,18 +87,23 @@ Before doing anything:
 - Read docs/ai-context/ARCHITECTURE.md
 - Read docs/ai-context/CONVENTIONS.md
 - Read docs/ai-context/HANDOFF.md
-- Read specs/001-playable-daily-majlis/spec.md
-- Read specs/001-playable-daily-majlis/plan.md
-- Read specs/001-playable-daily-majlis/tasks.md
+- Read docs/product/full-app-scope.md
+- Read docs/product/v1-product-decisions.md
+- Read specs/003-production-app/spec.md, plan.md, and tasks.md
+- Read docs/architecture/API_CONTRACTS.md and DATABASE_SCHEMA.md
+- Read docs/quality/requirements-to-tests.md
+- Set FEATURE_SPEC to the one approved `specs/<number>-<feature>/` folder for this task
+- Read FEATURE_SPEC/spec.md, plan.md, and tasks.md
 - Then inspect only the files needed for the selected task
 
 Task:
-Implement the next unchecked task from specs/001-playable-daily-majlis/tasks.md.
+Implement one approved unchecked task from FEATURE_SPEC/tasks.md.
 
 Scope:
 - Focus only on the selected task.
 - Avoid unrelated refactors.
 - Avoid implementing future features not required by the task.
+- Treat the selected feature as one delivery slice; do not present it as completion of the full app.
 
 Constraints:
 - Preserve the clean architecture boundaries.
@@ -96,6 +111,8 @@ Constraints:
 - Do not hardcode correct answers in the Flutter UI.
 - Update tests for scoring/streak behavior when relevant.
 - Do not add community features before moderation basics exist.
+- Map the implemented requirement IDs to named tests/evidence in docs/quality/requirements-to-tests.md.
+- Do not provision hosting, public domains, production Google/Apple/Meta/Snapchat credentials, App Links, or signing until the handoff records the `Game Ready` gate.
 
 Deliverables:
 - Implement the selected task.
@@ -118,10 +135,14 @@ You are working in the Majlis .NET backend.
 
 Read first:
 - AGENTS.md
+- docs/product/full-app-scope.md
+- specs/003-production-app/spec.md, plan.md, and tasks.md
 - docs/ai-context/ARCHITECTURE.md
 - docs/architecture/DATABASE_SCHEMA.md
 - docs/architecture/API_CONTRACTS.md
 - Relevant specs folder
+- docs/product/v1-product-decisions.md
+- docs/quality/requirements-to-tests.md
 
 Task:
 Implement backend domain/application logic for <specific behavior> using test-first development.
@@ -142,11 +163,16 @@ You are working in the Majlis Flutter Android app.
 
 Read first:
 - AGENTS.md
+- docs/product/full-app-scope.md
+- docs/product/v1-product-decisions.md
+- specs/003-production-app/spec.md, plan.md, and tasks.md
+- docs/architecture/API_CONTRACTS.md and DATABASE_SCHEMA.md
+- docs/quality/requirements-to-tests.md
 - docs/design/DESIGN.md
 - docs/design/THEME.md
 - docs/design/content-voice.md
 - docs/ai-context/ARCHITECTURE.md
-- Relevant specs folder
+- Relevant spec.md, plan.md, and tasks.md
 
 Task:
 Implement <screen/component> for the Daily Majlis flow.

@@ -36,6 +36,6 @@ The daily Majlis loop, scoring, streak logic, content scheduling, and moderation
 
 User profile data, family group membership, attempts, and discussion activity must be protected by least-privilege access rules. Sharing must be explicit and user-initiated.
 
-## 10. Ship in Playable Slices
+## 10. Deliver the Complete App Through Playable Slices
 
-Each feature slice must produce a working, testable increment. The first milestone is Playable Daily Majlis, not a complete social platform.
+Each feature slice must produce a working, testable increment, but slices are sequencing tools rather than release boundaries. Playable Daily Majlis is the first vertical slice; the delivery target remains the complete production Android app defined in `docs/product/full-app-scope.md`. The project is not complete while required mobile, backend, persistence, safety, content-operations, or release capabilities are missing.

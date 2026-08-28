@@ -4,14 +4,18 @@
 
 Majlis must feel like a respectful majlis. Users can disagree, joke, and compete, but the app cannot allow insults, sectarian attacks, racism, harassment, or regional humiliation.
 
-## MVP Controls
+## Production V1 Controls
 
 - Report comment.
-- Hide reported comments after threshold or admin review.
+- Premoderate every new or edited comment before public visibility.
+- Approve, hide, restore, or remove through an audited moderator action.
 - Admin moderation queue.
 - Comment status field.
-- Basic rate limits.
+- Endpoint-specific rate limits.
 - Community rules page.
+- Two-way interaction filtering after a user block.
+- User-visible moderation status and one appeal within 30 days.
+- Account suspension and deletion-aware filtering.
 
 ## Comment Statuses
 
@@ -19,6 +23,8 @@ Majlis must feel like a respectful majlis. Users can disagree, joke, and compete
 - `pending`: comment awaits review.
 - `hidden`: comment is hidden from users.
 - `removed`: comment removed for policy violation.
+
+`pending` is the mandatory initial state. A report does not automatically publish, hide, or remove content; only an authorized moderation action changes visibility.
 
 ## Report Reasons
 
@@ -46,6 +52,35 @@ Highest priority:
 - Threats.
 - Doxxing/private information.
 - Repeated spam.
+
+Queue service targets:
+
+- Credible threats or exposed private information: acknowledge within 1 hour and escalate immediately.
+- Hate/sectarian abuse and harassment: decision within 4 hours.
+- Other pending comments, reports, and appeals: 95% receive a decision within 12 hours, 24 hours, and 5 calendar days respectively.
+
+If staffing cannot meet these targets, public discussion must remain disabled while the daily challenge continues.
+
+## Minor Safety
+
+- Accounts are 13+ and store an age band, not full date of birth.
+- Minor profiles are private and excluded from the public leaderboard.
+- V1 has no direct messaging, private group, contact upload, precise location, or public activity history.
+- Display-name guidance tells users not to use a full legal name or contact information.
+- Comment input and moderation reject personal contact details, doxxing, sexual exploitation, threats, and attempts to move minors into private contact.
+
+## Blocking and Appeals
+
+- Blocking is private and does not notify the target.
+- Either-direction blocks remove comments/reactions between the users from consumer views without revealing why.
+- A hide, removal, or account suspension may be appealed once within 30 days.
+- An appeal is decided by a moderator other than the original actor; both events remain immutable.
+
+## Retention
+
+- Deleted comments leave public results immediately.
+- Account deletion and moderation evidence follow `V1-DEC-009` in `docs/product/v1-product-decisions.md`.
+- Metrics and analytics never contain comment/report/appeal text, reporter identity, or moderation notes.
 
 ## Design Implication
 

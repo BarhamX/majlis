@@ -2,21 +2,21 @@ namespace Majlis.Contracts.DailyMajlis;
 
 public sealed record DailyMajlisResponse(
     Guid DailyMajlisId,
-    DateOnly Date,
+    DateOnly PublishDate,
     string Title,
-    string Topic,
+    string TopicCode,
     DailyMajlisChallengeResponse Challenge,
-    string DiscussionQuestion,
+    string DiscussionPrompt,
     DailyMajlisUserStateResponse UserState);
 
 public sealed record DailyMajlisChallengeResponse(
     Guid Id,
-    string QuestionText,
+    string Question,
     string Type,
     string Difficulty,
-    string? Region,
+    string? RegionCode,
     IReadOnlyList<ChallengeOptionResponse> Options);
 
 public sealed record ChallengeOptionResponse(Guid Id, string Text);
 
-public sealed record DailyMajlisUserStateResponse(bool HasAttempted, int CurrentStreak);
+public sealed record DailyMajlisUserStateResponse(bool HasAttempted, Guid? AttemptId);

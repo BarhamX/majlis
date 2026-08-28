@@ -33,7 +33,7 @@
 
 - Daily app ritual.
 - Community discussions.
-- Family/friend leagues.
+- External family/friend sharing in V1; private leagues after V1 validation.
 - Premium archive and packs.
 - Institutional support later.
 

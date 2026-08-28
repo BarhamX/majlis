@@ -8,7 +8,7 @@ Android-first mobile app with Flutter frontend and .NET backend.
 
 - Flutter stable channel.
 - Dart stable channel matched to Flutter release.
-- Android MVP first.
+- Android production release first.
 - Riverpod for state management.
 - GoRouter for navigation.
 - Dio or generated client for API calls.
@@ -21,7 +21,8 @@ Android-first mobile app with Flutter frontend and .NET backend.
 - Entity Framework Core.
 - PostgreSQL.
 - Clean architecture solution structure.
-- JWT authentication or hosted identity provider integration.
+- Google Account through Android Credential Manager plus provider-approved Apple, Meta/Facebook Login, and Snapchat Login Kit flows, with state/nonce validation and PKCE where supported; provider adapters share one application boundary and Majlis stores no passwords.
+- A deterministic signed identity issuer is allowed only in Development/Testing and is rejected by Production startup.
 
 ## Backend Solution Structure
 
@@ -37,17 +38,17 @@ src/backend/
 
 ## Infrastructure
 
-Recommended MVP options:
+Production vendor selection and provisioning are deliberately deferred until the `Game Ready` milestone. Candidate options, not current decisions:
 
 - API hosting: Azure App Service, Azure Container Apps, Railway, Render, or Fly.io.
 - Database: Managed PostgreSQL.
 - File/media storage: S3-compatible storage or Azure Blob Storage later.
-- Push notifications: Firebase Cloud Messaging.
+- V1 reminders: Android local notifications. Firebase Cloud Messaging requires a later remote-notification specification.
 - Analytics: Firebase Analytics, PostHog, or Application Insights plus product events.
 
 ## Admin
 
-MVP admin can start as protected API endpoints plus a simple internal web UI later.
+Production V1 requires a protected browser-based admin interface backed by the same Application use cases as the API. Raw endpoints are not the sole operating interface.
 
 Admin capabilities:
 
@@ -63,7 +64,7 @@ Admin capabilities:
 
 - xUnit.
 - FluentAssertions.
-- Testcontainers for integration tests later.
+- Testcontainers for database integration tests.
 - OpenAPI/Swagger.
 - Serilog or structured logging.
 
@@ -71,13 +72,13 @@ Admin capabilities:
 
 - flutter_test.
 - mocktail.
-- golden tests later for critical share cards.
+- Golden tests for critical share cards.
 - integration_test for the daily loop.
 
 ## Versioning
 
 - API route prefix: `/api/v1`.
-- Spec folders are numbered: `specs/001-feature-name`.
+- Spec folders are numbered: `specs/<sequence>-<feature-name>`.
 - Database migrations must be committed and reviewed.
 
 ## Security Baseline
@@ -87,3 +88,5 @@ Admin capabilities:
 - Least-privilege admin roles.
 - Input validation on all community content.
 - Rate limiting on auth, comment, report, and answer submission endpoints.
+- MFA for privileged roles, immutable audits, and separation of editorial duties.
+- OWASP ASVS Level 2 and OWASP MASVS baseline verification as defined in Spec 009.

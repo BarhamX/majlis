@@ -35,9 +35,11 @@ Majlis helps Arabs rediscover and share cultural knowledge through a short daily
 
 ## 6. Monetization Model
 
+All monetization capabilities in this section are post-V1 unless a later approved specification changes the release scope.
+
 ### Freemium
 
-Free users get the daily Majlis, streaks, basic discussion, and limited archive access.
+Production V1 users get the daily Majlis, streaks, moderated discussion, external sharing, and the opt-in global weekly leaderboard. Archive access is a post-V1 product.
 
 ### Premium Subscription
 
@@ -55,21 +57,21 @@ Institutional dashboards, private classrooms, weekly reports, teacher prompts, a
 
 Cultural organizations can sponsor themed weeks, heritage campaigns, museum events, or national cultural days.
 
-## 7. MVP Business Requirements
+## 7. Production Release Business Requirements
 
 - Free daily challenge must be valuable enough to attract organic sharing.
 - Shareable cards must create low-cost acquisition.
 - Content admin workflow must allow daily publishing without developer involvement.
-- Basic analytics must measure retention and challenge completion.
+- The consent-aware event catalog in Spec 009 must measure activation, challenge completion, sharing, discussion, reminders, and leaderboard use without answer or comment content.
 - Community safety must exist before public growth campaigns.
 
 ## 8. Revenue Assumptions
 
-Initial revenue should not be the MVP's primary success measure. First prove:
+Initial revenue should not be the launch release's primary success measure. First prove:
 
 1. Users return daily.
 2. Users share challenges.
-3. Families/friends compete.
+3. Families/friends share the same daily challenge externally and adults may opt into the global weekly leaderboard.
 4. Content can be produced reliably.
 5. Discussion remains respectful.
 
@@ -149,7 +151,7 @@ Phase 5: Pan-Arab expansion with region-specific editorial partners.
 
 - Discussion responses are meaningful.
 - Moderation load is manageable.
-- Family/friend groups show higher retention than solo users.
+- Share-origin cohorts show whether family/friend sharing improves activation or retention; private groups remain a post-V1 hypothesis.
 
 ### Gate 4: Monetization Fit
 

@@ -4,9 +4,9 @@
 
 - [x] Create .NET solution under `src/backend` with projects: Api, Application, Domain, Infrastructure, Contracts, Tests.
 - [x] Add project references according to clean architecture boundaries.
-- [ ] Add health endpoint to `Majlis.Api`.
-- [ ] Add PostgreSQL and EF Core packages to Infrastructure.
-- [ ] Add application configuration for database connection string.
+- [x] Add health endpoint to `Majlis.Api`.
+- [x] Add PostgreSQL and EF Core packages to Infrastructure.
+- [x] Add application configuration for database connection string.
 
 ## Domain Model
 
@@ -15,6 +15,7 @@
 - [x] Create `ChallengeOption` entity.
 - [ ] Create `UserAttempt` entity.
 - [ ] Create `UserStreak` entity.
+- [ ] Create immutable XP ledger entity.
 - [x] Add domain rule: exactly one correct option per multiple-choice challenge.
 - [ ] Add domain rule: one scored attempt per user per challenge.
 
@@ -25,12 +26,16 @@
 - [ ] Implement scoring service.
 - [ ] Implement streak service.
 - [ ] Implement duplicate attempt handling.
+- [ ] Implement idempotency-key replay and concurrent submission handling.
+- [ ] Implement UTC published-content-day streak calculation.
+- [ ] Implement own attempt history.
 - [ ] Add spoiler-safe share summary generation.
 
 ## Backend API
 
 - [x] Add `GET /api/v1/daily-majlis/today`.
 - [ ] Add `POST /api/v1/challenges/{challengeId}/attempts`.
+- [ ] Add `GET /api/v1/attempts/{attemptId}` and `GET /api/v1/me/attempts`.
 - [x] Add API response contracts.
 - [x] Confirm today's endpoint does not expose correct answer.
 
@@ -41,7 +46,11 @@
 - [ ] Test duplicate attempt does not duplicate XP.
 - [ ] Test first completion updates streak.
 - [ ] Test missed day resets streak.
-- [ ] Test today's endpoint hides correct answer.
+- [ ] Test missing unpublished content day does not reset streak.
+- [ ] Test exact 10/15 XP awards and immutable ledger uniqueness.
+- [ ] Test idempotency-key mismatch and concurrent requests.
+- [ ] Test attempt ownership and result-revision preservation.
+- [x] Test today's endpoint hides correct answer.
 
 ## Flutter Foundation
 
@@ -68,4 +77,5 @@
 - [ ] Run Flutter analyzer.
 - [ ] Run Flutter tests.
 - [ ] Manually complete daily loop on Android emulator.
+- [ ] Map `DLY-*`, `ATT-*`, and `PROG-*` requirements in `docs/quality/requirements-to-tests.md`.
 - [x] Update `docs/ai-context/HANDOFF.md`.
