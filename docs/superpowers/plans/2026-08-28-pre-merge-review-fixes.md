@@ -206,4 +206,4 @@ git add -- src/backend docs
 git commit -m "fix: address daily majlis merge review"
 ```
 
-- [ ] **Step 4: Request a focused re-review of the correction range and resolve every Critical or Important finding before push**
+- [x] **Step 4: Request a focused re-review of the correction range and resolve every Critical or Important finding before push**
