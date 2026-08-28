@@ -24,7 +24,7 @@ public sealed class AttemptsController(IDailyLoopService dailyLoopService) : Con
             cancellationToken);
         if (result is null)
         {
-            return DailyLoopProblemResults.AttemptNotFound();
+            return DailyLoopProblemResults.AttemptNotFound(HttpContext);
         }
 
         Response.Headers.ContentLanguage = result.ResultLocale;
@@ -43,7 +43,7 @@ public sealed class AttemptsController(IDailyLoopService dailyLoopService) : Con
             attemptId,
             cancellationToken);
         return result is null
-            ? DailyLoopProblemResults.AttemptNotFound()
+            ? DailyLoopProblemResults.AttemptNotFound(HttpContext)
             : Ok(result);
     }
 }

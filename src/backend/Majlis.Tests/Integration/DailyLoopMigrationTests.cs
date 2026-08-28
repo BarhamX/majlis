@@ -7,7 +7,7 @@ namespace Majlis.Tests.Integration;
 public sealed class DailyLoopMigrationTests(PostgreSqlFixture postgreSql)
 {
     private const string PreviousMigration =
-        "20260828064802_EstablishForwardOnlyLocalizedContentBoundary";
+        "20260828114928_AddDailyLoopPersistence";
 
     [Fact]
     public async Task FreshDatabase_AppliesDailyLoopMigrationAndCreatesAllTables()
@@ -19,11 +19,14 @@ public sealed class DailyLoopMigrationTests(PostgreSqlFixture postgreSql)
 
         Assert.Contains(
             await dbContext.Database.GetAppliedMigrationsAsync(),
-            migration => migration.EndsWith("_AddDailyLoopPersistence", StringComparison.Ordinal));
+            migration => migration.EndsWith(
+                "_RecordDailyMajlisPublicationHistory",
+                StringComparison.Ordinal));
         Assert.Equal(0, await dbContext.UserAttempts.CountAsync());
         Assert.Equal(0, await dbContext.XpLedger.CountAsync());
         Assert.Equal(0, await dbContext.UserProgress.CountAsync());
         Assert.Equal(0, await dbContext.IdempotencyRecords.CountAsync());
+        Assert.Equal(0, await dbContext.DailyMajlisPublications.CountAsync());
     }
 
     [Fact]
@@ -32,15 +35,31 @@ public sealed class DailyLoopMigrationTests(PostgreSqlFixture postgreSql)
         await postgreSql.ResetAsync();
         await using var dbContext = CreateDbContext();
         await dbContext.Database.MigrateAsync(PreviousMigration);
+        var legacyId = Guid.NewGuid();
+        var legacyDate = new DateOnly(2026, 8, 20);
+        var legacyUpdatedAt = new DateTimeOffset(2026, 8, 21, 8, 0, 0, TimeSpan.Zero);
+        await dbContext.Database.ExecuteSqlInterpolatedAsync($$"""
+            INSERT INTO "DailyMajlis"
+                ("Id", "PublishDate", "Status", "ScheduledRevisionId", "PublishedRevisionId", "CreatedAt", "UpdatedAt")
+            VALUES
+                ({{legacyId}}, {{legacyDate}}, 'unpublished', NULL, NULL, {{legacyUpdatedAt}}, {{legacyUpdatedAt}})
+            """);
         var existingMigrations = (await dbContext.Database.GetAppliedMigrationsAsync()).ToArray();
 
         await dbContext.Database.MigrateAsync();
 
         var appliedMigrations = (await dbContext.Database.GetAppliedMigrationsAsync()).ToArray();
         Assert.Equal(existingMigrations, appliedMigrations.Take(existingMigrations.Length));
-        Assert.EndsWith("_AddDailyLoopPersistence", appliedMigrations[^1], StringComparison.Ordinal);
+        Assert.EndsWith(
+            "_RecordDailyMajlisPublicationHistory",
+            appliedMigrations[^1],
+            StringComparison.Ordinal);
         Assert.Empty(await dbContext.Database.GetPendingMigrationsAsync());
         Assert.Equal(0, await dbContext.UserAttempts.CountAsync());
+        var publication = await dbContext.DailyMajlisPublications.SingleAsync();
+        Assert.Equal(legacyId, publication.DailyMajlisId);
+        Assert.Equal(legacyDate, publication.PublishDate);
+        Assert.Equal(legacyUpdatedAt, publication.PublishedAt);
     }
 
     private MajlisDbContext CreateDbContext()

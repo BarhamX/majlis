@@ -12,15 +12,15 @@ Every normative requirement id must appear here before implementation starts and
 | DLY-002 | Arabic completeness, language fallback/header | `DailyMajlisLocalizationTests` | Planned |
 | DLY-003 | Pre-attempt field allowlist/spoiler scan | `DailyMajlisApiTests.GetToday_PreAttemptContractIsSafe` | Partial |
 | DLY-004 | Safe unavailable problem and Flutter state | API integration + `today_unavailable_test.dart` | Partial |
-| DLY-005 | Completed-state attempt pointer | `DailyLoopPostgreSqlTests.AcceptedAttempt_SurvivesApplicationRestart`; Flutter state pending | Partial |
+| DLY-005 | Completed-state attempt pointer | `DailyLoopPostgreSqlTests.AcceptedAttempt_SurvivesApplicationRestart`; Flutter state and hosted PostgreSQL execution pending | Planned |
 | DLY-006 | Result-to-share metadata boundary | `DailyLoopServiceTests.GetShare_ReturnsOnlySpoilerSafeConfiguredMetadata`; PostgreSQL/API and Spec 006 execution pending | Partial |
 | ATT-001 | Authentication/profile, option ownership, and current-published-only submission | `DailyLoopServiceTests` current challenge/option cases; `DailyLoopPostgreSqlTests` authored, hosted run pending | Partial |
 | ATT-002 | Atomic attempt/XP/UserProgress transaction with stored locale and post-award snapshots | application exact-state tests pass; PostgreSQL commit/rollback cases authored, hosted run pending | Partial |
 | ATT-003 | Same-key replay and payload mismatch | `DailyLoopServiceTests` replay/reuse cases pass; PostgreSQL API cases authored, hosted run pending | Partial |
 | ATT-004 | Unique attempt and concurrent requests | completed-conflict application case passes; PostgreSQL race cases authored, hosted run pending | Partial |
 | ATT-005 | Post-attempt result allowlist, stored locale, and immutable progress snapshots | stored-locale application response test passes; PostgreSQL correction/snapshot cases authored, hosted run pending | Partial |
-| ATT-006 | No replacement/retry/rescore after correction or unpublishing | PostgreSQL correction/unpublishing cases authored and compile; hosted run pending | Partial |
-| ATT-007 | Stable `attempt_not_found`, owned history, opaque cursor, and source revision | PostgreSQL ownership/history cases authored and compile; hosted run pending | Partial |
+| ATT-006 | No replacement/retry/rescore after correction or unpublishing | PostgreSQL correction/unpublishing cases authored and compile; hosted run pending | Planned |
+| ATT-007 | Stable `attempt_not_found`, owned history, opaque cursor, and source revision | PostgreSQL ownership/history cases authored and compile; hosted run pending | Planned |
 | ATT-008 | Attempt rate limits and no mutation | rate-limit integration tests | Planned |
 | PROG-001 | Exact incorrect/correct XP (10/15) | `XpAwardTests` and application exact-award tests pass; PostgreSQL execution pending | Partial |
 | PROG-002 | Ledger uniqueness and `UserProgress` as the single scoring/streak authority | persistence-model tests pass; PostgreSQL uniqueness/concurrency execution pending | Partial |

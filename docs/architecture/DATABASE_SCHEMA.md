@@ -105,6 +105,11 @@ DailyMajlis
 - UpdatedAt timestamptz not null
 unique (PublishDate) where Status in ('scheduled','published')
 
+DailyMajlisPublications
+- DailyMajlisId uuid primary key references DailyMajlis(Id) on delete restrict
+- PublishDate date not null unique
+- PublishedAt timestamptz not null
+
 DailyMajlisRevisions
 - Id uuid primary key
 - DailyMajlisId uuid not null references DailyMajlis(Id)
@@ -237,6 +242,8 @@ IdempotencyRecords
 - ExpiresAt timestamptz not null
 primary key (UserId, Scope, IdempotencyKey)
 ```
+
+`DailyMajlisPublications` is the immutable fact that a publish date became streak-eligible. Correction and unpublishing never remove or rewrite it. The forward migration backfills current `published` and historical `unpublished` rows, using the legacy `UpdatedAt` as the best available publication timestamp and a deterministic single row per publish date.
 
 `UserAttempts` are immutable after insertion. New attempt creation requires the challenge to belong to the current UTC-date `published` Daily Majlis; correction or unpublishing never rewrites or deletes an accepted attempt, its stored revision/locale/snapshots, its ledger row, or its progress effect. Attempt, XP-ledger, and `UserProgress` mutations occur in one transaction. `UserProgress` is the sole persistence authority for lifetime XP and streak state; no separate `UserStreak` table or aggregate is permitted. Weekly leaderboard totals are derived from `XpLedger.OccurredAt`; an indexed/materialized projection may be added without becoming a second scoring authority.
 

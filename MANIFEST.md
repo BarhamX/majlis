@@ -116,6 +116,7 @@ This manifest lists version-controlled and pending source files. Run `scripts/va
 - `src/backend/Majlis.Domain/DailyMajlis/Challenge.cs`
 - `src/backend/Majlis.Domain/DailyMajlis/ChallengeOption.cs`
 - `src/backend/Majlis.Domain/DailyMajlis/DailyMajlis.cs`
+- `src/backend/Majlis.Domain/DailyMajlis/DailyMajlisPublication.cs`
 - `src/backend/Majlis.Domain/DailyMajlis/DailyMajlisRevision.cs`
 - `src/backend/Majlis.Domain/Identity/AccountDeletionRequest.cs`
 - `src/backend/Majlis.Domain/Identity/IdentityEnums.cs`
@@ -141,6 +142,7 @@ This manifest lists version-controlled and pending source files. Run `scripts/va
 - `src/backend/Majlis.Infrastructure/Persistence/Configurations/ChallengeOptionConfiguration.cs`
 - `src/backend/Majlis.Infrastructure/Persistence/Configurations/ChallengeOptionTranslationConfiguration.cs`
 - `src/backend/Majlis.Infrastructure/Persistence/Configurations/DailyMajlisConfiguration.cs`
+- `src/backend/Majlis.Infrastructure/Persistence/Configurations/DailyMajlisPublicationConfiguration.cs`
 - `src/backend/Majlis.Infrastructure/Persistence/Configurations/DailyMajlisRevisionConfiguration.cs`
 - `src/backend/Majlis.Infrastructure/Persistence/Configurations/DailyMajlisTranslationConfiguration.cs`
 - `src/backend/Majlis.Infrastructure/Persistence/Configurations/IdempotencyRecordConfiguration.cs`
@@ -172,12 +174,15 @@ This manifest lists version-controlled and pending source files. Run `scripts/va
 - `src/backend/Majlis.Infrastructure/Persistence/Migrations/20260828064802_EstablishForwardOnlyLocalizedContentBoundary.cs`
 - `src/backend/Majlis.Infrastructure/Persistence/Migrations/20260828114928_AddDailyLoopPersistence.Designer.cs`
 - `src/backend/Majlis.Infrastructure/Persistence/Migrations/20260828114928_AddDailyLoopPersistence.cs`
+- `src/backend/Majlis.Infrastructure/Persistence/Migrations/20260828124324_RecordDailyMajlisPublicationHistory.Designer.cs`
+- `src/backend/Majlis.Infrastructure/Persistence/Migrations/20260828124324_RecordDailyMajlisPublicationHistory.cs`
 - `src/backend/Majlis.Infrastructure/Persistence/Migrations/MajlisDbContextModelSnapshot.cs`
 - `src/backend/Majlis.sln`
 - `src/backend/Majlis.Tests/Application/DailyMajlisServiceTests.cs`
 - `src/backend/Majlis.Tests/Application/DailyLoopServiceTests.cs`
 - `src/backend/Majlis.Tests/Application/DailyMajlisLocalizationTests.cs`
 - `src/backend/Majlis.Tests/Application/IdentityProfileServiceTests.cs`
+- `src/backend/Majlis.Tests/Api/DailyLoopProblemResultsTests.cs`
 - `src/backend/Majlis.Tests/Domain/ChallengeTests.cs`
 - `src/backend/Majlis.Tests/Domain/DailyMajlisRevisionTests.cs`
 - `src/backend/Majlis.Tests/Domain/UserProgressServiceTests.cs`

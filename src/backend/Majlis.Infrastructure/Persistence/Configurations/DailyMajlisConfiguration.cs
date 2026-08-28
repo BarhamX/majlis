@@ -35,6 +35,11 @@ internal sealed class DailyMajlisConfiguration : IEntityTypeConfiguration<DailyM
             .HasForeignKey(dailyMajlis => dailyMajlis.PublishedRevisionId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasOne(dailyMajlis => dailyMajlis.Publication)
+            .WithOne()
+            .HasForeignKey<DailyMajlisPublication>(publication => publication.DailyMajlisId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasIndex(dailyMajlis => dailyMajlis.PublishDate)
             .IsUnique()
             .HasFilter("\"Status\" IN ('scheduled', 'published')");

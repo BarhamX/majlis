@@ -27,7 +27,8 @@ public sealed class ChallengeAttemptsController(IDailyLoopService dailyLoopServi
             return DailyLoopProblemResults.Create(
                 StatusCodes.Status422UnprocessableEntity,
                 "validation_failed",
-                "Idempotency-Key must be a non-empty UUID.");
+                "Idempotency-Key must be a non-empty UUID.",
+                HttpContext);
         }
 
         try
@@ -46,14 +47,15 @@ public sealed class ChallengeAttemptsController(IDailyLoopService dailyLoopServi
         }
         catch (DailyLoopException exception)
         {
-            return DailyLoopProblemResults.Create(exception);
+            return DailyLoopProblemResults.Create(exception, HttpContext);
         }
         catch (ArgumentException exception)
         {
             return DailyLoopProblemResults.Create(
                 StatusCodes.Status422UnprocessableEntity,
                 "validation_failed",
-                exception.Message);
+                exception.Message,
+                HttpContext);
         }
     }
 }

@@ -219,6 +219,49 @@ public sealed class DailyLoopServiceTests
     }
 
     [Fact]
+    public async Task SubmitAttempt_RecomputesUtcDayAfterWaitingForUserLock()
+    {
+        var afterMidnight = Now.AddDays(1);
+        var repository = new InMemoryDailyLoopRepository(afterMidnight, Identity);
+        var timeProvider = new MutableTimeProvider(Now);
+        repository.LockUserCallback = () => timeProvider.UtcNow = afterMidnight;
+        var service = CreateService(repository, timeProvider);
+
+        var result = await service.SubmitAttemptAsync(
+            Identity,
+            repository.Challenge.Id,
+            repository.CorrectOption.Id,
+            Guid.NewGuid(),
+            "ar");
+
+        Assert.Equal(repository.DailyMajlis.PublishDate, DateOnly.FromDateTime(afterMidnight.UtcDateTime));
+        Assert.False(result.IsReplay);
+        Assert.Single(repository.Attempts);
+        Assert.Equal(afterMidnight, repository.Attempts[0].AttemptedAt);
+    }
+
+    [Fact]
+    public async Task SubmitAttempt_WhenLockedAccountRevokedToken_RejectsWithoutAward()
+    {
+        var repository = new InMemoryDailyLoopRepository(Now, Identity);
+        repository.User.RevokeAuthentication(Identity.IssuedAt);
+        var service = CreateService(repository);
+
+        var exception = await Assert.ThrowsAsync<DailyLoopException>(() =>
+            service.SubmitAttemptAsync(
+                Identity,
+                repository.Challenge.Id,
+                repository.CorrectOption.Id,
+                Guid.NewGuid(),
+                "ar"));
+
+        Assert.Equal("forbidden", exception.Code);
+        Assert.Empty(repository.Attempts);
+        Assert.Empty(repository.Ledger);
+        Assert.Empty(repository.IdempotencyRecords);
+    }
+
+    [Fact]
     public async Task GetProgress_WhenNoAttemptExists_ReturnsZeroWithoutCreatingProgress()
     {
         var repository = new InMemoryDailyLoopRepository(Now, Identity);
@@ -255,10 +298,12 @@ public sealed class DailyLoopServiceTests
             share.Url);
     }
 
-    private static DailyLoopService CreateService(InMemoryDailyLoopRepository repository) =>
+    private static DailyLoopService CreateService(
+        InMemoryDailyLoopRepository repository,
+        TimeProvider? timeProvider = null) =>
         new(
             repository,
-            new FixedTimeProvider(Now),
+            timeProvider ?? new FixedTimeProvider(Now),
             new ShareLinkSettings("https://share.majlis.test"));
 
     private sealed class InMemoryDailyLoopRepository :
@@ -344,7 +389,7 @@ public sealed class DailyLoopServiceTests
             Revision.Submit(now.AddHours(-1));
             DailyMajlis = new DailyMajlis(
                 Revision.DailyMajlisId,
-                new DateOnly(2026, 8, 28),
+                DateOnly.FromDateTime(now.UtcDateTime),
                 DailyMajlisStatus.Published,
                 Revision);
             PublishedDates.Add(DailyMajlis.PublishDate);
@@ -372,14 +417,19 @@ public sealed class DailyLoopServiceTests
 
         public List<DateOnly> PublishedDates { get; } = [];
 
+        public Action? LockUserCallback { get; set; }
+
         public Task<T> ExecuteInTransactionAsync<T>(
             Func<IDailyLoopTransaction, CancellationToken, Task<T>> operation,
             CancellationToken cancellationToken) => operation(this, cancellationToken);
 
         public Task<UserAccount?> LockUserAsync(
             AuthenticatedIdentity identity,
-            CancellationToken cancellationToken) => Task.FromResult<UserAccount?>(
-            identity == _identity ? User : null);
+            CancellationToken cancellationToken)
+        {
+            LockUserCallback?.Invoke();
+            return Task.FromResult<UserAccount?>(identity == _identity ? User : null);
+        }
 
         public Task<IdempotencyRecord?> FindIdempotencyAsync(
             Guid userId,
@@ -481,5 +531,12 @@ public sealed class DailyLoopServiceTests
     private sealed class FixedTimeProvider(DateTimeOffset utcNow) : TimeProvider
     {
         public override DateTimeOffset GetUtcNow() => utcNow;
+    }
+
+    private sealed class MutableTimeProvider(DateTimeOffset utcNow) : TimeProvider
+    {
+        public DateTimeOffset UtcNow { get; set; } = utcNow;
+
+        public override DateTimeOffset GetUtcNow() => UtcNow;
     }
 }

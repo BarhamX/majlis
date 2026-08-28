@@ -5,7 +5,9 @@ namespace Majlis.Api.Controllers;
 
 internal static class DailyLoopProblemResults
 {
-    public static ObjectResult Create(DailyLoopException exception)
+    public static ObjectResult Create(
+        DailyLoopException exception,
+        HttpContext httpContext)
     {
         var status = exception.Code switch
         {
@@ -19,26 +21,30 @@ internal static class DailyLoopProblemResults
                 StatusCodes.Status403Forbidden,
             _ => StatusCodes.Status422UnprocessableEntity,
         };
-        return Create(status, exception.Code, exception.Message, exception.AttemptId);
+        return Create(status, exception.Code, exception.Message, httpContext, exception.AttemptId);
     }
 
-    public static ObjectResult AttemptNotFound() => Create(
+    public static ObjectResult AttemptNotFound(HttpContext httpContext) => Create(
         StatusCodes.Status404NotFound,
         "attempt_not_found",
-        "The attempt was not found.");
+        "The attempt was not found.",
+        httpContext);
 
     public static ObjectResult Create(
         int status,
         string code,
         string title,
+        HttpContext httpContext,
         Guid? attemptId = null)
     {
         var problem = new ProblemDetails
         {
             Status = status,
             Title = title,
+            Type = $"https://httpstatuses.com/{status}",
         };
         problem.Extensions["code"] = code;
+        problem.Extensions["traceId"] = httpContext.TraceIdentifier;
         if (attemptId.HasValue)
         {
             problem.Extensions["attemptId"] = attemptId.Value;

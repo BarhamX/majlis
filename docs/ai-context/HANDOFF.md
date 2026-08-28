@@ -6,6 +6,29 @@ Majlis remains governed as a complete Production V1 Android application. The bac
 
 ## Work in Progress
 
+### 2026-08-28 - Task 4 Review Fix Round 1
+
+- Added immutable `DailyMajlisPublications` history and a new forward migration with deterministic legacy `published`/`unpublished` backfill; streak eligibility no longer depends on mutable publication status.
+- Moved submission time/day capture after the authenticated-user row lock, revalidated token issuance against the locked `AuthenticationNotBefore`, and added a PostgreSQL `FOR SHARE` locking read for the current publication decision.
+- Completed daily-loop problem envelopes with stable `type`, `title`, `status`, `code`, and `traceId`, without error details; reverted DLY-005, ATT-006, and ATT-007 to `Planned` pending hosted PostgreSQL execution.
+- Added locally executable regression tests plus compiled PostgreSQL coverage for published-then-unpublished streak history, midnight waiting, unpublishing races, and fresh/upgrade migration backfill. PostgreSQL remains unexecuted locally because Docker Desktop/PostgreSQL is unavailable.
+
+### Files Changed
+
+- Daily Majlis domain/configuration/context/initializer, `EfDailyLoopRepository`, `DailyLoopService`, daily-loop controllers/problem results, new publication-history migration/snapshot, focused tests, schema/traceability/manifest, and this handoff.
+
+### Tests and Checks Run
+
+- See the Task 4 fix-round report for exact RED/GREEN and final verification commands. Local PostgreSQL integration execution remains deferred to hosted CI.
+
+### Known Blockers
+
+- Hosted PostgreSQL execution is still required for migration backfill and transaction-lock race validation; no local integration success is claimed.
+
+### Next Recommended Task
+
+- Re-review this fix commit, then run hosted Backend CI before Task 5 rate-limit/security work.
+
 ### 2026-08-28 - Transactional Daily-Loop Application and APIs
 
 - Implemented Task 4 of the persisted backend daily loop test-first: application-owned submission orchestration, one EF/PostgreSQL transaction with authenticated-user locking/revalidation, deterministic idempotency, immutable result mapping, owned result/history/progress/share queries, thin API controllers, and real Today completion state.

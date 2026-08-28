@@ -31,8 +31,6 @@ public sealed class DailyLoopService(
         RequireId(selectedOptionId, nameof(selectedOptionId));
         RequireId(idempotencyKey, nameof(idempotencyKey));
 
-        var now = timeProvider.GetUtcNow();
-        var today = DateOnly.FromDateTime(now.UtcDateTime);
         var requestHash = CreateRequestHash(challengeId, selectedOptionId);
         SubmissionDecision decision;
         try
@@ -41,7 +39,9 @@ public sealed class DailyLoopService(
                 async (transaction, token) =>
                 {
                     var user = await transaction.LockUserAsync(identity, token);
-                    ValidateEligibleUser(user);
+                    var now = timeProvider.GetUtcNow();
+                    var today = DateOnly.FromDateTime(now.UtcDateTime);
+                    ValidateEligibleUser(user, identity);
 
                     var idempotency = await transaction.FindIdempotencyAsync(
                         user!.Id,
@@ -393,7 +393,9 @@ public sealed class DailyLoopService(
             attempt.ResultLocale);
     }
 
-    private static void ValidateEligibleUser(UserAccount? user)
+    private static void ValidateEligibleUser(
+        UserAccount? user,
+        AuthenticatedIdentity identity)
     {
         if (user is null || user.Status != UserAccountStatus.Active)
         {
@@ -407,6 +409,14 @@ public sealed class DailyLoopService(
             throw new DailyLoopException(
                 "profile_incomplete",
                 "Complete the Majlis profile before submitting an attempt.");
+        }
+
+        if (user.AuthenticationNotBefore.HasValue &&
+            identity.IssuedAt <= user.AuthenticationNotBefore.Value)
+        {
+            throw new DailyLoopException(
+                "forbidden",
+                "The authenticated credential is no longer valid.");
         }
     }
 

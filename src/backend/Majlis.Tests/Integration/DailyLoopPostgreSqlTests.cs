@@ -237,6 +237,96 @@ public sealed class DailyLoopPostgreSqlTests(PostgreSqlFixture postgreSql) : IAs
     }
 
     [Fact]
+    public async Task Submit_SkippedDayPublishedThenUnpublished_StillResetsStreak()
+    {
+        await SubmitForDayAsync("unpublished-reset-user", correct: false);
+        StartFactory(FirstDay.AddDays(1));
+        using (var skippedClient = await CreateAuthenticatedClientAsync("unpublished-reset-user"))
+        {
+            await GetTodayAsync(skippedClient);
+        }
+
+        await using (var scope = _factory.Services.CreateAsyncScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<MajlisDbContext>();
+            await dbContext.DailyMajlis
+                .Where(item => item.PublishDate == DateOnly.FromDateTime(FirstDay.AddDays(1).UtcDateTime))
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(item => item.Status, DailyMajlisStatus.Unpublished)
+                    .SetProperty(item => item.PublishedRevisionId, (Guid?)null));
+        }
+
+        StartFactory(FirstDay.AddDays(2));
+        var thirdDay = await SubmitForDayAsync("unpublished-reset-user", correct: false);
+
+        Assert.Equal(1, thirdDay.GetProperty("streak").GetProperty("current").GetInt32());
+    }
+
+    [Fact]
+    public async Task Submit_CrossesUtcMidnightWhileWaitingForUserLock_UsesPostLockDay()
+    {
+        const string subject = "midnight-lock-user";
+        using var client = await CreateAuthenticatedClientAsync(subject);
+        var today = await GetTodayAsync(client);
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<MajlisDbContext>();
+        var userId = await dbContext.UserIdentities
+            .Where(item => item.Subject == subject)
+            .Select(item => item.UserId)
+            .SingleAsync();
+        await using var transaction = await dbContext.Database.BeginTransactionAsync();
+        await dbContext.Users.FromSqlInterpolated($$"""
+            SELECT * FROM "Users" WHERE "Id" = {{userId}} FOR UPDATE
+            """).SingleAsync();
+
+        var submission = SubmitAsync(
+            client,
+            today.ChallengeId,
+            today.CorrectOptionId,
+            Guid.NewGuid());
+        await Task.Delay(200);
+        Assert.False(submission.IsCompleted);
+        _factory.Clock.UtcNow = FirstDay.AddDays(1);
+        await transaction.CommitAsync();
+
+        await AssertProblemCodeAsync(
+            await submission,
+            HttpStatusCode.NotFound,
+            "daily_majlis_unavailable");
+        await AssertDailyLoopRowCountsAsync(0, 0, 0, 0);
+    }
+
+    [Fact]
+    public async Task Submit_RacingUnpublish_HoldsPublicationDecisionUntilTransitionCommits()
+    {
+        using var client = await CreateAuthenticatedClientAsync("unpublish-race-user");
+        var today = await GetTodayAsync(client);
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<MajlisDbContext>();
+        await using var transaction = await dbContext.Database.BeginTransactionAsync();
+        await dbContext.DailyMajlis
+            .Where(item => item.Id == today.DailyMajlisId)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(item => item.Status, DailyMajlisStatus.Unpublished)
+                .SetProperty(item => item.PublishedRevisionId, (Guid?)null));
+
+        var submission = SubmitAsync(
+            client,
+            today.ChallengeId,
+            today.CorrectOptionId,
+            Guid.NewGuid());
+        await Task.Delay(200);
+        Assert.False(submission.IsCompleted);
+        await transaction.CommitAsync();
+
+        await AssertProblemCodeAsync(
+            await submission,
+            HttpStatusCode.NotFound,
+            "daily_majlis_unavailable");
+        await AssertDailyLoopRowCountsAsync(0, 0, 0, 0);
+    }
+
+    [Fact]
     public async Task Submit_WhenLedgerPersistenceFails_RollsBackEveryDailyLoopRow()
     {
         const string subject = "rollback-user";
@@ -612,7 +702,9 @@ public sealed class DailyLoopPostgreSqlTests(PostgreSqlFixture postgreSql) : IAs
     {
         await using var scope = _factory.Services.CreateAsyncScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<MajlisDbContext>();
-        var dailyMajlis = await dbContext.DailyMajlis.SingleAsync(item => item.Id == dailyMajlisId);
+        var dailyMajlis = await dbContext.DailyMajlis
+            .Include(item => item.Publication)
+            .SingleAsync(item => item.Id == dailyMajlisId);
         var revisionId = Guid.NewGuid();
         var challenge = new Challenge(
             Guid.NewGuid(),
@@ -673,20 +765,28 @@ public sealed class DailyLoopPostgreSqlTests(PostgreSqlFixture postgreSql) : IAs
         return document.RootElement.Clone();
     }
 
-    private sealed class DailyLoopApiFactory(
-        string connectionString,
-        DateTimeOffset utcNow) : WebApplicationFactory<Program>
+    private sealed class DailyLoopApiFactory : WebApplicationFactory<Program>
     {
+        private readonly string _connectionString;
+
+        public DailyLoopApiFactory(string connectionString, DateTimeOffset utcNow)
+        {
+            _connectionString = connectionString;
+            Clock = new MutableTimeProvider(utcNow);
+        }
+
+        public MutableTimeProvider Clock { get; }
+
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             builder.UseEnvironment("Testing");
-            builder.UseSetting("ConnectionStrings:MajlisDatabase", connectionString);
+            builder.UseSetting("ConnectionStrings:MajlisDatabase", _connectionString);
             builder.UseSetting("Authentication:Mode", "Test");
             builder.UseSetting("Sharing:PublicHost", "https://share.majlis.test");
             builder.ConfigureServices(services =>
             {
                 services.RemoveAll<TimeProvider>();
-                services.AddSingleton<TimeProvider>(new FixedTimeProvider(utcNow));
+                services.AddSingleton<TimeProvider>(Clock);
             });
         }
     }
@@ -697,8 +797,16 @@ public sealed class DailyLoopPostgreSqlTests(PostgreSqlFixture postgreSql) : IAs
         Guid CorrectOptionId,
         Guid IncorrectOptionId);
 
-    private sealed class FixedTimeProvider(DateTimeOffset utcNow) : TimeProvider
+    private sealed class MutableTimeProvider(DateTimeOffset utcNow) : TimeProvider
     {
-        public override DateTimeOffset GetUtcNow() => utcNow;
+        private long _utcTicks = utcNow.UtcTicks;
+
+        public DateTimeOffset UtcNow
+        {
+            get => new(Interlocked.Read(ref _utcTicks), TimeSpan.Zero);
+            set => Interlocked.Exchange(ref _utcTicks, value.UtcTicks);
+        }
+
+        public override DateTimeOffset GetUtcNow() => UtcNow;
     }
 }

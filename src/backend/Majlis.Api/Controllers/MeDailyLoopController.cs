@@ -29,7 +29,7 @@ public sealed class MeDailyLoopController(IDailyLoopService dailyLoopService) : 
         }
         catch (DailyLoopException exception)
         {
-            return DailyLoopProblemResults.Create(exception);
+            return DailyLoopProblemResults.Create(exception, HttpContext);
         }
     }
 

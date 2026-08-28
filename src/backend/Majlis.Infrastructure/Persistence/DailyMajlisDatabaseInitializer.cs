@@ -46,7 +46,7 @@ public sealed class DailyMajlisDatabaseInitializer(
         var revision = CreateSeedRevision(dailyMajlisId, revisionId, challenge);
         revision.Submit(timeProvider.GetUtcNow());
         var dailyMajlis = new DailyMajlisEntity(dailyMajlisId, publishDate);
-        dailyMajlis.Publish(revision);
+        dailyMajlis.Publish(revision, timeProvider.GetUtcNow());
         dbContext.DailyMajlis.Add(dailyMajlis);
 
         try
@@ -97,7 +97,7 @@ public sealed class DailyMajlisDatabaseInitializer(
         revision.Submit(timeProvider.GetUtcNow());
 
         dbContext.DailyMajlisRevisions.Add(revision);
-        seedDailyMajlis.Publish(revision);
+        seedDailyMajlis.Publish(revision, timeProvider.GetUtcNow());
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
@@ -105,6 +105,7 @@ public sealed class DailyMajlisDatabaseInitializer(
         DateOnly publishDate,
         CancellationToken cancellationToken) => dbContext.DailyMajlis
         .AsSplitQuery()
+        .Include(item => item.Publication)
         .Include(item => item.PublishedRevision)
         .ThenInclude(revision => revision!.Translations)
         .Include(item => item.PublishedRevision)
@@ -147,7 +148,7 @@ public sealed class DailyMajlisDatabaseInitializer(
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        dailyMajlis.Publish(revision);
+        dailyMajlis.Publish(revision, timeProvider.GetUtcNow());
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
     }

@@ -12,6 +12,8 @@ public sealed class MajlisDbContext(
 {
     public DbSet<DailyMajlisEntity> DailyMajlis => Set<DailyMajlisEntity>();
 
+    public DbSet<DailyMajlisPublication> DailyMajlisPublications => Set<DailyMajlisPublication>();
+
     public DbSet<Challenge> Challenges => Set<Challenge>();
 
     public DbSet<ChallengeOption> ChallengeOptions => Set<ChallengeOption>();

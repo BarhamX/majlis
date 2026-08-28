@@ -1,3 +1,4 @@
+using Majlis.Domain.DailyMajlis;
 using Majlis.Domain.Progress;
 using Majlis.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -122,6 +123,25 @@ public sealed class DailyLoopPersistenceModelTests
         Assert.Contains(idempotency.GetIndexes(), index =>
             index.GetDatabaseName() == "IX_IdempotencyRecords_ExpiresAt" &&
             Names(index.Properties).SequenceEqual([nameof(IdempotencyRecord.ExpiresAt)]));
+    }
+
+    [Fact]
+    public void Model_DefinesImmutableUniquePublicationHistory()
+    {
+        var publication = _model.FindEntityType(typeof(DailyMajlisPublication));
+        Assert.NotNull(publication);
+
+        Assert.Equal("DailyMajlisPublications", publication.GetTableName());
+        Assert.All(publication.GetProperties(), property =>
+            Assert.Equal(PropertySaveBehavior.Throw, property.GetAfterSaveBehavior()));
+        Assert.Contains(publication.GetIndexes(), index =>
+            index.IsUnique &&
+            Names(index.Properties).SequenceEqual([nameof(DailyMajlisPublication.PublishDate)]));
+        Assert.Contains(publication.GetForeignKeys(), foreignKey =>
+            foreignKey.DeleteBehavior == DeleteBehavior.Restrict &&
+            Names(foreignKey.Properties).SequenceEqual([
+                nameof(DailyMajlisPublication.DailyMajlisId),
+            ]));
     }
 
     private static string[] Names(IEnumerable<IReadOnlyProperty> properties) =>

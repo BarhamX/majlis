@@ -104,24 +104,49 @@ internal sealed class EfDailyLoopRepository(MajlisDbContext dbContext) :
             attempt.UserId == userId && attempt.DailyMajlisId == dailyMajlisId,
             cancellationToken);
 
-    public Task<DailyMajlisEntity?> GetCurrentPublishedChallengeAsync(
+    public async Task<DailyMajlisEntity?> GetCurrentPublishedChallengeAsync(
         DateOnly publishDate,
         Guid challengeId,
-        CancellationToken cancellationToken) => dbContext.DailyMajlis
-        .AsSplitQuery()
-        .Where(item =>
-            item.PublishDate == publishDate &&
-            item.Status == DailyMajlisStatus.Published &&
-            item.PublishedRevision != null &&
-            item.PublishedRevision.Challenge != null &&
-            item.PublishedRevision.Challenge.Id == challengeId)
-        .Include(item => item.PublishedRevision)
-        .ThenInclude(revision => revision!.Translations)
-        .Include(item => item.PublishedRevision)
-        .ThenInclude(revision => revision!.Challenge)
-        .ThenInclude(challenge => challenge!.Options)
-        .ThenInclude(option => option.Translations)
-        .SingleOrDefaultAsync(cancellationToken);
+        CancellationToken cancellationToken)
+    {
+        var dailyMajlis = await dbContext.DailyMajlis
+            .FromSqlInterpolated($$"""
+                SELECT daily.*
+                FROM "DailyMajlis" AS daily
+                INNER JOIN "DailyMajlisRevisions" AS revision
+                    ON revision."Id" = daily."PublishedRevisionId"
+                INNER JOIN "Challenges" AS challenge
+                    ON challenge."RevisionId" = revision."Id"
+                WHERE daily."PublishDate" = {{publishDate}}
+                  AND daily."Status" = 'published'
+                  AND challenge."Id" = {{challengeId}}
+                FOR SHARE OF daily
+                """)
+            .SingleOrDefaultAsync(cancellationToken);
+        if (dailyMajlis is null)
+        {
+            return null;
+        }
+
+        await dbContext.Entry(dailyMajlis)
+            .Reference(item => item.PublishedRevision)
+            .LoadAsync(cancellationToken);
+        var revision = dailyMajlis.PublishedRevision!;
+        await dbContext.Entry(revision).Collection(item => item.Translations)
+            .LoadAsync(cancellationToken);
+        await dbContext.Entry(revision).Reference(item => item.Challenge)
+            .LoadAsync(cancellationToken);
+        var challenge = revision.Challenge!;
+        await dbContext.Entry(challenge).Collection(item => item.Options)
+            .LoadAsync(cancellationToken);
+        foreach (var option in challenge.Options)
+        {
+            await dbContext.Entry(option).Collection(item => item.Translations)
+                .LoadAsync(cancellationToken);
+        }
+
+        return dailyMajlis;
+    }
 
     public Task<UserProgress?> GetProgressForUpdateAsync(
         Guid userId,
@@ -131,14 +156,13 @@ internal sealed class EfDailyLoopRepository(MajlisDbContext dbContext) :
     public async Task<IReadOnlyCollection<DateOnly>> GetPublishedDatesAsync(
         DateOnly? after,
         DateOnly through,
-        CancellationToken cancellationToken) => await dbContext.DailyMajlis
+        CancellationToken cancellationToken) => await dbContext.DailyMajlisPublications
         .AsNoTracking()
-        .Where(item =>
-            item.Status == DailyMajlisStatus.Published &&
-            (!after.HasValue || item.PublishDate >= after.Value) &&
-            item.PublishDate <= through)
-        .OrderBy(item => item.PublishDate)
-        .Select(item => item.PublishDate)
+        .Where(publication =>
+            (!after.HasValue || publication.PublishDate >= after.Value) &&
+            publication.PublishDate <= through)
+        .OrderBy(publication => publication.PublishDate)
+        .Select(publication => publication.PublishDate)
         .ToArrayAsync(cancellationToken);
 
     public void AddAttempt(UserAttempt attempt) => dbContext.UserAttempts.Add(attempt);
