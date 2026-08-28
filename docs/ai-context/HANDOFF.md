@@ -9,13 +9,14 @@ Majlis remains governed as a complete Production V1 Android application. The bac
 ### 2026-08-28 - Task 6 Persisted Backend Daily-Loop Documentation and Evidence
 
 - Reconciled Spec 001's backend checklist and the requirement-to-test matrix against the implemented daily loop and the green hosted PostgreSQL evidence. The completed backend slice is still only one milestone within the complete Production V1 Android application.
-- Promoted only requirements with direct passing evidence: `DLY-002`, `DLY-005`, `DLY-006`, `ATT-002` through `ATT-008`, `PROG-001` through `PROG-006`, `REL-003`, and `SHR-001` through `SHR-002` are `Verified`.
-- Kept `DLY-001`, `DLY-003`, `DLY-004`, and `ATT-001` `Partial`: explicit region/timezone-invariance, exact pre-attempt allowlist, Flutter unavailable-state, direct submission authentication/profile, and the complete non-current status/revision matrix still need dedicated evidence. `REL-012` remains `Partial` beyond daily-loop durability, while `REL-014` moved from `Planned` to `Partial` for identity and daily-attempt isolation only.
+- Promoted only requirements with direct passing evidence: `DLY-002`, `DLY-006`, `ATT-002` through `ATT-008`, `PROG-001` through `PROG-006`, `REL-003`, and `SHR-001` through `SHR-002` are `Verified`.
+- Kept `DLY-001`, `DLY-003`, `DLY-004`, `DLY-005`, and `ATT-001` `Partial`: backend `hasAttempted`/`attemptId`, authoritative result retrieval, and duplicate prevention are covered, but Flutter completed-state retrieval remains pending alongside explicit region/timezone-invariance, exact pre-attempt allowlist, Flutter unavailable-state, direct submission authentication/profile, and the complete non-current status/revision matrix. `REL-012` remains `Partial` beyond daily-loop durability, while `REL-014` moved from `Planned` to `Partial` for identity and daily-attempt isolation only.
 - Corrected the database document's stale migration status and documented the implemented attempt limiter, lazy zero progress, cursor validation, non-enumerating share ownership, and the still-unimplemented public share landing/rendering boundary.
 
 ### Files Changed
 
 - `specs/001-playable-daily-majlis/tasks.md` - checked only implemented and evidenced backend domain, use-case, API, and test work; left the exhaustive non-current challenge test row and all Flutter work open.
+- `specs/003-production-app/tasks.md` - checked only the committed localized immutable-content migration and persisted one-attempt, XP/streak, history, and spoiler-safe backend result rows; kept the overall Spec 001, Android, Game Ready, public sharing/deep-link, administration, and deployment work open.
 - `docs/quality/requirements-to-tests.md` - replaced pending-hosted placeholders with exact test evidence, run ids, and conservative statuses.
 - `docs/architecture/API_CONTRACTS.md` and `DATABASE_SCHEMA.md` - reconciled implemented daily-loop API/runtime behavior and the current forward migration boundary.
 - `docs/ai-context/HANDOFF.md` - updated current status and recorded this final documentation/evidence checkpoint.
