@@ -112,7 +112,9 @@ public sealed class DailyMajlisApiTests(PostgreSqlFixture postgreSql) : IAsyncLi
         await using (var scope = _factory.Services.CreateAsyncScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<MajlisDbContext>();
-            await dbContext.DailyMajlis.ExecuteDeleteAsync();
+            await dbContext.DailyMajlis.ExecuteUpdateAsync(setters => setters
+                .SetProperty(item => item.Status, DailyMajlisStatus.Unpublished)
+                .SetProperty(item => item.PublishedRevisionId, (Guid?)null));
         }
 
         var response = await client.GetAsync("/api/v1/daily-majlis/today");
@@ -157,9 +159,16 @@ public sealed class DailyMajlisApiTests(PostgreSqlFixture postgreSql) : IAsyncLi
     {
         await using var scope = _factory.Services.CreateAsyncScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<MajlisDbContext>();
-        dbContext.DailyMajlis.Add(CreateDailyMajlis(
+        var duplicateDailyMajlis = CreateDailyMajlis(
             new DateOnly(2026, 8, 26),
-            DailyMajlisStatus.Scheduled));
+            DailyMajlisStatus.Scheduled);
+        dbContext.DailyMajlis.Add(duplicateDailyMajlis);
+        dbContext.Entry(duplicateDailyMajlis)
+            .Reference(item => item.PublishedRevision)
+            .CurrentValue = null;
+        dbContext.Entry(duplicateDailyMajlis)
+            .Property(item => item.PublishedRevisionId)
+            .CurrentValue = null;
 
         await Assert.ThrowsAsync<DbUpdateException>(() => dbContext.SaveChangesAsync());
     }

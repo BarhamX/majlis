@@ -42,12 +42,29 @@ public sealed class DailyMajlisDatabaseInitializer(
         var revisionId = Guid.NewGuid();
         var challenge = CreateSeedChallenge(revisionId);
         var revision = CreateSeedRevision(SeedDailyMajlisId, revisionId, challenge);
-        dbContext.DailyMajlis.Add(new DailyMajlisEntity(
+        var dailyMajlis = new DailyMajlisEntity(
             SeedDailyMajlisId,
             today,
             DailyMajlisStatus.Published,
-            revision));
+            revision);
+        dbContext.DailyMajlis.Add(dailyMajlis);
+
+        var publishedRevision = dbContext.Entry(dailyMajlis)
+            .Reference(item => item.PublishedRevision);
+        publishedRevision.CurrentValue = null;
+        dbContext.Entry(dailyMajlis)
+            .Property(item => item.PublishedRevisionId)
+            .CurrentValue = null;
+
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        publishedRevision.CurrentValue = revision;
+        dbContext.Entry(dailyMajlis)
+            .Property(item => item.PublishedRevisionId)
+            .CurrentValue = revision.Id;
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
     }
 
     private async Task CompleteLegacySeedAsync(

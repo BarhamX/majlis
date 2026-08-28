@@ -6,6 +6,47 @@ Majlis remains governed as a complete Production V1 Android application. The bac
 
 ## Work in Progress
 
+### 2026-08-28 - Localized Revision Integration Repair
+
+- Recovered the Docker Desktop Linux engine and reran the previously blocked PostgreSQL suite.
+- Fixed clean Development/Testing initialization so the new Daily Majlis aggregate and revision are saved before the publication pointer is assigned, with both saves committed in one transaction.
+- Updated integration-test setup for the localized revision ownership model so unavailable-content and duplicate-publish-date tests exercise their intended API/database behavior.
+- This repair makes the current checkpoint testable and green; the broader localized-revision slice remains incomplete and no task checkbox was closed.
+
+### Files Changed
+
+- `src/backend/Majlis.Infrastructure/Persistence/DailyMajlisDatabaseInitializer.cs`
+- `src/backend/Majlis.Tests/Integration/DailyMajlisApiTests.cs`
+- `docs/ai-context/HANDOFF.md`
+
+### Decisions Made
+
+- Kept `PublishedRevisionId` nullable during the first persistence phase, then assigned it before committing the same database transaction, avoiding the EF insert cycle without weakening atomic publication.
+- Represented unavailable content in the API integration test by unpublishing the current aggregate instead of deleting revision-owned content.
+- Kept the duplicate-date test focused on the partial unique index by omitting the unrelated publication pointer from its candidate insert.
+
+### Tests and Checks Run
+
+- Red phase: the recovered PostgreSQL suite failed 11 integration tests on the EF `DailyMajlis`/`DailyMajlisRevision` publication-pointer cycle.
+- `dotnet test src/backend/Majlis.Tests/Majlis.Tests.csproj --configuration Release --no-restore --filter "FullyQualifiedName~DailyMajlisApiTests.Initializer_WhenRunMoreThanOnce_RemainsIdempotent"` - passed: 1 test, 0 failed after the transactional fix.
+- A subsequent full run exposed two stale integration-test setup assumptions; their focused rerun passed: 2 tests, 0 failed.
+- `dotnet test src/backend/Majlis.sln --configuration Release --no-restore` - passed: 52 tests, 0 failed, 0 skipped against PostgreSQL 17.
+- `dotnet format src/backend/Majlis.sln --verify-no-changes --no-restore` - passed.
+- `dotnet tool restore` - restored repository-pinned `dotnet-ef` 10.0.11.
+- `dotnet tool run dotnet-ef migrations has-pending-model-changes ... --configuration Release --no-build` - passed with no pending model changes.
+- `dotnet tool run dotnet-ef migrations script --idempotent ... --configuration Release --no-build` - passed.
+- `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-docs.ps1` - passed: 60 Markdown files and 147 requirement ids.
+- `git diff --check` - passed; only expected line-ending conversion warnings were printed.
+
+### Known Blockers
+
+- The localized revision slice still needs scheduled-content precedence, repeated-day rollover, concurrency, submitted-revision immutability, locale edge cases, and final legacy-migration/provenance review before its task checkbox can close.
+- Flutter, attempts, XP, and streak work remain outside this repair and are still required for `Game Ready`.
+
+### Next Recommended Task
+
+Add the remaining initializer, publication, migration, and locale edge-case tests test-first; then complete the localized-revision slice before starting persisted attempts, XP, and streaks.
+
 ### 2026-08-27 - Localized Daily Majlis Revision Checkpoint
 
 - Added the in-progress localized content-revision domain, persistence mappings, forward migrations, locale negotiation, canonical Today response fields, Arabic/English Development seed content, and focused tests.
@@ -317,4 +358,4 @@ Add the health endpoint and PostgreSQL/EF Core configuration, create the first e
 
 ## Last Updated
 
-2026-08-26
+2026-08-28
