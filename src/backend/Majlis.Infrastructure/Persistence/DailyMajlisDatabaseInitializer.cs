@@ -91,10 +91,10 @@ public sealed class DailyMajlisDatabaseInitializer(
         var revisionId = Guid.NewGuid();
         var challenge = CreateSeedChallenge(revisionId);
         var revisionNumber = (await dbContext.DailyMajlisRevisions
-            .Where(revision => revision.DailyMajlisId == SeedDailyMajlisId)
+            .Where(revision => revision.DailyMajlisId == seedDailyMajlis.Id)
             .Select(revision => (int?)revision.RevisionNumber)
             .MaxAsync(cancellationToken) ?? 0) + 1;
-        var revision = CreateSeedRevision(SeedDailyMajlisId, revisionId, challenge, revisionNumber);
+        var revision = CreateSeedRevision(seedDailyMajlis.Id, revisionId, challenge, revisionNumber);
         revision.Submit(timeProvider.GetUtcNow());
 
         dbContext.DailyMajlisRevisions.Add(revision);

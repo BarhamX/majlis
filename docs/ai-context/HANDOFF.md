@@ -6,6 +6,24 @@ Majlis remains governed as a complete Production V1 Android application. The bac
 
 ## Work in Progress
 
+### 2026-08-28 - Task 4 Review Fix Round 3
+
+- Corrected the remaining fixed legacy-ID leak in `CompleteSeedAsync`: replacement revision-number lookup and revision construction now use the selected repairable Daily Majlis aggregate ID.
+- The hosted initializer failure plus scoped review are the RED evidence. The existing PostgreSQL concurrent initializer regression still requires one published row and one immutable publication fact; local PostgreSQL remains unavailable, so hosted rerun is required.
+- No replay, restart, correction, schema, migration, or model behavior changed in this round.
+
+### Files Changed
+
+- `DailyMajlisDatabaseInitializer.cs` and this handoff.
+
+### Known Blockers
+
+- Hosted PostgreSQL CI must execute the repaired random-ID publication-owner path.
+
+### Next Recommended Task
+
+- Rerun hosted Backend CI before continuing Task 4 review or Task 5.
+
 ### 2026-08-28 - Task 4 Review Fix Round 2
 
 - Diagnosed hosted PostgreSQL run `33173237820` (114 passed, 4 failed): an unpublished app-created seed retained its immutable publication fact but was not recognized by the fixed-ID-only repair lookup, while three result tests expected text that does not exist in the real PostgreSQL seed.
