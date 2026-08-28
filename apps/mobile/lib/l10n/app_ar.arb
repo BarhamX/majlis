@@ -1,0 +1,27 @@
+{
+  "@@locale": "ar",
+  "appTitle": "مجلس",
+  "@appTitle": {
+    "description": "اسم التطبيق الظاهر للمستخدم"
+  },
+  "welcomeEyebrow": "موعد يومي مع الثقافة",
+  "@welcomeEyebrow": {
+    "description": "عبارة قصيرة فوق عنوان شاشة البداية"
+  },
+  "welcomeTitle": "المجلس يبدأ بسؤال",
+  "@welcomeTitle": {
+    "description": "العنوان الرئيسي لشاشة البداية"
+  },
+  "welcomeBody": "اكتشف حكايةً ومثلاً جديداً كل يوم، وشارك ما تعلّمته بلا حرق للإجابة.",
+  "@welcomeBody": {
+    "description": "وصف موجز لتجربة مجلس اليومية"
+  },
+  "todayMajlisLabel": "مجلس اليوم",
+  "@todayMajlisLabel": {
+    "description": "عنوان البطاقة التمهيدية لمجلس اليوم"
+  },
+  "majlisSymbolSemantics": "بوابة مجلس مضاءة",
+  "@majlisSymbolSemantics": {
+    "description": "وصف إمكانية الوصول للرمز الهندسي في شاشة البداية"
+  }
+}

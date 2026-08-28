@@ -84,25 +84,33 @@ Flutter app is feature-first:
 ```text
 lib/
   core/
-    api/
-    auth/
     routing/
     theme/
-    localization/
-    widgets/
-  features/
-    onboarding/
-    daily_majlis/
-    challenge/
-    results/
-    discussion/
-    profile/
-    leaderboard/
-    sharing/
-    reminders/
+  data/
+    models/
+    repositories/
+    services/
+  domain/
+    models/
+    use_cases/
+  l10n/
+  ui/
+    core/
+    features/
+      onboarding/
+      daily_majlis/
+      challenge/
+      results/
+      discussion/
+      profile/
+      leaderboard/
+      sharing/
+      reminders/
 ```
 
-State management: Riverpod.
+The UI layer follows MVVM: feature views stay lean, `ChangeNotifier` view models
+own presentation state, repositories isolate data access, and Riverpod provides
+dependency injection and state observation. GoRouter owns navigation.
 
 ## 6. Data Flow: Daily Challenge
 

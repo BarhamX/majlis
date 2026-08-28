@@ -55,11 +55,11 @@
 
 ## Flutter Foundation
 
-- [ ] Create Flutter app under `apps/mobile`.
-- [ ] Add feature-first folder structure.
-- [ ] Add Riverpod.
-- [ ] Add GoRouter.
-- [ ] Add theme tokens from `docs/design/THEME.md`.
+- [x] Create Flutter app under `apps/mobile`.
+- [x] Add feature-first folder structure.
+- [x] Add Riverpod.
+- [x] Add GoRouter.
+- [x] Add theme tokens from `docs/design/THEME.md`.
 
 ## Flutter Daily Flow
 
@@ -75,8 +75,8 @@
 ## Validation
 
 - [x] Run backend tests.
-- [ ] Run Flutter analyzer.
-- [ ] Run Flutter tests.
+- [x] Run Flutter analyzer.
+- [x] Run Flutter tests.
 - [ ] Manually complete daily loop on Android emulator.
 - [x] Map `DLY-*`, `ATT-*`, and `PROG-*` requirements in `docs/quality/requirements-to-tests.md`.
 - [x] Update `docs/ai-context/HANDOFF.md`.
