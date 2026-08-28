@@ -292,6 +292,8 @@ public sealed class DailyMajlisApiTests(PostgreSqlFixture postgreSql) : IAsyncLi
         Assert.Equal(1, await verification.DailyMajlis.CountAsync(item =>
             item.PublishDate == new DateOnly(2026, 8, 26) &&
             item.Status == DailyMajlisStatus.Published));
+        Assert.Equal(1, await verification.DailyMajlisPublications.CountAsync(item =>
+            item.PublishDate == new DateOnly(2026, 8, 26)));
     }
 
     [Fact]

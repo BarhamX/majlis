@@ -19,6 +19,9 @@ namespace Majlis.Tests.Integration;
 [Trait("Category", "Integration")]
 public sealed class DailyLoopPostgreSqlTests(PostgreSqlFixture postgreSql) : IAsyncLifetime
 {
+    private const string SeedEnglishExplanation =
+        "This proverb reflects hospitality as honor and responsibility.";
+    private const string CorrectedArabicExplanation = "شرح مصحح";
     private static readonly DateTimeOffset FirstDay =
         new(2026, 8, 26, 12, 0, 0, TimeSpan.Zero);
 
@@ -137,7 +140,11 @@ public sealed class DailyLoopPostgreSqlTests(PostgreSqlFixture postgreSql) : IAs
         Assert.Equal(HttpStatusCode.Created, first.StatusCode);
         Assert.Equal(HttpStatusCode.OK, replay.StatusCode);
         Assert.Equal(firstJson, replayJson);
-        Assert.Contains("English", replayJson, StringComparison.Ordinal);
+        Assert.Equal("en", (await ReadJsonAsync(first)).GetProperty("resultLocale").GetString());
+        var replayBody = await ReadJsonAsync(replay);
+        Assert.Equal("en", replayBody.GetProperty("resultLocale").GetString());
+        Assert.Contains("en", replay.Content.Headers.ContentLanguage);
+        Assert.Equal(SeedEnglishExplanation, replayBody.GetProperty("explanation").GetString());
         await AssertDailyLoopRowCountsAsync(attempts: 1, ledger: 1, progress: 1, idempotency: 1);
     }
 
@@ -377,7 +384,13 @@ public sealed class DailyLoopPostgreSqlTests(PostgreSqlFixture postgreSql) : IAs
             today.CorrectOptionId,
             Guid.NewGuid(),
             "en");
-        var attemptId = (await ReadJsonAsync(accepted)).GetProperty("attemptId").GetGuid();
+        var acceptedJson = await accepted.Content.ReadAsStringAsync();
+        using var acceptedDocument = JsonDocument.Parse(acceptedJson);
+        var attemptId = acceptedDocument.RootElement.GetProperty("attemptId").GetGuid();
+        Assert.Equal("en", acceptedDocument.RootElement.GetProperty("resultLocale").GetString());
+        Assert.Equal(
+            SeedEnglishExplanation,
+            acceptedDocument.RootElement.GetProperty("explanation").GetString());
         client.Dispose();
 
         StartFactory(FirstDay);
@@ -387,8 +400,15 @@ public sealed class DailyLoopPostgreSqlTests(PostgreSqlFixture postgreSql) : IAs
         var restartedToday = await ReadJsonAsync(
             await restartedClient.GetAsync("/api/v1/daily-majlis/today"));
 
+        var resultJson = await result.Content.ReadAsStringAsync();
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
-        Assert.Contains("English explanation", await result.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+        Assert.Equal(acceptedJson, resultJson);
+        Assert.Contains("en", result.Content.Headers.ContentLanguage);
+        using var resultDocument = JsonDocument.Parse(resultJson);
+        Assert.Equal("en", resultDocument.RootElement.GetProperty("resultLocale").GetString());
+        Assert.Equal(
+            SeedEnglishExplanation,
+            resultDocument.RootElement.GetProperty("explanation").GetString());
         Assert.Equal(15, progress.GetProperty("lifetimeXp").GetInt64());
         Assert.True(restartedToday.GetProperty("userState").GetProperty("hasAttempted").GetBoolean());
         Assert.Equal(
@@ -451,7 +471,9 @@ public sealed class DailyLoopPostgreSqlTests(PostgreSqlFixture postgreSql) : IAs
             today.CorrectOptionId,
             Guid.NewGuid(),
             "en-US");
-        var acceptedBody = await ReadJsonAsync(accepted);
+        var acceptedJson = await accepted.Content.ReadAsStringAsync();
+        using var acceptedDocument = JsonDocument.Parse(acceptedJson);
+        var acceptedBody = acceptedDocument.RootElement;
         var attemptId = acceptedBody.GetProperty("attemptId").GetGuid();
         var originalRevisionId = acceptedBody.GetProperty("contentRevisionId").GetGuid();
         await ReplacePublishedRevisionAsync(today.DailyMajlisId, originalRevisionId);
@@ -459,12 +481,17 @@ public sealed class DailyLoopPostgreSqlTests(PostgreSqlFixture postgreSql) : IAs
         client.DefaultRequestHeaders.AcceptLanguage.ParseAdd("ar");
 
         var result = await client.GetAsync($"/api/v1/attempts/{attemptId}");
-        var resultBody = await ReadJsonAsync(result);
+        var resultJson = await result.Content.ReadAsStringAsync();
+        using var resultDocument = JsonDocument.Parse(resultJson);
+        var resultBody = resultDocument.RootElement;
 
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+        Assert.Equal(acceptedJson, resultJson);
+        Assert.Contains("en", result.Content.Headers.ContentLanguage);
         Assert.Equal(originalRevisionId, resultBody.GetProperty("contentRevisionId").GetGuid());
         Assert.Equal("en", resultBody.GetProperty("resultLocale").GetString());
-        Assert.Equal("English explanation", resultBody.GetProperty("explanation").GetString());
+        Assert.Equal(SeedEnglishExplanation, resultBody.GetProperty("explanation").GetString());
+        Assert.DoesNotContain(CorrectedArabicExplanation, resultJson, StringComparison.Ordinal);
         Assert.Equal(15, resultBody.GetProperty("xp").GetProperty("lifetimeTotal").GetInt64());
         Assert.Equal(1, resultBody.GetProperty("streak").GetProperty("current").GetInt32());
     }

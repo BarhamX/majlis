@@ -158,10 +158,12 @@ This manifest lists version-controlled and pending source files. Run `scripts/va
 - `src/backend/Majlis.Infrastructure/Persistence/Configurations/UserRoleAssignmentConfiguration.cs`
 - `src/backend/Majlis.Infrastructure/Persistence/Configurations/XpLedgerEntryConfiguration.cs`
 - `src/backend/Majlis.Infrastructure/Persistence/DailyMajlisDatabaseInitializer.cs`
+- `src/backend/Majlis.Infrastructure/Persistence/DailyMajlisInitializationConflict.cs`
 - `src/backend/Majlis.Infrastructure/Persistence/EnumStorage.cs`
 - `src/backend/Majlis.Infrastructure/Persistence/IdentityStorage.cs`
 - `src/backend/Majlis.Infrastructure/Persistence/MajlisDbContext.cs`
 - `src/backend/Majlis.Infrastructure/Persistence/MajlisDbContextFactory.cs`
+- `src/backend/Majlis.Infrastructure/Properties/AssemblyInfo.cs`
 - `src/backend/Majlis.Infrastructure/Persistence/Migrations/20260826140414_InitialDailyMajlisContent.Designer.cs`
 - `src/backend/Majlis.Infrastructure/Persistence/Migrations/20260826140414_InitialDailyMajlisContent.cs`
 - `src/backend/Majlis.Infrastructure/Persistence/Migrations/20260826193542_AddIdentityProfileFoundation.Designer.cs`
@@ -190,6 +192,7 @@ This manifest lists version-controlled and pending source files. Run `scripts/va
 - `src/backend/Majlis.Tests/Domain/XpAwardTests.cs`
 - `src/backend/Majlis.Tests/Infrastructure/AuthenticationConfigurationTests.cs`
 - `src/backend/Majlis.Tests/Infrastructure/DependencyInjectionTests.cs`
+- `src/backend/Majlis.Tests/Infrastructure/DailyMajlisInitializationConflictTests.cs`
 - `src/backend/Majlis.Tests/Infrastructure/DailyLoopPersistenceModelTests.cs`
 - `src/backend/Majlis.Tests/Infrastructure/IdentityPersistenceModelTests.cs`
 - `src/backend/Majlis.Tests/Infrastructure/TestIdentityTokenIssuerTests.cs`

@@ -1,6 +1,5 @@
 using Majlis.Domain.DailyMajlis;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
 using DailyMajlisEntity = Majlis.Domain.DailyMajlis.DailyMajlis;
 
 namespace Majlis.Infrastructure.Persistence;
@@ -16,8 +15,8 @@ public sealed class DailyMajlisDatabaseInitializer(
         await dbContext.Database.MigrateAsync(cancellationToken);
 
         var today = DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime);
-        var legacySeed = await GetLegacySeedAsync(today, cancellationToken);
-        if (IsUsablePublishedSeed(legacySeed))
+        var repairableSeed = await GetRepairableSeedAsync(today, cancellationToken);
+        if (IsUsablePublishedSeed(repairableSeed))
         {
             return;
         }
@@ -27,9 +26,9 @@ public sealed class DailyMajlisDatabaseInitializer(
             return;
         }
 
-        if (legacySeed is not null)
+        if (repairableSeed is not null)
         {
-            await RepairLegacySeedAsync(legacySeed, today, cancellationToken);
+            await RepairSeedAsync(repairableSeed, today, cancellationToken);
             return;
         }
 
@@ -53,7 +52,8 @@ public sealed class DailyMajlisDatabaseInitializer(
         {
             await SaveNewPublicationAsync(dailyMajlis, revision, cancellationToken);
         }
-        catch (DbUpdateException exception) when (IsUniqueViolation(exception))
+        catch (DbUpdateException exception) when (
+            DailyMajlisInitializationConflict.IsExpectedCreateRace(exception))
         {
             dbContext.ChangeTracker.Clear();
             if (!await OfficialContentExistsAsync(publishDate, cancellationToken))
@@ -63,19 +63,20 @@ public sealed class DailyMajlisDatabaseInitializer(
         }
     }
 
-    private async Task RepairLegacySeedAsync(
+    private async Task RepairSeedAsync(
         DailyMajlisEntity seedDailyMajlis,
         DateOnly publishDate,
         CancellationToken cancellationToken)
     {
         try
         {
-            await CompleteLegacySeedAsync(seedDailyMajlis, cancellationToken);
+            await CompleteSeedAsync(seedDailyMajlis, cancellationToken);
         }
-        catch (DbUpdateException exception) when (IsUniqueViolation(exception))
+        catch (DbUpdateException exception) when (
+            DailyMajlisInitializationConflict.IsExpectedRepairRace(exception))
         {
             dbContext.ChangeTracker.Clear();
-            var persistedSeed = await GetLegacySeedAsync(publishDate, cancellationToken);
+            var persistedSeed = await GetRepairableSeedAsync(publishDate, cancellationToken);
             if (!IsUsablePublishedSeed(persistedSeed))
             {
                 throw;
@@ -83,7 +84,7 @@ public sealed class DailyMajlisDatabaseInitializer(
         }
     }
 
-    private async Task CompleteLegacySeedAsync(
+    private async Task CompleteSeedAsync(
         DailyMajlisEntity seedDailyMajlis,
         CancellationToken cancellationToken)
     {
@@ -101,7 +102,7 @@ public sealed class DailyMajlisDatabaseInitializer(
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    private Task<DailyMajlisEntity?> GetLegacySeedAsync(
+    private Task<DailyMajlisEntity?> GetRepairableSeedAsync(
         DateOnly publishDate,
         CancellationToken cancellationToken) => dbContext.DailyMajlis
         .AsSplitQuery()
@@ -112,9 +113,12 @@ public sealed class DailyMajlisDatabaseInitializer(
         .ThenInclude(revision => revision!.Challenge)
         .ThenInclude(challenge => challenge!.Options)
         .ThenInclude(option => option.Translations)
-        .SingleOrDefaultAsync(
-            item => item.Id == SeedDailyMajlisId && item.PublishDate == publishDate,
-            cancellationToken);
+        .Where(item =>
+            item.PublishDate == publishDate &&
+            (item.Id == SeedDailyMajlisId || item.Publication != null))
+        .OrderByDescending(item => item.Publication != null)
+        .ThenByDescending(item => item.Id == SeedDailyMajlisId)
+        .FirstOrDefaultAsync(cancellationToken);
 
     private static bool IsUsablePublishedSeed(DailyMajlisEntity? seedDailyMajlis) =>
         seedDailyMajlis is
@@ -161,12 +165,6 @@ public sealed class DailyMajlisDatabaseInitializer(
             (dailyMajlis.Status == DailyMajlisStatus.Scheduled ||
              dailyMajlis.Status == DailyMajlisStatus.Published),
         cancellationToken);
-
-    private static bool IsUniqueViolation(DbUpdateException exception) =>
-        exception.InnerException is PostgresException
-        {
-            SqlState: PostgresErrorCodes.UniqueViolation,
-        };
 
     private DailyMajlisRevision CreateSeedRevision(
         Guid dailyMajlisId,

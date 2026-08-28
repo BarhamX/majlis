@@ -6,6 +6,25 @@ Majlis remains governed as a complete Production V1 Android application. The bac
 
 ## Work in Progress
 
+### 2026-08-28 - Task 4 Review Fix Round 2
+
+- Diagnosed hosted PostgreSQL run `33173237820` (114 passed, 4 failed): an unpublished app-created seed retained its immutable publication fact but was not recognized by the fixed-ID-only repair lookup, while three result tests expected text that does not exist in the real PostgreSQL seed.
+- The initializer now reuses the Daily Majlis that owns today's immutable publication fact and concurrent repair converges through the revision-number constraint. Unique-violation handling is restricted to the exact create/repair race constraints so unrelated PostgreSQL 23505 failures propagate.
+- PostgreSQL replay, restart, and correction tests now compare the first accepted stored result with the later result and independently assert the real seeded English locale/explanation plus `Content-Language`; the correction case also rejects substituted corrected Arabic content.
+- Local focused/non-integration tests and Release compilation pass. PostgreSQL integration execution remains hosted-only because local Docker/PostgreSQL is unavailable; the controller must rerun hosted CI.
+
+### Files Changed
+
+- `DailyMajlisDatabaseInitializer.cs`, new `DailyMajlisInitializationConflict.cs`, Infrastructure test visibility, focused conflict tests, affected PostgreSQL tests, `MANIFEST.md`, and this handoff.
+
+### Known Blockers
+
+- Hosted PostgreSQL rerun is required to validate the repaired initializer race and corrected durable-result assertions.
+
+### Next Recommended Task
+
+- Rerun hosted Backend CI for this fix commit; continue Task 4 review only after the full PostgreSQL suite is green.
+
 ### 2026-08-28 - Task 4 Review Fix Round 1
 
 - Added immutable `DailyMajlisPublications` history and a new forward migration with deterministic legacy `published`/`unpublished` backfill; streak eligibility no longer depends on mutable publication status.
