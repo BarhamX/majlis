@@ -2,7 +2,7 @@
 
 ## Status and Migration Rule
 
-This is the target logical PostgreSQL schema for Production V1. The committed initial migration currently contains only `DailyMajlis`, `Challenges`, and `ChallengeOptions`; its nullable `Challenges.SourceNotes` and non-localized text are known implementation gaps. Do not edit an applied migration. Add explicit reviewed forward migrations that preserve existing development data or document its reset.
+This is the target logical PostgreSQL schema for Production V1. The committed forward migration chain now implements the localized immutable Daily Majlis content model, Development/Testing identity/profile foundation, immutable publication history, and persisted attempt/XP/progress/idempotency model described below. Community, leaderboard, content-administration, moderation, analytics, retention-job, and production-operations tables remain target schema rather than implemented persistence. Do not edit an applied migration. Add explicit reviewed forward migrations that preserve existing development data or document its reset.
 
 Localized immutable content revisions establish an explicit forward-only migration boundary. Downgrading across that boundary is rejected before schema mutation because reconstructing the legacy non-localized model would discard revision history and translations. Recovery across the boundary must restore a compatible pre-migration backup or apply a reviewed forward recovery migration; direct EF downgrade is not a supported rollback path.
 

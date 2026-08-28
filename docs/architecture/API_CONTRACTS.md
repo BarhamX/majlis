@@ -198,6 +198,8 @@ First accepted response `201`:
 
 `resultLocale` is the negotiated BCP 47 locale stored when the first attempt is accepted. `xp.lifetimeTotal`, `streak.current`, and `streak.longest` are the exact post-award snapshots stored with the attempt, not recalculated from later progress. The explanation and cultural card are served from the immutable stored `contentRevisionId` in that stored locale. Same key/payload returns `200` with the same body. Same key/different payload returns `409 idempotency_key_reused`. A later key after completion returns `409 attempt_already_completed` with extension `attemptId`. Option/challenge mismatch returns `422 option_not_in_challenge`.
 
+The authenticated account and request IP use chained fixed one-minute windows of 10 and 60 submissions respectively. The limiter runs after completed-profile authorization resolves the local account and before the controller or daily-loop transaction can write. Excess requests return `429 rate_limit_exceeded` and `Retry-After`; the queue length is zero. Deployment behind a reverse proxy must configure trusted forwarding before the resolved remote IP is treated as the client partition.
+
 ### GET `/attempts/{attemptId}`
 
 Returns the same stored result contract only when owned by the caller. A missing or non-owned attempt always returns the same non-enumerating `404 attempt_not_found`; the response must not distinguish those cases. Result retrieval remains available after the content day, a correction, or unpublishing and never changes the accepted option, correctness, XP, streak snapshots, stored locale, or source revision.
@@ -205,6 +207,8 @@ Returns the same stored result contract only when owned by the caller. A missing
 ### GET `/me/attempts?cursor=&limit=20`
 
 Returns the user's newest-first attempt summaries with attempt id, publish date, title in the stored result locale, correctness, XP awarded, stored result locale, and content revision id. `limit` defaults to 20 and is 1-50. `cursor` is opaque and represents the final `(attemptedAt, attemptId)` boundary of the prior page under descending `attemptedAt`, then descending `attemptId` ordering; a continuation returns only rows strictly after that boundary. Attempts created after the first page that sort before its boundary do not shift, duplicate, or replace continuation items.
+
+An invalid cursor or out-of-range limit returns `422 validation_failed`.
 
 ### GET `/me/progress`
 
@@ -216,6 +220,8 @@ Returns the user's newest-first attempt summaries with attempt id, publish date,
   "lastCompletedPublishDate": "2026-08-26"
 }
 ```
+
+If no accepted attempt exists, this endpoint returns zero lifetime/current/longest values and a null last-completed date without creating a `UserProgress` row. Progress is created lazily only by the first accepted attempt transaction.
 
 ## Weekly Leaderboard
 
@@ -249,7 +255,7 @@ Only opted-in adult active users are eligible. `me` is null when ineligible. The
 }
 ```
 
-The endpoint requires ownership and returns no correctness, answer, explanation, user identity, XP, or streak. `GET /daily/{yyyy-MM-dd}` is a public web landing route, not a JSON API; it opens the verified Android App Link or a safe current/expired/invalid fallback.
+The endpoint requires ownership and returns no correctness, answer, explanation, user identity, XP, or streak. Missing and non-owned attempts both return `404 attempt_not_found`. `GET /daily/{yyyy-MM-dd}` is a public web landing route, not a JSON API; it opens the verified Android App Link or a safe current/expired/invalid fallback. The public landing route, card rendering, and verified Android App Link are not implemented by this backend checkpoint.
 
 ## Reminder Preference
 

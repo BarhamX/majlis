@@ -2,9 +2,51 @@
 
 ## Current Status
 
-Majlis remains governed as a complete Production V1 Android application. The backend now has the local identity/profile foundation needed for game development plus a persisted, localized Daily Majlis checkpoint with immutable published revisions, history-safe UTC rollover, scheduled-content precedence, and concurrency-safe Development/Testing initialization. Google, Apple, Meta, and Snapchat are the selected production providers, but their credentials/callbacks and all hosting/domain logistics remain deferred until `Game Ready`.
+Majlis remains governed as a complete Production V1 Android application. The backend now has the local identity/profile foundation and persisted Daily Majlis loop needed for Android game development: immutable localized publications and accepted results, exact XP, UTC published-day streaks, idempotent/concurrent submission, owned history/progress/share metadata, real Today completion state, and account/IP submission limits. Google, Apple, Meta, and Snapchat are the selected production providers, but their credentials/callbacks and all hosting/domain logistics remain deferred until `Game Ready`.
 
 ## Work in Progress
+
+### 2026-08-28 - Task 6 Persisted Backend Daily-Loop Documentation and Evidence
+
+- Reconciled Spec 001's backend checklist and the requirement-to-test matrix against the implemented daily loop and the green hosted PostgreSQL evidence. The completed backend slice is still only one milestone within the complete Production V1 Android application.
+- Promoted only requirements with direct passing evidence: `DLY-002`, `DLY-005`, `DLY-006`, `ATT-002` through `ATT-008`, `PROG-001` through `PROG-006`, `REL-003`, and `SHR-001` through `SHR-002` are `Verified`.
+- Kept `DLY-001`, `DLY-003`, `DLY-004`, and `ATT-001` `Partial`: explicit region/timezone-invariance, exact pre-attempt allowlist, Flutter unavailable-state, direct submission authentication/profile, and the complete non-current status/revision matrix still need dedicated evidence. `REL-012` remains `Partial` beyond daily-loop durability, while `REL-014` moved from `Planned` to `Partial` for identity and daily-attempt isolation only.
+- Corrected the database document's stale migration status and documented the implemented attempt limiter, lazy zero progress, cursor validation, non-enumerating share ownership, and the still-unimplemented public share landing/rendering boundary.
+
+### Files Changed
+
+- `specs/001-playable-daily-majlis/tasks.md` - checked only implemented and evidenced backend domain, use-case, API, and test work; left the exhaustive non-current challenge test row and all Flutter work open.
+- `docs/quality/requirements-to-tests.md` - replaced pending-hosted placeholders with exact test evidence, run ids, and conservative statuses.
+- `docs/architecture/API_CONTRACTS.md` and `DATABASE_SCHEMA.md` - reconciled implemented daily-loop API/runtime behavior and the current forward migration boundary.
+- `docs/ai-context/HANDOFF.md` - updated current status and recorded this final documentation/evidence checkpoint.
+- `MANIFEST.md` required no change because every daily-loop production, migration, test, and CI file was already registered.
+
+### Decisions Made
+
+- Treated hosted Backend CI as the PostgreSQL runtime authority because local Docker Desktop remains unavailable; local checks below do not claim PostgreSQL execution.
+- Kept task completion narrower than implementation inference: the current-published query enforces the invariant, but the consolidated test checkbox remains open until future, scheduled, draft, unpublished, and superseded-correction submissions plus unauthenticated/incomplete-profile submission are exercised explicitly.
+- Marked the backend share metadata/ownership requirements verified without implying that Flutter rendering, the public landing route, Android Sharesheet behavior, or verified App Links exist.
+- Kept single-process account/IP fixed-window limiting as the implemented checkpoint; trusted proxy deployment and a distributed multi-replica limiter remain production-operations work.
+
+### Tests and Checks Run
+
+- Hosted Backend CI run [`33167356373`](https://github.com/BarhamX/majlis/actions/runs/33167356373) passed the initial Release build, the three identity PostgreSQL baseline tests, and all 63 then-current backend tests.
+- Hosted Backend CI run [`33169349998`](https://github.com/BarhamX/majlis/actions/runs/33169349998) passed the Release build, the three identity PostgreSQL baseline tests, and all 77 then-current backend tests including daily-loop migration coverage.
+- Hosted Backend CI run [`33175565908`](https://github.com/BarhamX/majlis/actions/runs/33175565908) passed the Release build, the three identity PostgreSQL baseline tests, and all 130 then-current backend tests including transaction, restart, publication-history, and race coverage.
+- Final Task 5 hosted Backend CI run [`33177107954`](https://github.com/BarhamX/majlis/actions/runs/33177107954) at `97396bfdba6eee950ec6e9201975a434944d2241` passed the Release build with 0 warnings/errors, the three identity PostgreSQL baseline tests, and all 143 backend tests with 0 failures/skips. This is the PostgreSQL evidence for the final persisted daily-loop and rate-limit/security matrix.
+- Local `dotnet build src/backend/Majlis.sln --configuration Release --no-restore` passed with 0 warnings and 0 errors; the local non-integration Release suite passed 82 tests with 0 failures/skips.
+- Local EF 10.0.11 reported no pending model changes. The idempotent migration script was generated in memory and contained both daily-loop migrations plus `UserAttempts`, `UserProgress`, `XpLedger`, `IdempotencyRecords`, and `DailyMajlisPublications`.
+- Documentation validation passed for 76 Markdown files and 147 requirement ids. Targeted consistency searches and `git diff --check` passed; only expected LF-to-CRLF working-copy warnings were emitted.
+
+### Known Blockers
+
+- Local Docker Desktop/PostgreSQL remains unavailable. No local PostgreSQL test execution is claimed; the green Linux/Testcontainers runs above provide the database evidence.
+- Spec 001 remains incomplete until the open explicit backend matrix test and the complete Flutter Android daily journey, states, share card, analyzer/tests, and emulator verification are delivered.
+- Flutter, full content administration/import, share rendering/public deep links, leaderboards, community/moderation, production identity providers, hosting/signing, trusted proxy configuration, and distributed multi-replica rate limiting remain separate Production V1 work.
+
+### Next Recommended Task
+
+- Add the remaining explicit Spec 001 backend contract/status-matrix tests, then build the Arabic/RTL Flutter daily journey against the Development/Testing identity and persisted backend without provisioning production credentials or hosting.
 
 ### 2026-08-28 - Task 5 Daily-Attempt Rate Limiting and Security Verification
 
