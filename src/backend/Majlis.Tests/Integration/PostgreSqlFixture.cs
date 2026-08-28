@@ -6,7 +6,7 @@ namespace Majlis.Tests.Integration;
 
 public sealed class PostgreSqlFixture : IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:17-alpine")
+    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:17")
         .WithDatabase("majlis_tests")
         .WithUsername("majlis")
         .WithPassword("majlis-tests")

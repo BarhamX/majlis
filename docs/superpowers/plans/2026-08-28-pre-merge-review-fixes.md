@@ -199,7 +199,7 @@ git diff --check
 
 - [x] **Step 2: Update the handoff with date, files, decisions, exact verification results, remaining blockers, and next recommended task**
 
-- [ ] **Step 3: Commit the review corrections**
+- [x] **Step 3: Commit the review corrections**
 
 ```powershell
 git add -- src/backend docs

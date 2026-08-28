@@ -16,6 +16,8 @@ namespace Majlis.Tests.Integration;
 [Trait("Category", "Integration")]
 public sealed class DailyMajlisApiTests(PostgreSqlFixture postgreSql) : IAsyncLifetime
 {
+    private static readonly Guid LegacySeedDailyMajlisId =
+        Guid.Parse("20000000-0000-0000-0000-000000000001");
     private static readonly DateTimeOffset TestNow =
         new(2026, 8, 26, 12, 0, 0, TimeSpan.Zero);
 
@@ -154,6 +156,71 @@ public sealed class DailyMajlisApiTests(PostgreSqlFixture postgreSql) : IAsyncLi
         Assert.Equal(2, await dbContext.DailyMajlisTranslations.CountAsync());
         Assert.Equal(4, await dbContext.ChallengeOptionTranslations.CountAsync());
         Assert.True((await dbContext.DailyMajlisRevisions.SingleAsync()).IsImmutable);
+    }
+
+    [Fact]
+    public async Task Initializer_WhenUpgradingMutablePublishedSeed_SealsAReplacementRevision()
+    {
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<MajlisDbContext>();
+        await ResetDailyMajlisContentAsync(dbContext);
+        var legacySeed = CreateDailyMajlis(
+            LegacySeedDailyMajlisId,
+            new DateOnly(2026, 8, 26),
+            DailyMajlisStatus.Published);
+        await SavePublicationGraphAsync(dbContext, legacySeed);
+        await dbContext.Database.ExecuteSqlRawAsync(
+            "UPDATE \"DailyMajlisRevisions\" SET \"SubmittedAt\" = NULL;");
+        dbContext.ChangeTracker.Clear();
+
+        var initializer = scope.ServiceProvider.GetRequiredService<DailyMajlisDatabaseInitializer>();
+        await initializer.InitializeAsync();
+
+        dbContext.ChangeTracker.Clear();
+        var repaired = await dbContext.DailyMajlis
+            .Include(item => item.PublishedRevision)
+            .ThenInclude(revision => revision!.Translations)
+            .Include(item => item.PublishedRevision)
+            .ThenInclude(revision => revision!.Challenge)
+            .ThenInclude(challenge => challenge!.Options)
+            .ThenInclude(option => option.Translations)
+            .SingleAsync(item => item.Id == LegacySeedDailyMajlisId);
+        Assert.Equal(DailyMajlisStatus.Published, repaired.Status);
+        Assert.NotNull(repaired.PublishedRevision);
+        Assert.True(repaired.PublishedRevision.IsImmutable);
+        Assert.True(repaired.PublishedRevision.IsCompleteForServing());
+        Assert.Equal(2, await dbContext.DailyMajlisRevisions.CountAsync());
+    }
+
+    [Fact]
+    public async Task Initializer_WhenConcurrentStartsRepairUnpublishedLegacySeed_Converges()
+    {
+        await using (var setupScope = _factory.Services.CreateAsyncScope())
+        {
+            var dbContext = setupScope.ServiceProvider.GetRequiredService<MajlisDbContext>();
+            await ResetDailyMajlisContentAsync(dbContext);
+            dbContext.DailyMajlis.Add(new DailyMajlis(
+                LegacySeedDailyMajlisId,
+                new DateOnly(2026, 8, 26)));
+            await dbContext.SaveChangesAsync();
+        }
+
+        await using var firstScope = _factory.Services.CreateAsyncScope();
+        await using var secondScope = _factory.Services.CreateAsyncScope();
+        var first = firstScope.ServiceProvider.GetRequiredService<DailyMajlisDatabaseInitializer>();
+        var second = secondScope.ServiceProvider.GetRequiredService<DailyMajlisDatabaseInitializer>();
+
+        await Task.WhenAll(first.InitializeAsync(), second.InitializeAsync());
+
+        await using var verificationScope = _factory.Services.CreateAsyncScope();
+        var verification = verificationScope.ServiceProvider.GetRequiredService<MajlisDbContext>();
+        var repaired = await verification.DailyMajlis
+            .Include(item => item.PublishedRevision)
+            .SingleAsync(item => item.Id == LegacySeedDailyMajlisId);
+        Assert.Equal(DailyMajlisStatus.Published, repaired.Status);
+        Assert.NotNull(repaired.PublishedRevision);
+        Assert.True(repaired.PublishedRevision.IsImmutable);
+        Assert.Equal(1, await verification.DailyMajlisRevisions.CountAsync());
     }
 
     [Fact]
@@ -304,9 +371,16 @@ public sealed class DailyMajlisApiTests(PostgreSqlFixture postgreSql) : IAsyncLi
 
     private static DailyMajlis CreateDailyMajlis(
         DateOnly publishDate,
+        DailyMajlisStatus status) => CreateDailyMajlis(
+            Guid.Parse("20000000-0000-0000-0000-000000000002"),
+            publishDate,
+            status);
+
+    private static DailyMajlis CreateDailyMajlis(
+        Guid dailyId,
+        DateOnly publishDate,
         DailyMajlisStatus status)
     {
-        var dailyId = Guid.Parse("20000000-0000-0000-0000-000000000002");
         var revisionId = Guid.Parse("40000000-0000-0000-0000-000000000002");
         var challenge = new Challenge(
             Guid.Parse("10000000-0000-0000-0000-000000000002"),
@@ -328,6 +402,28 @@ public sealed class DailyMajlisApiTests(PostgreSqlFixture postgreSql) : IAsyncLi
         revision.Submit(DateTimeOffset.UtcNow);
 
         return new DailyMajlis(dailyId, publishDate, status, revision);
+    }
+
+    private static async Task ResetDailyMajlisContentAsync(MajlisDbContext dbContext)
+    {
+        await dbContext.Database.ExecuteSqlRawAsync("TRUNCATE TABLE \"DailyMajlis\" CASCADE;");
+        dbContext.ChangeTracker.Clear();
+    }
+
+    private static async Task SavePublicationGraphAsync(
+        MajlisDbContext dbContext,
+        DailyMajlis dailyMajlis)
+    {
+        var revision = dailyMajlis.PublishedRevision!;
+        dbContext.DailyMajlis.Add(dailyMajlis);
+        dbContext.Entry(dailyMajlis).Reference(item => item.PublishedRevision).CurrentValue = null;
+        dbContext.Entry(dailyMajlis).Property(item => item.PublishedRevisionId).CurrentValue = null;
+
+        await using var transaction = await dbContext.Database.BeginTransactionAsync();
+        await dbContext.SaveChangesAsync();
+        dailyMajlis.Publish(revision);
+        await dbContext.SaveChangesAsync();
+        await transaction.CommitAsync();
     }
 
     private async Task<HttpClient> CreateAuthenticatedClientAsync(string subject)

@@ -11,28 +11,31 @@ Majlis remains governed as a complete Production V1 Android application. The bac
 - Recovered the Docker Desktop Linux engine and reran the previously blocked PostgreSQL suite.
 - Fixed clean Development/Testing initialization so the new Daily Majlis aggregate and revision are saved before the publication pointer is assigned, with both saves committed in one transaction.
 - Preserved prior published days during UTC rollover, gave scheduled or published editorial content precedence over seed content, and made concurrent startup converge on one official row.
+- Added an upgrade repair for the immediately preceding checkpoint's known fixed-id seed so a published-but-mutable revision is atomically replaced with a complete submitted revision; concurrent legacy-seed repairs converge on the winner.
 - Enforced domain publication through complete submitted revisions, rejected mutable or incomplete revisions in the serving path, and loaded persisted region provenance for API responses.
 - Enforced server-owned terms and privacy versions before any profile bootstrap persistence.
 - Added a forward-only migration boundary so a downgrade cannot reach the historical destructive localized-content rollback; recovery is by compatible backup restore or reviewed forward migration.
 - Updated integration-test setup for the localized revision ownership model so unavailable-content and duplicate-publish-date tests exercise their intended API/database behavior.
-- This repair makes the current checkpoint testable and mergeable; the broader localized-revision slice remains incomplete and no specification task checkbox was closed.
+- This repair makes the current checkpoint a reviewed merge candidate; the broader localized-revision slice remains incomplete and no specification task checkbox was closed.
 
 ### Files Changed
 
 - Daily content domain/application/persistence: `DailyMajlis.cs`, `DailyMajlisService.cs`, `EfDailyMajlisRepository.cs`, and `DailyMajlisDatabaseInitializer.cs`.
 - Identity consent enforcement: `RequiredConsentVersions.cs`, `IdentityProfileService.cs`, API composition/configuration, and their unit/PostgreSQL tests.
 - Migration safety: `20260828064802_EstablishForwardOnlyLocalizedContentBoundary` plus its designer and the database-schema recovery guidance.
-- Daily Majlis domain/application/PostgreSQL tests, this handoff, the pre-merge implementation plan, and `MANIFEST.md`.
+- Daily Majlis domain/application/PostgreSQL tests, the PostgreSQL 17 Testcontainers fixture, this handoff, the pre-merge implementation plan, and `MANIFEST.md`.
 
 ### Decisions Made
 
 - Kept `PublishedRevisionId` nullable during the first persistence phase, then assigned it before committing the same database transaction, avoiding the EF insert cycle without weakening atomic publication.
 - Treated any current-day scheduled or published row as authoritative and never moved an earlier seed aggregate to a later date.
+- Reserved the historical fixed seed id for upgrade repair: an already-complete submitted seed remains idempotent, while mutable/incomplete legacy seed state is repaired before it can be accepted as official.
 - Required publication revisions to belong to their aggregate, be submitted/immutable, and contain complete Arabic serving content.
 - Stored required consent versions in server configuration and compared them exactly before repository lookup or user construction.
 - Preserved applied migration history by adding an explicit forward-only boundary rather than editing the earlier localized-content migration.
 - Represented unavailable content in the API integration test by unpublishing the current aggregate instead of deleting revision-owned content.
 - Kept the duplicate-date test focused on the partial unique index by omitting the unrelated publication pointer from its candidate insert.
+- Kept PostgreSQL at version 17 while moving the disposable integration fixture from the Alpine image to the official Debian image after repeated Alpine `initdb` stalls on Docker Desktop.
 
 ### Tests and Checks Run
 
@@ -43,7 +46,12 @@ Majlis remains governed as a complete Production V1 Android application. The bac
 - Red phase: fabricated consent versions were accepted and the PostgreSQL API returned Created; focused identity verification then passed: 8 tests, 0 failed.
 - Red phase: the forward-only boundary test failed because the named migration did not exist; its focused PostgreSQL rerun passed: 1 test, 0 failed.
 - `dotnet test src/backend/Majlis.sln --configuration Release --no-restore` - passed: 61 tests, 0 failed, 0 skipped against PostgreSQL 17.
-- Final isolated rerun after Docker Desktop storage stalls: `Category=Integration` passed 16 tests and `Category!=Integration` passed 45 tests, for the same complete 61-test coverage with 0 failures and 0 skipped.
+- Before the final legacy-seed correction, an isolated rerun passed 16 integration tests and 45 non-integration tests, for the then-complete 61-test coverage with 0 failures and 0 skipped.
+- Reviewer regression red phase: the mutable published seed remained mutable and concurrent unpublished-seed repair raised PostgreSQL unique violation `23505`.
+- Focused reviewer regression rerun - passed: 2 tests, 0 failed, covering mutable published-seed upgrade and concurrent unpublished-seed repair.
+- Current Daily Majlis PostgreSQL class rerun - passed: 15 tests, 0 failed, 0 skipped.
+- Current non-integration rerun - passed: 45 tests, 0 failed, 0 skipped.
+- Current combined 63-test run was aborted by an `Internal CLR error` in the .NET/Npgsql query host after all 45 non-integration tests passed; the three identity PostgreSQL tests were subsequently blocked before execution by Docker Desktop/Testcontainers readiness stalls. Do not treat the combined run as passed.
 - `dotnet format src/backend/Majlis.sln --verify-no-changes --no-restore` - passed.
 - `dotnet tool restore` - restored repository-pinned `dotnet-ef` 10.0.11.
 - `dotnet tool run dotnet-ef migrations has-pending-model-changes ... --configuration Release --no-build` - passed with no pending model changes.
@@ -56,6 +64,7 @@ Majlis remains governed as a complete Production V1 Android application. The bac
 - The localized revision slice still needs its remaining locale edge cases and content-management/import workflow before its specification task can close.
 - Flutter, attempts, XP, streaks, and the rest of the complete Production V1 remain outside this checkpoint and are still required for `Game Ready`.
 - Production provider credentials, hosting, domains, verified links, and signing remain intentionally deferred until `Game Ready`.
+- The local Docker Desktop engine currently becomes unhealthy across repeated Testcontainers lifecycles; the three unchanged identity PostgreSQL cases need a fresh CI or stable-engine rerun even though they passed before the final initializer-only correction.
 
 ### Next Recommended Task
 

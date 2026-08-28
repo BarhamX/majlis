@@ -16,18 +16,20 @@ public sealed class DailyMajlisDatabaseInitializer(
         await dbContext.Database.MigrateAsync(cancellationToken);
 
         var today = DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime);
-        if (await OfficialContentExistsAsync(today, cancellationToken))
+        var legacySeed = await GetLegacySeedAsync(today, cancellationToken);
+        if (IsUsablePublishedSeed(legacySeed))
         {
             return;
         }
 
-        var seedDailyMajlis = await dbContext.DailyMajlis
-            .SingleOrDefaultAsync(
-                item => item.Id == SeedDailyMajlisId && item.PublishDate == today,
-                cancellationToken);
-        if (seedDailyMajlis is not null)
+        if (await EditorialContentExistsAsync(today, cancellationToken))
         {
-            await CompleteLegacySeedAsync(seedDailyMajlis, cancellationToken);
+            return;
+        }
+
+        if (legacySeed is not null)
+        {
+            await RepairLegacySeedAsync(legacySeed, today, cancellationToken);
             return;
         }
 
@@ -61,6 +63,26 @@ public sealed class DailyMajlisDatabaseInitializer(
         }
     }
 
+    private async Task RepairLegacySeedAsync(
+        DailyMajlisEntity seedDailyMajlis,
+        DateOnly publishDate,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await CompleteLegacySeedAsync(seedDailyMajlis, cancellationToken);
+        }
+        catch (DbUpdateException exception) when (IsUniqueViolation(exception))
+        {
+            dbContext.ChangeTracker.Clear();
+            var persistedSeed = await GetLegacySeedAsync(publishDate, cancellationToken);
+            if (!IsUsablePublishedSeed(persistedSeed))
+            {
+                throw;
+            }
+        }
+    }
+
     private async Task CompleteLegacySeedAsync(
         DailyMajlisEntity seedDailyMajlis,
         CancellationToken cancellationToken)
@@ -78,6 +100,37 @@ public sealed class DailyMajlisDatabaseInitializer(
         seedDailyMajlis.Publish(revision);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
+
+    private Task<DailyMajlisEntity?> GetLegacySeedAsync(
+        DateOnly publishDate,
+        CancellationToken cancellationToken) => dbContext.DailyMajlis
+        .AsSplitQuery()
+        .Include(item => item.PublishedRevision)
+        .ThenInclude(revision => revision!.Translations)
+        .Include(item => item.PublishedRevision)
+        .ThenInclude(revision => revision!.Challenge)
+        .ThenInclude(challenge => challenge!.Options)
+        .ThenInclude(option => option.Translations)
+        .SingleOrDefaultAsync(
+            item => item.Id == SeedDailyMajlisId && item.PublishDate == publishDate,
+            cancellationToken);
+
+    private static bool IsUsablePublishedSeed(DailyMajlisEntity? seedDailyMajlis) =>
+        seedDailyMajlis is
+        {
+            Status: DailyMajlisStatus.Published,
+            PublishedRevision.IsImmutable: true,
+        } && seedDailyMajlis.PublishedRevision.IsCompleteForServing();
+
+    private Task<bool> EditorialContentExistsAsync(
+        DateOnly publishDate,
+        CancellationToken cancellationToken) => dbContext.DailyMajlis.AnyAsync(
+        dailyMajlis =>
+            dailyMajlis.PublishDate == publishDate &&
+            (dailyMajlis.Status == DailyMajlisStatus.Scheduled ||
+             (dailyMajlis.Status == DailyMajlisStatus.Published &&
+              dailyMajlis.Id != SeedDailyMajlisId)),
+        cancellationToken);
 
     private async Task SaveNewPublicationAsync(
         DailyMajlisEntity dailyMajlis,
