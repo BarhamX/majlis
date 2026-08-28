@@ -259,6 +259,105 @@ public sealed class DailyLoopPostgreSqlTests(PostgreSqlFixture postgreSql) : IAs
     }
 
     [Fact]
+    public async Task Submit_WhenUnauthenticated_ReturnsUnauthorizedWithoutMutation()
+    {
+        using var setupClient = await CreateAuthenticatedClientAsync("unauthenticated-setup-user");
+        var today = await GetTodayAsync(setupClient);
+        using var client = CreateClient();
+
+        var response = await SubmitAsync(
+            client,
+            today.ChallengeId,
+            today.CorrectOptionId,
+            Guid.NewGuid());
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await AssertDailyLoopRowCountsAsync(attempts: 0, ledger: 0, progress: 0, idempotency: 0);
+    }
+
+    [Fact]
+    public async Task Submit_WhenProfileIsIncomplete_ReturnsForbiddenWithoutMutation()
+    {
+        using var setupClient = await CreateAuthenticatedClientAsync("incomplete-profile-setup-user");
+        var today = await GetTodayAsync(setupClient);
+        using var client = await CreateTokenClientAsync("incomplete-profile-attempt-user");
+
+        var response = await SubmitAsync(
+            client,
+            today.ChallengeId,
+            today.CorrectOptionId,
+            Guid.NewGuid());
+
+        await AssertProblemCodeAsync(response, HttpStatusCode.Forbidden, "profile_incomplete");
+        await AssertDailyLoopRowCountsAsync(attempts: 0, ledger: 0, progress: 0, idempotency: 0);
+    }
+
+    [Theory]
+    [InlineData(DailyMajlisStatus.Draft)]
+    [InlineData(DailyMajlisStatus.InReview)]
+    [InlineData(DailyMajlisStatus.Approved)]
+    [InlineData(DailyMajlisStatus.Scheduled)]
+    [InlineData(DailyMajlisStatus.Unpublished)]
+    public async Task Submit_CurrentDateChallengeInNonPublishedStatus_ReturnsUnavailableWithoutMutation(
+        DailyMajlisStatus status)
+    {
+        using var client = await CreateAuthenticatedClientAsync($"non-published-{status}-user");
+        var today = await GetTodayAsync(client);
+        await SetDailyMajlisStatusAsync(today.DailyMajlisId, status);
+
+        var response = await SubmitAsync(
+            client,
+            today.ChallengeId,
+            today.CorrectOptionId,
+            Guid.NewGuid());
+
+        await AssertProblemCodeAsync(response, HttpStatusCode.NotFound, "daily_majlis_unavailable");
+        await AssertDailyLoopRowCountsAsync(attempts: 0, ledger: 0, progress: 0, idempotency: 0);
+    }
+
+    [Fact]
+    public async Task Submit_FutureChallenge_ReturnsUnavailableWithoutMutation()
+    {
+        StartFactory(FirstDay.AddDays(1));
+        TodayIds future;
+        using (var futureClient = await CreateAuthenticatedClientAsync("future-setup-user"))
+        {
+            future = await GetTodayAsync(futureClient);
+        }
+
+        StartFactory(FirstDay);
+        using var currentClient = await CreateAuthenticatedClientAsync("future-attempt-user");
+
+        var response = await SubmitAsync(
+            currentClient,
+            future.ChallengeId,
+            future.CorrectOptionId,
+            Guid.NewGuid());
+
+        await AssertProblemCodeAsync(response, HttpStatusCode.NotFound, "daily_majlis_unavailable");
+        await AssertDailyLoopRowCountsAsync(attempts: 0, ledger: 0, progress: 0, idempotency: 0);
+    }
+
+    [Fact]
+    public async Task Submit_SupersededRevisionChallenge_ReturnsUnavailableWithoutMutation()
+    {
+        using var client = await CreateAuthenticatedClientAsync("superseded-revision-user");
+        var superseded = await GetTodayAsync(client);
+        await ReplacePublishedRevisionAsync(
+            superseded.DailyMajlisId,
+            await GetPublishedRevisionIdAsync(superseded.DailyMajlisId));
+
+        var response = await SubmitAsync(
+            client,
+            superseded.ChallengeId,
+            superseded.CorrectOptionId,
+            Guid.NewGuid());
+
+        await AssertProblemCodeAsync(response, HttpStatusCode.NotFound, "daily_majlis_unavailable");
+        await AssertDailyLoopRowCountsAsync(attempts: 0, ledger: 0, progress: 0, idempotency: 0);
+    }
+
+    [Fact]
     public async Task Submit_OptionFromAnotherChallenge_ReturnsOwnershipErrorWithoutMutation()
     {
         using var client = await CreateAuthenticatedClientAsync("wrong-option-user");
@@ -850,13 +949,7 @@ public sealed class DailyLoopPostgreSqlTests(PostgreSqlFixture postgreSql) : IAs
 
     private async Task<HttpClient> CreateAuthenticatedClientAsync(string subject)
     {
-        var client = CreateClient();
-        var tokenResponse = await client.PostAsJsonAsync(
-            "/api/v1/dev/auth/token",
-            new { subject });
-        tokenResponse.EnsureSuccessStatusCode();
-        var token = (await ReadJsonAsync(tokenResponse)).GetProperty("accessToken").GetString();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var client = await CreateTokenClientAsync(subject);
         var bootstrap = await client.PostAsJsonAsync(
             "/api/v1/me/bootstrap",
             new
@@ -871,6 +964,18 @@ public sealed class DailyLoopPostgreSqlTests(PostgreSqlFixture postgreSql) : IAs
                 acceptedPrivacyVersion = "2026-08-26",
             });
         bootstrap.EnsureSuccessStatusCode();
+        return client;
+    }
+
+    private async Task<HttpClient> CreateTokenClientAsync(string subject)
+    {
+        var client = CreateClient();
+        var tokenResponse = await client.PostAsJsonAsync(
+            "/api/v1/dev/auth/token",
+            new { subject });
+        tokenResponse.EnsureSuccessStatusCode();
+        var token = (await ReadJsonAsync(tokenResponse)).GetProperty("accessToken").GetString();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         return client;
     }
 
@@ -953,6 +1058,37 @@ public sealed class DailyLoopPostgreSqlTests(PostgreSqlFixture postgreSql) : IAs
         Assert.Equal(idempotency, await dbContext.IdempotencyRecords.CountAsync());
     }
 
+    private async Task SetDailyMajlisStatusAsync(
+        Guid dailyMajlisId,
+        DailyMajlisStatus status)
+    {
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<MajlisDbContext>();
+        var revisionId = await dbContext.DailyMajlis
+            .Where(item => item.Id == dailyMajlisId)
+            .Select(item => item.PublishedRevisionId)
+            .SingleAsync();
+        Assert.NotNull(revisionId);
+
+        if (status == DailyMajlisStatus.Scheduled)
+        {
+            await dbContext.DailyMajlis
+                .Where(item => item.Id == dailyMajlisId)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(item => item.Status, status)
+                    .SetProperty(item => item.ScheduledRevisionId, revisionId)
+                    .SetProperty(item => item.PublishedRevisionId, (Guid?)null));
+            return;
+        }
+
+        await dbContext.DailyMajlis
+            .Where(item => item.Id == dailyMajlisId)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(item => item.Status, status)
+                .SetProperty(item => item.ScheduledRevisionId, (Guid?)null)
+                .SetProperty(item => item.PublishedRevisionId, (Guid?)null));
+    }
+
     private static async Task<bool> WaitForBlockedPublicationReadAsync(
         MajlisDbContext dbContext)
     {
@@ -1025,6 +1161,18 @@ public sealed class DailyLoopPostgreSqlTests(PostgreSqlFixture postgreSql) : IAs
         await dbContext.SaveChangesAsync();
         dailyMajlis.Publish(replacement);
         await dbContext.SaveChangesAsync();
+    }
+
+    private async Task<Guid> GetPublishedRevisionIdAsync(Guid dailyMajlisId)
+    {
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var revisionId = await scope.ServiceProvider.GetRequiredService<MajlisDbContext>()
+            .DailyMajlis
+            .Where(item => item.Id == dailyMajlisId)
+            .Select(item => item.PublishedRevisionId)
+            .SingleAsync();
+        return revisionId ?? throw new InvalidOperationException(
+            "The test Daily Majlis must have a published revision.");
     }
 
     private static async Task AssertProblemCodeAsync(
