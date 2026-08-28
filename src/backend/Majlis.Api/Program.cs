@@ -1,5 +1,6 @@
 using Majlis.Api.Authentication;
 using Majlis.Application.DailyMajlis;
+using Majlis.Application.DailyLoop;
 using Majlis.Application.Identity;
 using Majlis.Infrastructure;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -11,7 +12,10 @@ builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton(new RequiredConsentVersions(
     builder.Configuration["ConsentVersions:Terms"] ?? string.Empty,
     builder.Configuration["ConsentVersions:Privacy"] ?? string.Empty));
+builder.Services.AddSingleton(new ShareLinkSettings(
+    builder.Configuration["Sharing:PublicHost"] ?? string.Empty));
 builder.Services.AddScoped<IDailyMajlisService, DailyMajlisService>();
+builder.Services.AddScoped<IDailyLoopService, DailyLoopService>();
 builder.Services.AddScoped<IIdentityProfileService, IdentityProfileService>();
 builder.Services.AddMajlisAuthentication(builder.Configuration, builder.Environment);
 builder.Services.AddMajlisInfrastructure(builder.Configuration);

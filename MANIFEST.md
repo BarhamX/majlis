@@ -82,8 +82,12 @@ This manifest lists version-controlled and pending source files. Run `scripts/va
 - `src/backend/Majlis.Api/appsettings.Development.json`
 - `src/backend/Majlis.Api/appsettings.json`
 - `src/backend/Majlis.Api/Controllers/DailyMajlisController.cs`
+- `src/backend/Majlis.Api/Controllers/AttemptsController.cs`
+- `src/backend/Majlis.Api/Controllers/ChallengeAttemptsController.cs`
+- `src/backend/Majlis.Api/Controllers/DailyLoopProblemResults.cs`
 - `src/backend/Majlis.Api/Controllers/DevelopmentAuthenticationController.cs`
 - `src/backend/Majlis.Api/Controllers/IdentityProfileController.cs`
+- `src/backend/Majlis.Api/Controllers/MeDailyLoopController.cs`
 - `src/backend/Majlis.Api/Majlis.Api.csproj`
 - `src/backend/Majlis.Api/Majlis.Api.http`
 - `src/backend/Majlis.Api/Program.cs`
@@ -92,6 +96,11 @@ This manifest lists version-controlled and pending source files. Run `scripts/va
 - `src/backend/Majlis.Application/DailyMajlis/DailyMajlisService.cs`
 - `src/backend/Majlis.Application/DailyMajlis/IDailyMajlisRepository.cs`
 - `src/backend/Majlis.Application/DailyMajlis/IDailyMajlisService.cs`
+- `src/backend/Majlis.Application/DailyLoop/DailyLoopException.cs`
+- `src/backend/Majlis.Application/DailyLoop/DailyLoopService.cs`
+- `src/backend/Majlis.Application/DailyLoop/IDailyLoopRepository.cs`
+- `src/backend/Majlis.Application/DailyLoop/IDailyLoopService.cs`
+- `src/backend/Majlis.Application/DailyLoop/ShareLinkSettings.cs`
 - `src/backend/Majlis.Application/Identity/AuthenticatedIdentity.cs`
 - `src/backend/Majlis.Application/Identity/IdentityConflictException.cs`
 - `src/backend/Majlis.Application/Identity/IdentityProfileException.cs`
@@ -101,6 +110,7 @@ This manifest lists version-controlled and pending source files. Run `scripts/va
 - `src/backend/Majlis.Application/Identity/RequiredConsentVersions.cs`
 - `src/backend/Majlis.Application/Majlis.Application.csproj`
 - `src/backend/Majlis.Contracts/DailyMajlis/DailyMajlisResponse.cs`
+- `src/backend/Majlis.Contracts/DailyLoop/DailyLoopContracts.cs`
 - `src/backend/Majlis.Contracts/Identity/IdentityProfileContracts.cs`
 - `src/backend/Majlis.Contracts/Majlis.Contracts.csproj`
 - `src/backend/Majlis.Domain/DailyMajlis/Challenge.cs`
@@ -122,6 +132,7 @@ This manifest lists version-controlled and pending source files. Run `scripts/va
 - `src/backend/Majlis.Domain/Progress/UserProgress.cs`
 - `src/backend/Majlis.Domain/Progress/XpLedgerEntry.cs`
 - `src/backend/Majlis.Infrastructure/DailyMajlis/EfDailyMajlisRepository.cs`
+- `src/backend/Majlis.Infrastructure/DailyLoop/EfDailyLoopRepository.cs`
 - `src/backend/Majlis.Infrastructure/DependencyInjection.cs`
 - `src/backend/Majlis.Infrastructure/Identity/EfUserAccountRepository.cs`
 - `src/backend/Majlis.Infrastructure/Majlis.Infrastructure.csproj`
@@ -164,6 +175,7 @@ This manifest lists version-controlled and pending source files. Run `scripts/va
 - `src/backend/Majlis.Infrastructure/Persistence/Migrations/MajlisDbContextModelSnapshot.cs`
 - `src/backend/Majlis.sln`
 - `src/backend/Majlis.Tests/Application/DailyMajlisServiceTests.cs`
+- `src/backend/Majlis.Tests/Application/DailyLoopServiceTests.cs`
 - `src/backend/Majlis.Tests/Application/DailyMajlisLocalizationTests.cs`
 - `src/backend/Majlis.Tests/Application/IdentityProfileServiceTests.cs`
 - `src/backend/Majlis.Tests/Domain/ChallengeTests.cs`
@@ -178,6 +190,7 @@ This manifest lists version-controlled and pending source files. Run `scripts/va
 - `src/backend/Majlis.Tests/Infrastructure/TestIdentityTokenIssuerTests.cs`
 - `src/backend/Majlis.Tests/Integration/DailyMajlisApiTests.cs`
 - `src/backend/Majlis.Tests/Integration/DailyLoopMigrationTests.cs`
+- `src/backend/Majlis.Tests/Integration/DailyLoopPostgreSqlTests.cs`
 - `src/backend/Majlis.Tests/Integration/IdentityProfileApiTests.cs`
 - `src/backend/Majlis.Tests/Integration/IdentityProfilePostgreSqlTests.cs`
 - `src/backend/Majlis.Tests/Integration/PostgreSqlFixture.cs`

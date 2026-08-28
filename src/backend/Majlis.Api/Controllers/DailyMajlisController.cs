@@ -1,4 +1,5 @@
 using Majlis.Application.DailyMajlis;
+using Majlis.Application.DailyLoop;
 using Majlis.Api.Authentication;
 using Majlis.Contracts.DailyMajlis;
 using Microsoft.AspNetCore.Authorization;
@@ -9,7 +10,9 @@ namespace Majlis.Api.Controllers;
 [ApiController]
 [Authorize(Policy = MajlisAuthorizationPolicies.CompletedProfile)]
 [Route("api/v1/daily-majlis")]
-public sealed class DailyMajlisController(IDailyMajlisService dailyMajlisService) : ControllerBase
+public sealed class DailyMajlisController(
+    IDailyMajlisService dailyMajlisService,
+    IDailyLoopService dailyLoopService) : ControllerBase
 {
     [HttpGet("today")]
     [ProducesResponseType<DailyMajlisResponse>(StatusCodes.Status200OK)]
@@ -35,6 +38,10 @@ public sealed class DailyMajlisController(IDailyMajlisService dailyMajlisService
 
         Response.Headers.ContentLanguage = localized.ContentLanguage;
         Response.Headers.Vary = "Accept-Language";
-        return Ok(localized.Response);
+        var userState = await dailyLoopService.GetTodayStateAsync(
+            AuthenticatedIdentityFactory.Create(User),
+            localized.Response.DailyMajlisId,
+            cancellationToken);
+        return Ok(localized.Response with { UserState = userState });
     }
 }

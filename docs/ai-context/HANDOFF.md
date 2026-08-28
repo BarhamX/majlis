@@ -6,6 +6,48 @@ Majlis remains governed as a complete Production V1 Android application. The bac
 
 ## Work in Progress
 
+### 2026-08-28 - Transactional Daily-Loop Application and APIs
+
+- Implemented Task 4 of the persisted backend daily loop test-first: application-owned submission orchestration, one EF/PostgreSQL transaction with authenticated-user locking/revalidation, deterministic idempotency, immutable result mapping, owned result/history/progress/share queries, thin API controllers, and real Today completion state.
+- Authored PostgreSQL coverage for current-day/option ownership, exact awards and streaks, database-trigger rollback, replay/conflicts, restart durability, correction/unpublishing snapshots, ownership, history, share safety, and same/different-key races. These tests compile but were not run locally because Docker Desktop/PostgreSQL is unavailable; hosted CI execution remains required before upgrading their evidence beyond `Partial`.
+
+### Files Changed
+
+- `src/backend/Majlis.Application/DailyLoop/` - use-case contracts, orchestration, stable exceptions, cursor codec, request hashing, result mapping, and configurable share-link settings.
+- `src/backend/Majlis.Infrastructure/DailyLoop/EfDailyLoopRepository.cs` - transaction/retry boundary, user-row lock, EF persistence/query implementation, keyset history, and PostgreSQL conflict translation.
+- `src/backend/Majlis.Contracts/DailyLoop/` and `src/backend/Majlis.Api/Controllers/` - submit/result/history/progress/share contracts and thin authenticated endpoints.
+- `DailyMajlisController.cs`, `Program.cs`, Infrastructure dependency registration, and application settings - Today attempt state, daily-loop composition, and configurable share host.
+- `src/backend/Majlis.Tests/Application/DailyLoopServiceTests.cs` and `Integration/DailyLoopPostgreSqlTests.cs` - application GREEN coverage plus compiled PostgreSQL scenarios.
+- `docs/quality/requirements-to-tests.md`, `MANIFEST.md`, and `docs/ai-context/HANDOFF.md` - partial evidence, file inventory, and this handoff; Spec 001 task checkboxes remain open pending hosted PostgreSQL execution and Task 5 security/rate-limit work.
+
+### Decisions Made
+
+- Kept orchestration in Application through an explicit transaction/repository port; Infrastructure owns EF, PostgreSQL `FOR UPDATE`, transaction retry, unique/concurrency detection, and opaque keyset query details.
+- Scoped attempt idempotency to `challenge_attempt` and hashed canonical challenge/selected-option UUIDs. Same key/payload rebuilds the original response from stored attempt/revision data; changed payload and different-key completion remain distinct stable conflicts.
+- Cleared the request-scoped EF tracker before starting the mutation transaction so the locked user row and completed-profile status are reloaded and revalidated inside the award transaction rather than reused from authorization middleware state.
+- Kept absent progress implicit: `/me/progress` returns zeros without creating `UserProgress`; the first accepted attempt creates it in the same transaction as attempt, ledger, snapshots, and idempotency.
+- Used the stored `ContentRevisionId`, `ResultLocale`, and post-award XP/streak snapshots for all replays and owned reads. The configured share host only produces spoiler-safe metadata; no rendering, landing route, or deep-link behavior was added.
+
+### Tests and Checks Run
+
+- RED: `dotnet test src/backend/Majlis.Tests/Majlis.Tests.csproj --configuration Release --no-restore --filter "FullyQualifiedName~DailyLoopServiceTests"` failed with expected CS0234/CS0246 errors because the `Majlis.Application.DailyLoop` use-case types did not exist.
+- GREEN: the same focused command passed 11 tests, 0 failed after the minimal Application/Infrastructure/API implementation.
+- `dotnet test src/backend/Majlis.sln --configuration Release --no-restore --filter "FullyQualifiedName!~Majlis.Tests.Integration"` - passed: 57 tests, 0 failed, 0 skipped.
+- `dotnet build src/backend/Majlis.sln --configuration Release --no-restore` - passed with 0 warnings and 0 errors.
+- Scoped `dotnet format --verify-no-changes` for all Task 4 C# files passed.
+- Repository-pinned `dotnet-ef` 10.0.11 `migrations has-pending-model-changes` passed with no model drift.
+- `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-docs.ps1` - passed: 71 Markdown files and 147 requirement ids.
+- `git diff --check` passed; only expected line-ending conversion warnings were printed.
+
+### Known Blockers
+
+- `DailyLoopPostgreSqlTests` are authored and compile but were not executed locally: the task began with Docker Desktop/PostgreSQL unavailable, and local integration execution was explicitly excluded. Hosted CI must validate runtime SQL locking, rollback, restart, cursor, correction, and race behavior.
+- Attempt-rate limiting, rejected-request no-mutation proof, the remaining malformed-header/security matrix, and full PostgreSQL confirmation are Task 5. No Spec 001 task checkbox or evidence row was marked verified in this checkpoint.
+
+### Next Recommended Task
+
+Run this commit in hosted Backend CI. If the PostgreSQL suite is green, complete Task 5 test-first: account/IP attempt limits plus the remaining authorization, malformed-input, cursor-stability, response-allowlist, and concurrency/security verification.
+
 ### 2026-08-28 - Daily-Loop Domain and Persistence Foundation
 
 - Implemented Task 3 of the persisted backend daily loop test-first: exact attempt scoring, published-content-day streak rules, immutable attempt/ledger/idempotency records, the single mutable `UserProgress` aggregate, EF ownership/constraint mappings, and a forward migration.
