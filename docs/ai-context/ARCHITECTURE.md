@@ -25,7 +25,12 @@ src/backend/
 ```text
 apps/mobile/lib/
   core/
-  features/
+  data/
+  domain/
+  l10n/
+  ui/
+    core/
+    features/
 ```
 
 ## Core Rule

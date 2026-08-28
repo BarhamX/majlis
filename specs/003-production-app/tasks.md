@@ -44,7 +44,7 @@ This is the release-wide checklist. Feature task files provide implementation de
 
 ## Android Application
 
-- [ ] Create the Flutter app with feature-first structure, Riverpod, routing, theme, and localization resources.
+- [x] Create the Flutter app with feature-first structure, Riverpod, routing, theme, and localization resources.
 - [ ] Implement Development/Testing sign-in, onboarding, Today, challenge, result, cultural card, profile, and progress screens.
 - [ ] Implement loading, empty, offline, validation, retry, and completed states for the core daily journey.
 - [ ] Add Flutter unit, widget, golden, and end-to-end integration tests for the core daily journey.

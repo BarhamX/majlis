@@ -21,7 +21,7 @@ The app does not shame users for what they do not know. It playfully provokes cu
 
 ## Repository Status
 
-Majlis is under active implementation as a complete production Android application. The repository contains the product, business, UX, design, architecture, agent context, and specifications, plus PostgreSQL-backed Daily Majlis retrieval and the local identity/profile backend foundation. The Flutter client and the remaining production capabilities are still to be implemented.
+Majlis is under active implementation as a complete production Android application. The repository contains the product, business, UX, design, architecture, agent context, and specifications; the persisted backend daily loop and local identity/profile foundation; and an Arabic-first Flutter Android foundation with Riverpod, GoRouter, generated localization, centralized theme tokens, and bundled Noto Sans Arabic. The complete mobile journeys and remaining production capabilities are still to be implemented.
 
 ## Important Directories
 
@@ -36,7 +36,7 @@ docs/architecture/                  System architecture, API, database, stack
 docs/ai-context/                    Files Codex/agents must read first
 docs/prompts/                       Reusable prompt pack
 docs/quality/                       Requirement-to-test traceability
-apps/mobile/                        Flutter Android application (implementation pending)
+apps/mobile/                        Active Flutter Android application
 src/backend/                        Active .NET backend solution
 ```
 

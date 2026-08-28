@@ -2,9 +2,58 @@
 
 ## Current Status
 
-Majlis remains governed as a complete Production V1 Android application. The backend now has the local identity/profile foundation and persisted Daily Majlis loop needed for Android game development: immutable localized publications and accepted results, exact XP, UTC published-day streaks, idempotent/concurrent submission, owned history/progress/share metadata, real Today completion state, and account/IP submission limits. Google, Apple, Meta, and Snapchat are the selected production providers, but their credentials/callbacks and all hosting/domain logistics remain deferred until `Game Ready`.
+Majlis remains governed as a complete Production V1 Android application. The backend has the local identity/profile foundation and persisted Daily Majlis loop needed for Android game development: immutable localized publications and accepted results, exact XP, UTC published-day streaks, idempotent/concurrent submission, owned history/progress/share metadata, real Today completion state, and account/IP submission limits. The Flutter Android client now has its Arabic-first architectural foundation, generated localization, routing, Riverpod MVVM state, centralized theme tokens, bundled Arabic typography, and a verified first emulator render. Google, Apple, Meta, and Snapchat are the selected production providers, but their credentials/callbacks and all hosting/domain logistics remain deferred until `Game Ready`.
 
 ## Latest Delivery
+
+### 2026-08-28 - Flutter Android Architecture and Arabic-First Foundation
+
+- Replaced the mobile placeholder with an Android-only Flutter 3.47.1 application using application id `com.barhamx.majlis`.
+- Established layered data/domain/UI boundaries with repository-backed `ChangeNotifier` view models injected through Riverpod, feature-grouped UI, and GoRouter navigation.
+- Added Arabic-first ARB localization with generated `AppLocalizations`, English validation resources, locale-derived RTL/LTR direction, and Arabic as the default first paint.
+- Centralized the documented Majlis color, spacing, and typography tokens; bundled the official Noto Sans Arabic variable font and SIL Open Font License.
+- Added a localized welcome route with a restrained illuminated-doorway motif derived from entering a Majlis. No daily challenge or answer content is hardcoded into the app.
+- Matched the native Android launch background to the Flutter sand canvas to avoid a generic white/black flash before first paint.
+
+### Files Changed
+
+- `apps/mobile/` - generated Android scaffold, package/dependency configuration, localization resources, bundled font/license, layered Dart source, and focused tests.
+- `.github/workflows/flutter-ci.yml` - pinned Flutter restore, localization, format, analyzer, test, and Android debug-build gates.
+- `docs/architecture/ARCHITECTURE.md` and `docs/ai-context/ARCHITECTURE.md` - reconciled the implemented hybrid layered/feature-first mobile structure.
+- `.gitattributes`, `README.md`, `apps/mobile/README.md`, and `MANIFEST.md` - established Flutter text/binary handling and documented the active client, commands, architecture, and tracked inventory.
+- `specs/001-playable-daily-majlis/tasks.md` and `specs/003-production-app/tasks.md` - completed only the Flutter foundation/analyzer/test rows; all daily-flow and Game Ready rows remain open.
+- `docs/ai-context/HANDOFF.md` - recorded this milestone and its evidence.
+
+### Decisions Made
+
+- Combined the requested MVVM/repository architecture with the repository's Riverpod rule: views stay lean, `ChangeNotifier` view models own presentation state, repositories isolate data, and Riverpod owns construction/observation.
+- Kept the initial language repository session-scoped with Arabic as the default. Backend profile preference integration belongs to the authentication/onboarding slice and will replace the in-memory implementation without changing UI contracts.
+- Used current Flutter source-based localization generation (`output-dir: lib/l10n/generated`) instead of the removed synthetic-package path.
+- Kept the first route informational and localized; backend-managed Daily Majlis content begins only when the authenticated API slice is implemented.
+- Retained development-only debug signing. Production signing remains prohibited until `Game Ready`.
+
+### Tests and Checks Run
+
+- RED: focused Flutter tests initially failed to compile because the layered repository, view model, providers, app shell, and view did not exist.
+- GREEN: four unit/widget tests passed for repository-backed language changes, Arabic RTL first paint, English LTR derivation, semantic labeling, bundled font selection, and narrow-screen 200% text scale.
+- The 200% text-scale test first failed on a 200-pixel header overflow; the header was changed to a wrapping layout and the regression passed.
+- `flutter analyze` passed with no issues. `flutter test` passed 4/4.
+- `flutter pub outdated --no-dev-dependencies` reported all direct dependencies up to date; only compatible transitive lockfile updates were available.
+- `flutter build apk --debug` produced `app-debug.apk`; the first Gradle distribution download required proxy-safe cache bootstrap, and Kotlin daemon startup under JDK 25 fell back to in-process compilation before succeeding.
+- Installed and launched on `Majlis_API_35` (`emulator-5554`). Android package resolution, UI-tree inspection, Arabic screenshot review, and crash-log inspection passed; the package reported version `0.1.0+1`, min SDK 24, and target SDK 36.
+- Hosted Flutter CI run [`33204882453`](https://github.com/BarhamX/majlis/actions/runs/33204882453) passed localization generation, formatting, analyzer, all 4 tests, and the Android debug APK build on Ubuntu.
+- Hosted Backend CI run [`33204882388`](https://github.com/BarhamX/majlis/actions/runs/33204882388) preserved the existing Release build, identity PostgreSQL baseline 3/3, and complete backend suite 168/168.
+- Documentation validation passed for 82 Markdown files and 147 requirement ids; `git diff --check` passed.
+
+### Known Blockers
+
+- This is the Flutter foundation only. Development/Testing sign-in, profile bootstrap, API services, Today/challenge/result states, progress, and the complete Android daily journey remain unimplemented.
+- Flutter doctor reports unaccepted/unknown Android SDK license status and two installed `adb` binaries. The debug build and emulator verification passed, but the toolchain warnings should be cleaned before release automation.
+- Android Studio currently supplies JDK 25; Kotlin daemon connection failed and Gradle used its successful in-process fallback. Pin or validate the release CI JDK before the Android release gate.
+
+### Next Recommended Task
+
+- Implement Development/Testing sign-in and profile bootstrap through the local backend, including secure session boundaries and localized loading, cancellation, validation, offline, and error states.
 
 ### 2026-08-28 - Daily Attempt Eligibility and Authentication Matrix
 
