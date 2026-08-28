@@ -961,10 +961,9 @@ public sealed class DailyLoopPostgreSqlTests(PostgreSqlFixture postgreSql) : IAs
             var isBlocked = await dbContext.Database.SqlQueryRaw<bool>("""
                 SELECT EXISTS (
                     SELECT 1
-                    FROM pg_stat_activity
-                    WHERE pid <> pg_backend_pid()
-                      AND wait_event_type = 'Lock'
-                      AND query LIKE '%FOR SHARE OF daily%') AS "Value"
+                    FROM pg_stat_activity AS activity
+                    WHERE activity.pid <> pg_backend_pid()
+                      AND pg_backend_pid() = ANY(pg_blocking_pids(activity.pid))) AS "Value"
                 """).SingleAsync();
             if (isBlocked)
             {
