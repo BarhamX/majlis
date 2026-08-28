@@ -41,6 +41,8 @@ Majlis remains governed as a complete Production V1 Android application. The bac
 - `flutter pub outdated --no-dev-dependencies` reported all direct dependencies up to date; only compatible transitive lockfile updates were available.
 - `flutter build apk --debug` produced `app-debug.apk`; the first Gradle distribution download required proxy-safe cache bootstrap, and Kotlin daemon startup under JDK 25 fell back to in-process compilation before succeeding.
 - Installed and launched on `Majlis_API_35` (`emulator-5554`). Android package resolution, UI-tree inspection, Arabic screenshot review, and crash-log inspection passed; the package reported version `0.1.0+1`, min SDK 24, and target SDK 36.
+- Hosted Flutter CI run [`33204882453`](https://github.com/BarhamX/majlis/actions/runs/33204882453) passed localization generation, formatting, analyzer, all 4 tests, and the Android debug APK build on Ubuntu.
+- Hosted Backend CI run [`33204882388`](https://github.com/BarhamX/majlis/actions/runs/33204882388) preserved the existing Release build, identity PostgreSQL baseline 3/3, and complete backend suite 168/168.
 - Documentation validation passed for 82 Markdown files and 147 requirement ids; `git diff --check` passed.
 
 ### Known Blockers
