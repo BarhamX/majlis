@@ -49,7 +49,7 @@
 - [x] Test missing unpublished content day does not reset streak.
 - [x] Test exact 10/15 XP awards and immutable ledger uniqueness.
 - [x] Test idempotency-key mismatch and concurrent requests.
-- [ ] Test historical, future, superseded-correction, scheduled, draft, and unpublished challenges cannot receive a new attempt.
+- [x] Test historical, future, superseded-correction, scheduled, draft, and unpublished challenges cannot receive a new attempt.
 - [x] Test stable `attempt_not_found` ownership non-enumeration, opaque-cursor stability, stored result locale/snapshots, and result-revision preservation after correction/unpublishing.
 - [x] Test today's endpoint hides correct answer.
 
