@@ -77,6 +77,58 @@ public sealed class DailyLoopPostgreSqlTests(PostgreSqlFixture postgreSql) : IAs
         Assert.Equal(1, await dbContext.IdempotencyRecords.CountAsync());
     }
 
+    [Fact]
+    public async Task ForwardOnlyFeatureMigrations_WhenDowngradeCrossesBoundary_PreserveAllDataAndHistory()
+    {
+        using var client = await CreateAuthenticatedClientAsync("forward-only-feature-user");
+        var today = await GetTodayAsync(client);
+        var accepted = await SubmitAsync(
+            client,
+            today.ChallengeId,
+            today.CorrectOptionId,
+            Guid.NewGuid());
+        accepted.EnsureSuccessStatusCode();
+
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<MajlisDbContext>();
+        var migrations = dbContext.Database.GetMigrations().ToArray();
+        var boundary = Assert.Single(migrations, migration => migration.EndsWith(
+            "_EstablishForwardOnlyLocalizedContentBoundary",
+            StringComparison.Ordinal));
+        var boundaryIndex = Array.IndexOf(migrations, boundary);
+        Assert.True(boundaryIndex > 0);
+        var appliedBefore = (await dbContext.Database.GetAppliedMigrationsAsync()).ToArray();
+        var attemptBefore = await dbContext.UserAttempts.AsNoTracking().SingleAsync();
+        var ledgerBefore = await dbContext.XpLedger.AsNoTracking().SingleAsync();
+        var progressBefore = await dbContext.UserProgress.AsNoTracking().SingleAsync();
+        var idempotencyBefore = await dbContext.IdempotencyRecords.AsNoTracking().SingleAsync();
+        var publicationBefore = await dbContext.DailyMajlisPublications.AsNoTracking().SingleAsync();
+
+        var exception = await Assert.ThrowsAsync<NotSupportedException>(() =>
+            dbContext.Database.MigrateAsync(migrations[boundaryIndex - 1]));
+
+        Assert.Contains("forward-only", exception.Message, StringComparison.OrdinalIgnoreCase);
+        dbContext.ChangeTracker.Clear();
+        var attemptAfter = await dbContext.UserAttempts.AsNoTracking().SingleAsync();
+        var ledgerAfter = await dbContext.XpLedger.AsNoTracking().SingleAsync();
+        var progressAfter = await dbContext.UserProgress.AsNoTracking().SingleAsync();
+        var idempotencyAfter = await dbContext.IdempotencyRecords.AsNoTracking().SingleAsync();
+        var publicationAfter = await dbContext.DailyMajlisPublications.AsNoTracking().SingleAsync();
+        Assert.Equal(attemptBefore.Id, attemptAfter.Id);
+        Assert.Equal(attemptBefore.LifetimeXpAfter, attemptAfter.LifetimeXpAfter);
+        Assert.Equal(ledgerBefore.Id, ledgerAfter.Id);
+        Assert.Equal(ledgerBefore.Amount, ledgerAfter.Amount);
+        Assert.Equal(progressBefore.UserId, progressAfter.UserId);
+        Assert.Equal(progressBefore.LifetimeXp, progressAfter.LifetimeXp);
+        Assert.Equal(idempotencyBefore.IdempotencyKey, idempotencyAfter.IdempotencyKey);
+        Assert.Equal(idempotencyBefore.RequestHash, idempotencyAfter.RequestHash);
+        Assert.Equal(publicationBefore.DailyMajlisId, publicationAfter.DailyMajlisId);
+        Assert.Equal(publicationBefore.PublishDate, publicationAfter.PublishDate);
+        Assert.Equal(
+            appliedBefore,
+            (await dbContext.Database.GetAppliedMigrationsAsync()).ToArray());
+    }
+
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -434,6 +486,37 @@ public sealed class DailyLoopPostgreSqlTests(PostgreSqlFixture postgreSql) : IAs
             Guid.NewGuid());
         await Task.Delay(200);
         Assert.False(submission.IsCompleted);
+        await transaction.CommitAsync();
+
+        await AssertProblemCodeAsync(
+            await submission,
+            HttpStatusCode.NotFound,
+            "daily_majlis_unavailable");
+        await AssertDailyLoopRowCountsAsync(0, 0, 0, 0);
+    }
+
+    [Fact]
+    public async Task Submit_CrossesUtcMidnightWhileWaitingForPublicationLock_RejectsWithoutAward()
+    {
+        using var client = await CreateAuthenticatedClientAsync("publication-midnight-user");
+        var today = await GetTodayAsync(client);
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<MajlisDbContext>();
+        await using var transaction = await dbContext.Database.BeginTransactionAsync();
+        await dbContext.DailyMajlis.FromSqlInterpolated($$"""
+            SELECT * FROM "DailyMajlis" WHERE "Id" = {{today.DailyMajlisId}} FOR UPDATE
+            """).SingleAsync();
+
+        var submission = SubmitAsync(
+            client,
+            today.ChallengeId,
+            today.CorrectOptionId,
+            Guid.NewGuid());
+        Assert.True(
+            await WaitForBlockedPublicationReadAsync(dbContext),
+            "The submission did not reach the blocked publication-decision read.");
+        Assert.False(submission.IsCompleted);
+        _factory.Clock.UtcNow = FirstDay.AddDays(1);
         await transaction.CommitAsync();
 
         await AssertProblemCodeAsync(
@@ -868,6 +951,30 @@ public sealed class DailyLoopPostgreSqlTests(PostgreSqlFixture postgreSql) : IAs
         Assert.Equal(ledger, await dbContext.XpLedger.CountAsync());
         Assert.Equal(progress, await dbContext.UserProgress.CountAsync());
         Assert.Equal(idempotency, await dbContext.IdempotencyRecords.CountAsync());
+    }
+
+    private static async Task<bool> WaitForBlockedPublicationReadAsync(
+        MajlisDbContext dbContext)
+    {
+        for (var attempt = 0; attempt < 100; attempt++)
+        {
+            var isBlocked = await dbContext.Database.SqlQueryRaw<bool>("""
+                SELECT EXISTS (
+                    SELECT 1
+                    FROM pg_stat_activity
+                    WHERE pid <> pg_backend_pid()
+                      AND wait_event_type = 'Lock'
+                      AND query LIKE '%FOR SHARE OF daily%') AS "Value"
+                """).SingleAsync();
+            if (isBlocked)
+            {
+                return true;
+            }
+
+            await Task.Delay(50);
+        }
+
+        return false;
     }
 
     private async Task ReplacePublishedRevisionAsync(Guid dailyMajlisId, Guid originalRevisionId)

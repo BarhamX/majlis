@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -56,8 +56,9 @@ namespace Majlis.Infrastructure.Persistence.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "DailyMajlisPublications");
+            throw new NotSupportedException(
+                "Daily Majlis publication history is a forward-only boundary; " +
+                "restore a compatible backup or apply a reviewed forward recovery migration.");
         }
     }
 }

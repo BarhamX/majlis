@@ -197,25 +197,9 @@ namespace Majlis.Infrastructure.Persistence.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "IdempotencyRecords");
-
-            migrationBuilder.DropTable(
-                name: "UserProgress");
-
-            migrationBuilder.DropTable(
-                name: "XpLedger");
-
-            migrationBuilder.DropTable(
-                name: "UserAttempts");
-
-            migrationBuilder.DropUniqueConstraint(
-                name: "AK_Challenges_Id_RevisionId",
-                table: "Challenges");
-
-            migrationBuilder.DropUniqueConstraint(
-                name: "AK_ChallengeOptions_Id_ChallengeId",
-                table: "ChallengeOptions");
+            throw new NotSupportedException(
+                "Daily-loop persistence is a forward-only boundary; " +
+                "restore a compatible backup or apply a reviewed forward recovery migration.");
         }
     }
 }

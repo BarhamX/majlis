@@ -5,6 +5,8 @@ namespace Majlis.Infrastructure.Persistence;
 
 internal static class DailyMajlisInitializationConflict
 {
+    private const string DailyMajlisPrimaryKeyConstraint =
+        "PK_DailyMajlis";
     private const string DailyMajlisPublishDateConstraint =
         "IX_DailyMajlis_PublishDate";
     private const string PublicationPublishDateConstraint =
@@ -15,6 +17,13 @@ internal static class DailyMajlisInitializationConflict
         "IX_DailyMajlisRevisions_DailyMajlisId_RevisionNumber";
 
     public static bool IsExpectedCreateRace(DbUpdateException exception) =>
+        HasUniqueConstraint(
+            exception,
+            DailyMajlisPrimaryKeyConstraint,
+            DailyMajlisPublishDateConstraint,
+            PublicationPublishDateConstraint);
+
+    public static bool IsExpectedEditorialWinnerRace(DbUpdateException exception) =>
         HasUniqueConstraint(
             exception,
             DailyMajlisPublishDateConstraint,

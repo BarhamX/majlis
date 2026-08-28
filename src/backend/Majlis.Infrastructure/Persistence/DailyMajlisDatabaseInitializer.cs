@@ -1,3 +1,4 @@
+using System.Globalization;
 using Majlis.Domain.DailyMajlis;
 using Microsoft.EntityFrameworkCore;
 using DailyMajlisEntity = Majlis.Domain.DailyMajlis.DailyMajlis;
@@ -8,8 +9,9 @@ public sealed class DailyMajlisDatabaseInitializer(
     MajlisDbContext dbContext,
     TimeProvider timeProvider)
 {
-    private static readonly Guid SeedDailyMajlisId =
+    private static readonly Guid LegacySeedDailyMajlisId =
         Guid.Parse("20000000-0000-0000-0000-000000000001");
+
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
         await dbContext.Database.MigrateAsync(cancellationToken);
@@ -39,7 +41,7 @@ public sealed class DailyMajlisDatabaseInitializer(
         DateOnly publishDate,
         CancellationToken cancellationToken)
     {
-        var dailyMajlisId = Guid.NewGuid();
+        var dailyMajlisId = GetSeedDailyMajlisId(publishDate);
         var revisionId = Guid.NewGuid();
         var challenge = CreateSeedChallenge(revisionId);
         var revision = CreateSeedRevision(dailyMajlisId, revisionId, challenge);
@@ -56,10 +58,21 @@ public sealed class DailyMajlisDatabaseInitializer(
             DailyMajlisInitializationConflict.IsExpectedCreateRace(exception))
         {
             dbContext.ChangeTracker.Clear();
-            if (!await OfficialContentExistsAsync(publishDate, cancellationToken))
+            var persistedSeed = await GetRepairableSeedAsync(
+                publishDate,
+                cancellationToken);
+            if (IsConvergedRepair(persistedSeed, dailyMajlisId, publishDate))
             {
-                throw;
+                return;
             }
+
+            if (DailyMajlisInitializationConflict.IsExpectedEditorialWinnerRace(exception) &&
+                await EditorialContentExistsAsync(publishDate, cancellationToken))
+            {
+                return;
+            }
+
+            throw;
         }
     }
 
@@ -110,21 +123,25 @@ public sealed class DailyMajlisDatabaseInitializer(
 
     private Task<DailyMajlisEntity?> GetRepairableSeedAsync(
         DateOnly publishDate,
-        CancellationToken cancellationToken) => dbContext.DailyMajlis
-        .AsSplitQuery()
-        .Include(item => item.Publication)
-        .Include(item => item.PublishedRevision)
-        .ThenInclude(revision => revision!.Translations)
-        .Include(item => item.PublishedRevision)
-        .ThenInclude(revision => revision!.Challenge)
-        .ThenInclude(challenge => challenge!.Options)
-        .ThenInclude(option => option.Translations)
-        .Where(item =>
-            item.PublishDate == publishDate &&
-            (item.Id == SeedDailyMajlisId || item.Publication != null))
-        .OrderByDescending(item => item.Publication != null)
-        .ThenByDescending(item => item.Id == SeedDailyMajlisId)
-        .FirstOrDefaultAsync(cancellationToken);
+        CancellationToken cancellationToken)
+    {
+        var seedDailyMajlisId = GetSeedDailyMajlisId(publishDate);
+        return dbContext.DailyMajlis
+            .AsSplitQuery()
+            .Include(item => item.Publication)
+            .Include(item => item.PublishedRevision)
+            .ThenInclude(revision => revision!.Translations)
+            .Include(item => item.PublishedRevision)
+            .ThenInclude(revision => revision!.Challenge)
+            .ThenInclude(challenge => challenge!.Options)
+            .ThenInclude(option => option.Translations)
+            .Where(item =>
+                item.PublishDate == publishDate &&
+                (item.Id == seedDailyMajlisId || item.Id == LegacySeedDailyMajlisId))
+            .OrderByDescending(item => item.Publication != null)
+            .ThenByDescending(item => item.Id == seedDailyMajlisId)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
 
     private static bool IsUsablePublishedSeed(DailyMajlisEntity? seedDailyMajlis) =>
         seedDailyMajlis is
@@ -145,13 +162,16 @@ public sealed class DailyMajlisDatabaseInitializer(
 
     private Task<bool> EditorialContentExistsAsync(
         DateOnly publishDate,
-        CancellationToken cancellationToken) => dbContext.DailyMajlis.AnyAsync(
-        dailyMajlis =>
-            dailyMajlis.PublishDate == publishDate &&
-            (dailyMajlis.Status == DailyMajlisStatus.Scheduled ||
-             (dailyMajlis.Status == DailyMajlisStatus.Published &&
-              dailyMajlis.Id != SeedDailyMajlisId)),
-        cancellationToken);
+        CancellationToken cancellationToken)
+    {
+        var seedDailyMajlisId = GetSeedDailyMajlisId(publishDate);
+        return dbContext.DailyMajlis.AnyAsync(
+            dailyMajlis =>
+                dailyMajlis.PublishDate == publishDate &&
+                dailyMajlis.Id != seedDailyMajlisId &&
+                dailyMajlis.Id != LegacySeedDailyMajlisId,
+            cancellationToken);
+    }
 
     private async Task SaveNewPublicationAsync(
         DailyMajlisEntity dailyMajlis,
@@ -173,14 +193,11 @@ public sealed class DailyMajlisDatabaseInitializer(
         await transaction.CommitAsync(cancellationToken);
     }
 
-    private Task<bool> OfficialContentExistsAsync(
-        DateOnly publishDate,
-        CancellationToken cancellationToken) => dbContext.DailyMajlis.AnyAsync(
-        dailyMajlis =>
-            dailyMajlis.PublishDate == publishDate &&
-            (dailyMajlis.Status == DailyMajlisStatus.Scheduled ||
-             dailyMajlis.Status == DailyMajlisStatus.Published),
-        cancellationToken);
+    private static Guid GetSeedDailyMajlisId(DateOnly publishDate) => Guid.ParseExact(
+        string.Create(
+            CultureInfo.InvariantCulture,
+            $"20000000-0000-0000-0000-{publishDate:yyyyMMdd}0000"),
+        "D");
 
     private DailyMajlisRevision CreateSeedRevision(
         Guid dailyMajlisId,

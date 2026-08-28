@@ -241,6 +241,31 @@ public sealed class DailyLoopServiceTests
     }
 
     [Fact]
+    public async Task SubmitAttempt_CrossesUtcMidnightWhileWaitingForPublicationLock_RejectsWithoutAward()
+    {
+        var afterMidnight = Now.AddDays(1);
+        var repository = new InMemoryDailyLoopRepository(Now, Identity);
+        var timeProvider = new MutableTimeProvider(Now);
+        repository.GetCurrentPublishedChallengeCallback = () =>
+            timeProvider.UtcNow = afterMidnight;
+        var service = CreateService(repository, timeProvider);
+
+        var exception = await Assert.ThrowsAsync<DailyLoopException>(() =>
+            service.SubmitAttemptAsync(
+                Identity,
+                repository.Challenge.Id,
+                repository.CorrectOption.Id,
+                Guid.NewGuid(),
+                "ar"));
+
+        Assert.Equal("daily_majlis_unavailable", exception.Code);
+        Assert.Empty(repository.Attempts);
+        Assert.Empty(repository.Ledger);
+        Assert.Empty(repository.IdempotencyRecords);
+        Assert.Null(repository.Progress);
+    }
+
+    [Fact]
     public async Task SubmitAttempt_WhenLockedAccountRevokedToken_RejectsWithoutAward()
     {
         var repository = new InMemoryDailyLoopRepository(Now, Identity);
@@ -419,6 +444,8 @@ public sealed class DailyLoopServiceTests
 
         public Action? LockUserCallback { get; set; }
 
+        public Action? GetCurrentPublishedChallengeCallback { get; set; }
+
         public Task<T> ExecuteInTransactionAsync<T>(
             Func<IDailyLoopTransaction, CancellationToken, Task<T>> operation,
             CancellationToken cancellationToken) => operation(this, cancellationToken);
@@ -454,12 +481,16 @@ public sealed class DailyLoopServiceTests
         public Task<DailyMajlis?> GetCurrentPublishedChallengeAsync(
             DateOnly publishDate,
             Guid challengeId,
-            CancellationToken cancellationToken) => Task.FromResult<DailyMajlis?>(
-            DailyMajlis.PublishDate == publishDate &&
-            DailyMajlis.Status == DailyMajlisStatus.Published &&
-            Challenge.Id == challengeId
-                ? DailyMajlis
-                : null);
+            CancellationToken cancellationToken)
+        {
+            GetCurrentPublishedChallengeCallback?.Invoke();
+            return Task.FromResult<DailyMajlis?>(
+                DailyMajlis.PublishDate == publishDate &&
+                DailyMajlis.Status == DailyMajlisStatus.Published &&
+                Challenge.Id == challengeId
+                    ? DailyMajlis
+                    : null);
+        }
 
         public Task<UserProgress?> GetProgressForUpdateAsync(
             Guid userId,

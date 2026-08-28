@@ -6,6 +6,42 @@ Majlis remains governed as a complete Production V1 Android application. The bac
 
 ## Work in Progress
 
+### 2026-08-28 - Final Persisted Daily-Loop Review Fix Wave
+
+- Restricted Development/Testing seed repair to explicit seed-owned identities. New fixture aggregates use a deterministic date-derived id, legacy fixed-id fixtures remain repairable, and any non-seed aggregate for the UTC date takes editorial precedence regardless of draft, review, scheduled, published, unpublished, or retained publication-history state.
+- Preserved exact conflict handling under concurrent initialization: only the deterministic seed primary key and the two date-ownership indexes enter create-race resolution; only date-ownership conflicts may converge on a concurrently persisted editorial winner, and unrelated PostgreSQL errors still propagate.
+- Made both unmerged post-boundary feature migrations independently forward-only. Each `Down` throws before adding a destructive operation, protecting intermediate and latest schemas, data, and `__EFMigrationsHistory` under EF Core 10's per-migration downgrade transactions.
+- Resampled UTC time immediately after the locked publication decision. A request crossing midnight at that lock is rejected before progress, attempt, ledger, or idempotency mutation, while an already accepted same-key replay remains available before current-day validation.
+
+### Files Changed
+
+- `DailyMajlisDatabaseInitializer.cs`, `DailyMajlisInitializationConflict.cs`, and their focused/hosted tests - deterministic seed ownership, editorial preservation, and exact race convergence.
+- `DailyLoopService.cs` and daily-loop application/PostgreSQL tests - post-publication-lock UTC validation and no-mutation coverage.
+- `20260828114928_AddDailyLoopPersistence.cs`, `20260828124324_RecordDailyMajlisPublicationHistory.cs`, migration unit tests, PostgreSQL migration tests, and the original localized-boundary regression - independently guarded downgrades with schema/data/history assertions.
+- `DATABASE_SCHEMA.md`, `MANIFEST.md`, this handoff, and the ignored final-fix report - recorded the forward-only invariant, new test file, decisions, and evidence.
+
+### Decisions Made
+
+- Encoded the Development/Testing seed owner as `20000000-0000-0000-0000-yyyyMMdd0000`; ownership is explicit per UTC publication date and cannot drift to an arbitrary aggregate merely because publication history exists.
+- Kept the existing fixed seed id as an explicit legacy compatibility identity only. Editorial precedence is based on every other aggregate id, not mutable status.
+- Retained the pre-publication idempotency replay path. The post-lock clock is the authoritative timestamp for every newly accepted progress, attempt, ledger, and idempotency row and its 24-hour expiry.
+- Edited only the two unmerged feature migrations after the established boundary; no pre-feature historical migration semantics or EF model snapshot changed.
+
+### Tests and Checks Run
+
+- RED: the focused Release suite produced the four expected failures for deterministic seed primary-key classification, both destructive feature-migration `Down` methods, and acceptance after a publication-lock midnight rollover.
+- GREEN: the expanded focused Release suite passed 22 tests; the full non-integration Release suite passed 92 tests; Release build succeeded with 0 warnings and 0 errors.
+- The PostgreSQL regressions compile and cover unpublished editorial restart preservation and unavailable submission, deterministic concurrent seed creation, a proven blocked `FOR SHARE` rollover, both intermediate/latest migration heads, and representative latest daily-loop data plus exact migration-history preservation.
+- EF reported no pending model changes. The idempotent script contained both feature migrations and all five persisted daily-loop/publication tables; scoped format/verification, documentation validation for 80 Markdown files and 147 requirement ids, and `git diff --check` passed.
+
+### Known Blockers
+
+- Local Docker Desktop/PostgreSQL remains unavailable, so the new hosted PostgreSQL cases have not been executed locally and no local database pass is claimed. Backend CI must be green before this fix wave is accepted.
+
+### Next Recommended Task
+
+- Run the final fix commit through hosted Backend CI, complete the final whole-branch re-review, and merge only after the PostgreSQL suite and review are green.
+
 ### 2026-08-28 - Task 6 Persisted Backend Daily-Loop Documentation and Evidence
 
 - Reconciled Spec 001's backend checklist and the requirement-to-test matrix against the implemented daily loop and the green hosted PostgreSQL evidence. The completed backend slice is still only one milestone within the complete Production V1 Android application.

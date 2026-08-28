@@ -39,8 +39,9 @@ public sealed class DailyLoopService(
                 async (transaction, token) =>
                 {
                     var user = await transaction.LockUserAsync(identity, token);
-                    var now = timeProvider.GetUtcNow();
-                    var today = DateOnly.FromDateTime(now.UtcDateTime);
+                    var selectionInstant = timeProvider.GetUtcNow();
+                    var selectedPublishDate = DateOnly.FromDateTime(
+                        selectionInstant.UtcDateTime);
                     ValidateEligibleUser(user, identity);
 
                     var idempotency = await transaction.FindIdempotencyAsync(
@@ -81,17 +82,22 @@ public sealed class DailyLoopService(
                     }
 
                     var dailyMajlis = await transaction.GetCurrentPublishedChallengeAsync(
-                        today,
+                        selectedPublishDate,
                         challengeId,
                         token);
+                    var awardInstant = timeProvider.GetUtcNow();
+                    var awardPublishDate = DateOnly.FromDateTime(awardInstant.UtcDateTime);
+                    if (awardPublishDate != selectedPublishDate)
+                    {
+                        throw DailyMajlisUnavailable();
+                    }
+
                     var revision = dailyMajlis?.PublishedRevision;
                     var challenge = revision?.Challenge;
                     if (dailyMajlis is null || revision is null || challenge is null ||
                         !revision.IsImmutable || !revision.IsCompleteForServing())
                     {
-                        throw new DailyLoopException(
-                            "daily_majlis_unavailable",
-                            "The requested challenge is not available for submission today.");
+                        throw DailyMajlisUnavailable();
                     }
 
                     var selectedOption = challenge.Options.SingleOrDefault(
@@ -108,15 +114,19 @@ public sealed class DailyLoopService(
                     var progress = await transaction.GetProgressForUpdateAsync(user.Id, token);
                     if (progress is null)
                     {
-                        progress = new UserProgress(user.Id, now);
+                        progress = new UserProgress(user.Id, awardInstant);
                         transaction.AddProgress(progress);
                     }
 
                     var publishedDates = await transaction.GetPublishedDatesAsync(
                         progress.LastCompletedPublishDate,
-                        today,
+                        awardPublishDate,
                         token);
-                    progress.ApplyAttempt(score, dailyMajlis.PublishDate, publishedDates, now);
+                    progress.ApplyAttempt(
+                        score,
+                        dailyMajlis.PublishDate,
+                        publishedDates,
+                        awardInstant);
 
                     var attemptId = Guid.NewGuid();
                     var attempt = new UserAttempt(
@@ -132,14 +142,14 @@ public sealed class DailyLoopService(
                         progress.LifetimeXp,
                         progress.CurrentStreak,
                         progress.LongestStreak,
-                        now);
+                        awardInstant);
                     transaction.AddAttempt(attempt);
                     transaction.AddLedgerEntry(new XpLedgerEntry(
                         Guid.NewGuid(),
                         user.Id,
                         attemptId,
                         score.TotalXp,
-                        now));
+                        awardInstant));
                     transaction.AddIdempotencyRecord(new IdempotencyRecord(
                         user.Id,
                         AttemptScope,
@@ -147,8 +157,8 @@ public sealed class DailyLoopService(
                         requestHash,
                         attemptId,
                         responseStatus: 201,
-                        now,
-                        now.AddHours(24)));
+                        awardInstant,
+                        awardInstant.AddHours(24)));
                     await transaction.SaveChangesAsync(token);
 
                     return new SubmissionDecision(user.Id, attemptId, IsReplay: false);
@@ -448,6 +458,10 @@ public sealed class DailyLoopService(
         "attempt_already_completed",
         "This Daily Majlis attempt is already completed.",
         attemptId);
+
+    private static DailyLoopException DailyMajlisUnavailable() => new(
+        "daily_majlis_unavailable",
+        "The requested challenge is not available for submission today.");
 
     private static Guid RequireId(Guid id, string parameterName) => id == Guid.Empty
         ? throw new ArgumentException("A non-empty id is required.", parameterName)

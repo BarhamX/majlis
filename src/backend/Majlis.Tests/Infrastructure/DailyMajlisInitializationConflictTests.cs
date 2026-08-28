@@ -7,9 +7,10 @@ namespace Majlis.Tests.Infrastructure;
 public sealed class DailyMajlisInitializationConflictTests
 {
     [Theory]
+    [InlineData("PK_DailyMajlis")]
     [InlineData("IX_DailyMajlis_PublishDate")]
     [InlineData("IX_DailyMajlisPublications_PublishDate")]
-    public void IsExpectedCreateRace_OnlyRecognizesPublishDateConstraints(
+    public void IsExpectedCreateRace_OnlyRecognizesDeterministicSeedConstraints(
         string constraintName)
     {
         Assert.True(DailyMajlisInitializationConflict.IsExpectedCreateRace(
@@ -24,6 +25,28 @@ public sealed class DailyMajlisInitializationConflictTests
         string constraintName)
     {
         Assert.False(DailyMajlisInitializationConflict.IsExpectedCreateRace(
+            CreateUniqueViolation(constraintName)));
+    }
+
+    [Theory]
+    [InlineData("IX_DailyMajlis_PublishDate")]
+    [InlineData("IX_DailyMajlisPublications_PublishDate")]
+    public void IsExpectedEditorialWinnerRace_OnlyRecognizesDateOwnershipConstraints(
+        string constraintName)
+    {
+        Assert.True(DailyMajlisInitializationConflict.IsExpectedEditorialWinnerRace(
+            CreateUniqueViolation(constraintName)));
+    }
+
+    [Theory]
+    [InlineData("PK_DailyMajlis")]
+    [InlineData("PK_DailyMajlisPublications")]
+    [InlineData("IX_DailyMajlisRevisions_DailyMajlisId_RevisionNumber")]
+    [InlineData("UX_Unrelated_Test_Constraint")]
+    public void IsExpectedEditorialWinnerRace_OtherConstraintsAreNotConvergence(
+        string constraintName)
+    {
+        Assert.False(DailyMajlisInitializationConflict.IsExpectedEditorialWinnerRace(
             CreateUniqueViolation(constraintName)));
     }
 

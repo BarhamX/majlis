@@ -195,6 +195,7 @@ This manifest lists version-controlled and pending source files. Run `scripts/va
 - `src/backend/Majlis.Tests/Infrastructure/AuthenticationConfigurationTests.cs`
 - `src/backend/Majlis.Tests/Infrastructure/DependencyInjectionTests.cs`
 - `src/backend/Majlis.Tests/Infrastructure/DailyMajlisInitializationConflictTests.cs`
+- `src/backend/Majlis.Tests/Infrastructure/ForwardOnlyDailyLoopMigrationTests.cs`
 - `src/backend/Majlis.Tests/Infrastructure/DailyLoopPersistenceModelTests.cs`
 - `src/backend/Majlis.Tests/Infrastructure/IdentityPersistenceModelTests.cs`
 - `src/backend/Majlis.Tests/Infrastructure/TestIdentityTokenIssuerTests.cs`
