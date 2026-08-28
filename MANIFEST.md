@@ -92,6 +92,7 @@ This manifest lists version-controlled and pending source files. Run `scripts/va
 - `src/backend/Majlis.Api/Majlis.Api.http`
 - `src/backend/Majlis.Api/Program.cs`
 - `src/backend/Majlis.Api/Properties/AssemblyInfo.cs`
+- `src/backend/Majlis.Api/RateLimiting/DailyAttemptRateLimiting.cs`
 - `src/backend/Majlis.Api/Properties/launchSettings.json`
 - `src/backend/Majlis.Application/DailyMajlis/DailyMajlisService.cs`
 - `src/backend/Majlis.Application/DailyMajlis/IDailyMajlisRepository.cs`
@@ -185,6 +186,7 @@ This manifest lists version-controlled and pending source files. Run `scripts/va
 - `src/backend/Majlis.Tests/Application/DailyMajlisLocalizationTests.cs`
 - `src/backend/Majlis.Tests/Application/IdentityProfileServiceTests.cs`
 - `src/backend/Majlis.Tests/Api/DailyLoopProblemResultsTests.cs`
+- `src/backend/Majlis.Tests/Api/DailyAttemptRateLimitingTests.cs`
 - `src/backend/Majlis.Tests/Domain/ChallengeTests.cs`
 - `src/backend/Majlis.Tests/Domain/DailyMajlisRevisionTests.cs`
 - `src/backend/Majlis.Tests/Domain/UserProgressServiceTests.cs`

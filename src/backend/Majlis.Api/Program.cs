@@ -1,4 +1,5 @@
 using Majlis.Api.Authentication;
+using Majlis.Api.RateLimiting;
 using Majlis.Application.DailyMajlis;
 using Majlis.Application.DailyLoop;
 using Majlis.Application.Identity;
@@ -18,6 +19,7 @@ builder.Services.AddScoped<IDailyMajlisService, DailyMajlisService>();
 builder.Services.AddScoped<IDailyLoopService, DailyLoopService>();
 builder.Services.AddScoped<IIdentityProfileService, IdentityProfileService>();
 builder.Services.AddMajlisAuthentication(builder.Configuration, builder.Environment);
+builder.Services.AddDailyAttemptRateLimiting();
 builder.Services.AddMajlisInfrastructure(builder.Configuration);
 
 var app = builder.Build();
@@ -25,6 +27,7 @@ var app = builder.Build();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 app.MapControllers();
 app.MapHealthChecks("/health", new HealthCheckOptions());
 

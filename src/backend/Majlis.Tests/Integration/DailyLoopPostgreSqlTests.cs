@@ -77,6 +77,116 @@ public sealed class DailyLoopPostgreSqlTests(PostgreSqlFixture postgreSql) : IAs
         Assert.Equal(1, await dbContext.IdempotencyRecords.CountAsync());
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("not-a-uuid")]
+    [InlineData("00000000-0000-0000-0000-000000000000")]
+    public async Task Submit_MissingOrMalformedIdempotencyKey_ReturnsValidationWithoutMutation(
+        string? idempotencyKey)
+    {
+        using var client = await CreateAuthenticatedClientAsync("invalid-key-database-user");
+        var today = await GetTodayAsync(client);
+
+        var response = await SubmitWithIdempotencyKeyAsync(
+            client,
+            today.ChallengeId,
+            today.CorrectOptionId,
+            idempotencyKey);
+
+        await AssertProblemCodeAsync(
+            response,
+            HttpStatusCode.UnprocessableEntity,
+            "validation_failed");
+        await AssertDailyLoopRowCountsAsync(attempts: 0, ledger: 0, progress: 0, idempotency: 0);
+    }
+
+    [Fact]
+    public async Task Submit_UnsupportedLocale_FallsBackToArabicAndStoresFallback()
+    {
+        using var client = await CreateAuthenticatedClientAsync("locale-fallback-user");
+        var today = await GetTodayAsync(client);
+
+        var response = await SubmitAsync(
+            client,
+            today.ChallengeId,
+            today.CorrectOptionId,
+            Guid.NewGuid(),
+            "fr-CA");
+        var body = await ReadJsonAsync(response);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        Assert.Equal("ar", body.GetProperty("resultLocale").GetString());
+        Assert.Contains("ar", response.Content.Headers.ContentLanguage);
+        await using var scope = _factory.Services.CreateAsyncScope();
+        Assert.Equal(
+            "ar",
+            (await scope.ServiceProvider.GetRequiredService<MajlisDbContext>()
+                .UserAttempts.SingleAsync()).ResultLocale);
+    }
+
+    [Fact]
+    public async Task Submit_AccountRateLimitRejectsBeforeAnyAdditionalDailyLoopMutation()
+    {
+        using var client = await CreateAuthenticatedClientAsync("database-account-rate-user");
+        var today = await GetTodayAsync(client);
+
+        var first = await SubmitAsync(
+            client,
+            today.ChallengeId,
+            today.CorrectOptionId,
+            Guid.NewGuid());
+        Assert.Equal(HttpStatusCode.Created, first.StatusCode);
+        for (var requestNumber = 1; requestNumber < 10; requestNumber++)
+        {
+            var completed = await SubmitAsync(
+                client,
+                today.ChallengeId,
+                today.CorrectOptionId,
+                Guid.NewGuid());
+            await AssertProblemCodeAsync(
+                completed,
+                HttpStatusCode.Conflict,
+                "attempt_already_completed");
+        }
+
+        var rejected = await SubmitAsync(
+            client,
+            today.ChallengeId,
+            today.CorrectOptionId,
+            Guid.NewGuid());
+
+        await AssertRateLimitProblemAsync(rejected);
+        await AssertDailyLoopRowCountsAsync(attempts: 1, ledger: 1, progress: 1, idempotency: 1);
+    }
+
+    [Fact]
+    public async Task Submit_IpRateLimitRejectsSixtyFirstAccountBeforeAnyAdditionalMutation()
+    {
+        TodayIds? today = null;
+        for (var requestNumber = 0; requestNumber < 60; requestNumber++)
+        {
+            using var client = await CreateAuthenticatedClientAsync($"database-ip-rate-user-{requestNumber}");
+            today ??= await GetTodayAsync(client);
+            var accepted = await SubmitAsync(
+                client,
+                today.ChallengeId,
+                today.CorrectOptionId,
+                Guid.NewGuid());
+            Assert.Equal(HttpStatusCode.Created, accepted.StatusCode);
+        }
+
+        using var rejectedClient = await CreateAuthenticatedClientAsync("database-ip-rate-rejected-user");
+        var rejected = await SubmitAsync(
+            rejectedClient,
+            today!.ChallengeId,
+            today!.CorrectOptionId,
+            Guid.NewGuid());
+
+        await AssertRateLimitProblemAsync(rejected);
+        await AssertDailyLoopRowCountsAsync(attempts: 60, ledger: 60, progress: 60, idempotency: 60);
+    }
+
     [Fact]
     public async Task Submit_HistoricalChallenge_ReturnsUnavailableWithoutMutation()
     {
@@ -545,9 +655,13 @@ public sealed class DailyLoopPostgreSqlTests(PostgreSqlFixture postgreSql) : IAs
 
         var nonOwned = await other.GetAsync($"/api/v1/attempts/{attemptId}");
         var missing = await other.GetAsync($"/api/v1/attempts/{Guid.NewGuid()}");
+        var nonOwnedShare = await other.GetAsync($"/api/v1/attempts/{attemptId}/share");
+        var missingShare = await other.GetAsync($"/api/v1/attempts/{Guid.NewGuid()}/share");
 
         await AssertProblemCodeAsync(nonOwned, HttpStatusCode.NotFound, "attempt_not_found");
         await AssertProblemCodeAsync(missing, HttpStatusCode.NotFound, "attempt_not_found");
+        await AssertProblemCodeAsync(nonOwnedShare, HttpStatusCode.NotFound, "attempt_not_found");
+        await AssertProblemCodeAsync(missingShare, HttpStatusCode.NotFound, "attempt_not_found");
     }
 
     [Fact]
@@ -590,7 +704,12 @@ public sealed class DailyLoopPostgreSqlTests(PostgreSqlFixture postgreSql) : IAs
         Assert.False(string.IsNullOrWhiteSpace(cursor));
         Assert.DoesNotContain("2026-08-27", cursor, StringComparison.Ordinal);
 
-        var secondPage = await client.GetFromJsonAsync<JsonElement>(
+        client.Dispose();
+        StartFactory(FirstDay.AddDays(3));
+        await SubmitForDayAsync(subject, correct: true);
+        using var continuationClient = await CreateAuthenticatedClientAsync(subject);
+
+        var secondPage = await continuationClient.GetFromJsonAsync<JsonElement>(
             $"/api/v1/me/attempts?limit=2&cursor={Uri.EscapeDataString(cursor!)}");
         var secondItems = secondPage.GetProperty("items");
         Assert.Equal(1, secondItems.GetArrayLength());
@@ -615,6 +734,12 @@ public sealed class DailyLoopPostgreSqlTests(PostgreSqlFixture postgreSql) : IAs
         using var body = JsonDocument.Parse(json);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(
+            ["body", "imageAlt", "publishDate", "resultState", "title", "url"],
+            body.RootElement.EnumerateObject()
+                .Select(property => property.Name)
+                .Order(StringComparer.Ordinal)
+                .ToArray());
         Assert.Equal("completed", body.RootElement.GetProperty("resultState").GetString());
         Assert.Equal(
             "https://share.majlis.test/daily/2026-08-26",
@@ -695,6 +820,26 @@ public sealed class DailyLoopPostgreSqlTests(PostgreSqlFixture postgreSql) : IAs
         };
         request.Headers.Add("Idempotency-Key", key.ToString("D"));
         request.Headers.AcceptLanguage.ParseAdd(acceptLanguage);
+        return client.SendAsync(request);
+    }
+
+    private static Task<HttpResponseMessage> SubmitWithIdempotencyKeyAsync(
+        HttpClient client,
+        Guid challengeId,
+        Guid optionId,
+        string? idempotencyKey)
+    {
+        var request = new HttpRequestMessage(
+            HttpMethod.Post,
+            $"/api/v1/challenges/{challengeId}/attempts")
+        {
+            Content = JsonContent.Create(new { selectedOptionId = optionId }),
+        };
+        if (idempotencyKey is not null)
+        {
+            request.Headers.Add("Idempotency-Key", idempotencyKey);
+        }
+
         return client.SendAsync(request);
     }
 
@@ -784,6 +929,19 @@ public sealed class DailyLoopPostgreSqlTests(PostgreSqlFixture postgreSql) : IAs
         var body = await ReadJsonAsync(response);
         Assert.Equal(status, response.StatusCode);
         Assert.Equal(code, body.GetProperty("code").GetString());
+    }
+
+    private static async Task AssertRateLimitProblemAsync(HttpResponseMessage response)
+    {
+        var body = await ReadJsonAsync(response);
+        Assert.Equal(HttpStatusCode.TooManyRequests, response.StatusCode);
+        Assert.NotNull(response.Headers.RetryAfter);
+        Assert.True(response.Headers.RetryAfter!.Delta > TimeSpan.Zero);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+        Assert.Equal("rate_limit_exceeded", body.GetProperty("code").GetString());
+        Assert.Equal(429, body.GetProperty("status").GetInt32());
+        Assert.Equal("https://httpstatuses.com/429", body.GetProperty("type").GetString());
+        Assert.False(string.IsNullOrWhiteSpace(body.GetProperty("traceId").GetString()));
     }
 
     private static async Task<JsonElement> ReadJsonAsync(HttpResponseMessage response)

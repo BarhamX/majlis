@@ -1,4 +1,5 @@
 using Majlis.Application.Identity;
+using Majlis.Api.RateLimiting;
 using Majlis.Domain.Identity;
 using Microsoft.AspNetCore.Authorization;
 
@@ -21,8 +22,8 @@ internal sealed class CompletedProfileAuthorizationHandler(
         try
         {
             var identity = AuthenticatedIdentityFactory.Create(context.User);
-            var cancellationToken = context.Resource is HttpContext httpContext
-                ? httpContext.RequestAborted
+            var cancellationToken = context.Resource is HttpContext requestContext
+                ? requestContext.RequestAborted
                 : CancellationToken.None;
             var user = await userAccountRepository.FindByIdentityAsync(
                 identity.Provider,
@@ -36,6 +37,11 @@ internal sealed class CompletedProfileAuthorizationHandler(
                 (!user.AuthenticationNotBefore.HasValue ||
                  identity.IssuedAt > user.AuthenticationNotBefore.Value))
             {
+                if (context.Resource is HttpContext httpContext)
+                {
+                    httpContext.Items[DailyAttemptRateLimiting.AccountIdItemKey] = user.Id;
+                }
+
                 context.Succeed(requirement);
             }
         }

@@ -1,4 +1,5 @@
 using Majlis.Api.Authentication;
+using Majlis.Api.RateLimiting;
 using Majlis.Application.DailyLoop;
 using Majlis.Contracts.DailyLoop;
 using Microsoft.AspNetCore.Authorization;
@@ -12,10 +13,12 @@ namespace Majlis.Api.Controllers;
 public sealed class ChallengeAttemptsController(IDailyLoopService dailyLoopService) : ControllerBase
 {
     [HttpPost]
+    [DailyAttemptRateLimited]
     [ProducesResponseType<AttemptResultResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<AttemptResultResponse>(StatusCodes.Status201Created)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status422UnprocessableEntity)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<AttemptResultResponse>> Submit(
         Guid challengeId,
         SubmitAttemptRequest request,

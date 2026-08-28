@@ -6,6 +6,42 @@ Majlis remains governed as a complete Production V1 Android application. The bac
 
 ## Work in Progress
 
+### 2026-08-28 - Task 5 Daily-Attempt Rate Limiting and Security Verification
+
+- Added composed fixed-window submission limits keyed by the authorized local account id and the request IP address: 10 requests/minute per account and 60 requests/minute per IP.
+- Rate limiting runs after authentication/completed-profile authorization has resolved the local account, but before the attempt controller and its transactional writes. Rejections return stable RFC 7807 `429 rate_limit_exceeded` with `Retry-After`, `type`, `status`, and `traceId`.
+- Added locally executable authenticated pipeline tests for missing/malformed idempotency keys and both limiter partitions. The recorder proves a rejected request never reaches `IDailyLoopService.SubmitAttemptAsync`.
+- Strengthened the PostgreSQL API suite with row-count no-mutation proofs for account/IP rejection, unsupported-locale fallback persistence, share ownership non-enumeration, exact spoiler-safe share fields, and cursor stability when a newer attempt is inserted between pages. Existing Task 4 tests continue to cover completion conflicts, unavailable/non-current challenges, option ownership, immutable result/progress snapshots, restart durability, and exactly-once races.
+
+### Files Changed
+
+- `src/backend/Majlis.Api/RateLimiting/DailyAttemptRateLimiting.cs`, `Program.cs`, completed-profile authorization, and `ChallengeAttemptsController.cs` - composed account/IP limiter, account partition handoff, middleware registration, endpoint marker, and documented `429` response.
+- `src/backend/Majlis.Tests/Api/DailyAttemptRateLimitingTests.cs` - real authenticated pipeline RED/GREEN tests without PostgreSQL.
+- `src/backend/Majlis.Tests/Integration/DailyLoopPostgreSqlTests.cs` - PostgreSQL security, contract allowlist, stable-cursor, localization fallback, and rate-rejection row-count coverage.
+- `MANIFEST.md` and this handoff - registered the new production/test files and recorded Task 5 evidence.
+
+### Decisions Made
+
+- Partition account limits by the resolved Majlis `UserAccount.Id`, not external-provider subject, so explicitly linked identities cannot obtain separate account budgets.
+- Apply one chained limiter only to the marked attempt-submission action; unrelated APIs receive no limiter from this policy.
+- Treat all authenticated submission requests, including invalid headers and completed-attempt conflicts, as attempts against the fixed-window budget. Authorization performs only a read before limiting; no daily-loop write is reachable after rejection.
+- Kept the fixed-window queue at zero so excess requests fail immediately and cannot mutate after waiting.
+
+### Tests and Checks Run
+
+- RED: focused `DailyAttemptRateLimitingTests` passed the four malformed-key cases but failed both limit cases because request 11 and request 61 returned `201 Created` instead of `429`.
+- GREEN: the same focused Release filter passed 6 tests, 0 failed; account request 11 and shared-IP request 61 returned `429`, exposed `Retry-After`, and left the submission-service call counts at 10 and 60.
+- Full non-integration Release suite passed 82 tests, 0 failed, and Release build succeeded with 0 warnings and 0 errors. The PostgreSQL additions compile as part of that build.
+
+### Known Blockers
+
+- Local Docker Desktop/PostgreSQL remains unavailable, so the new database row-count cases and the existing transaction/restart/race suite were compiled but not executed locally. Hosted Backend CI must run the full PostgreSQL suite before Task 5 evidence can be finalized.
+- Reverse-proxy trusted-forwarding configuration belongs to production hosting/operations; this task partitions on ASP.NET Core's resolved `RemoteIpAddress` and does not trust arbitrary forwarded headers.
+
+### Next Recommended Task
+
+- Run the Task 5 commit through hosted Backend CI. If green, complete Task 6 documentation/evidence reconciliation, full verification, review, and PR delivery.
+
 ### 2026-08-28 - Task 4 Review Fix Round 4
 
 - Diagnosed hosted run `33174425481` (identity baseline passed; 121 of 122 full-suite tests passed): concurrent fixed-ID legacy repairs can both begin without a publication, and PostgreSQL can surface `PK_DailyMajlisPublications` before the already-supported revision-number race.
