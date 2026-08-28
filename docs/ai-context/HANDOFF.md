@@ -6,6 +6,43 @@ Majlis remains governed as a complete Production V1 Android application. The bac
 
 ## Latest Delivery
 
+### 2026-08-28 - Daily Attempt Eligibility and Authentication Matrix
+
+- Completed the remaining Spec 001 backend submission matrix at the authenticated HTTP boundary backed by PostgreSQL.
+- Added direct rejection coverage for unauthenticated callers and authenticated identities without a completed local profile.
+- Added current-day coverage for every non-published status (`draft`, `in_review`, `approved`, `scheduled`, and `unpublished`) plus future and superseded-revision challenges; the existing historical case completes the date/revision matrix.
+- Every rejected request asserts the stable HTTP/problem outcome and proves that no attempt, XP-ledger, progress, or idempotency row was created.
+
+### Files Changed
+
+- `src/backend/Majlis.Tests/Integration/DailyLoopPostgreSqlTests.cs` - nine new HTTP/PostgreSQL eligibility cases and shared token/status test helpers.
+- `specs/001-playable-daily-majlis/tasks.md` - completed the explicit non-current challenge matrix row.
+- `docs/quality/requirements-to-tests.md` - promoted `ATT-001` to `Verified` with exact hosted evidence.
+- `docs/ai-context/HANDOFF.md` - recorded this verification milestone.
+- `MANIFEST.md` was unchanged because no new repository file was added.
+
+### Decisions Made
+
+- Kept the public submission endpoint as the test seam; authorization/status results are asserted through HTTP and persistence side effects, without mocking application or repository internals.
+- Treated every current-day status other than `published` as ineligible, including `in_review` and `approved`, even though the original checklist named only draft, scheduled, and unpublished.
+- Kept unauthenticated rejection at HTTP `401`; an authenticated identity without a completed local profile receives HTTP `403` with `profile_incomplete`.
+- Made no production-code change because the existing policy and transactional daily-loop implementation passed the complete matrix.
+
+### Tests and Checks Run
+
+- Local Release build passed with 0 warnings and 0 errors; the 92-test non-integration Release suite passed with no failures or skips.
+- The nine new PostgreSQL cases compiled locally. Local Docker Desktop remained unavailable, so no local database execution is claimed.
+- Hosted Backend CI run [`33200378503`](https://github.com/BarhamX/majlis/actions/runs/33200378503) passed the Release build, the identity PostgreSQL baseline 3/3, and the complete backend suite 168/168 with no failures or skips.
+- Scoped formatting, documentation validation for 81 Markdown files and 147 requirement ids, and `git diff --check` passed.
+
+### Known Blockers
+
+- None for the Spec 001 backend submission matrix. Local Docker remains unavailable, but hosted Linux/Testcontainers supplied the required PostgreSQL evidence.
+
+### Next Recommended Task
+
+- Build the Arabic/RTL Flutter daily journey against the Development/Testing identity and persisted backend, including loading, unavailable, error, unanswered, submitted, and completed-result states.
+
 ### 2026-08-28 - Final Persisted Daily-Loop Review Fix Wave
 
 - Restricted Development/Testing seed repair to explicit seed-owned identities. New fixture aggregates use a deterministic date-derived id, legacy fixed-id fixtures remain repairable, and any non-seed aggregate for the UTC date takes editorial precedence regardless of draft, review, scheduled, published, unpublished, or retained publication-history state.
@@ -43,7 +80,7 @@ Majlis remains governed as a complete Production V1 Android application. The bac
 
 ### Next Recommended Task
 
-- Add the remaining explicit Spec 001 submission status/authentication matrix tests, then build the Arabic/RTL Flutter daily journey against the Development/Testing identity without provisioning production credentials or hosting.
+- Build the Arabic/RTL Flutter daily journey against the Development/Testing identity without provisioning production credentials or hosting.
 
 ### 2026-08-28 - Task 6 Persisted Backend Daily-Loop Documentation and Evidence
 
